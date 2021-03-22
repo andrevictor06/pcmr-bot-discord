@@ -1,0 +1,22 @@
+{
+  "name": "pcmr-bot-discord",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andrevictor06/pcmr-bot-discord.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/andrevictor06/pcmr-bot-discord/issues"
+  },
+  "homepage": "https://github.com/andrevictor06/pcmr-bot-discord#readme",
+  "dependencies": {
+    "discord.js": "^12.5.1"
+  }
+}
