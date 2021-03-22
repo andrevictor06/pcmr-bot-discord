@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/andrevictor06/pcmr-bot-discord#readme",
   "dependencies": {
+    "crypto": "^1.0.1",
     "discord.js": "^12.5.1"
   }
 }
