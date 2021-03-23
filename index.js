@@ -2,7 +2,6 @@ const Discord = require("discord.js");
 
 const bot = new Discord.Client();
 
-const token = process.env.TOKEN_DISCORD;
 const lista = [
     "https://i.i.cbsi.com/cnwk.1d/i/tim//2010/07/06/Damaged_Falcon_NW_610x406_610x406.jpg",
     "https://support.cyberpowerpc.com/hc/article_attachments/360028078513/broken_PCI_01.jpg",
@@ -21,7 +20,7 @@ function between(min, max) {
     )
   }
   
-bot.login(token);
+bot.login(process.env.TOKEN_DISCORD);
 
 bot.on("message", msg =>{
     if(msg.content === "/placa"){
