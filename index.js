@@ -2,7 +2,6 @@ const Discord = require("discord.js");
 
 const bot = new Discord.Client();
 
-const pk    = "";
 const token = process.env.TOKEN_DISCORD;
 const lista = [
     "https://i.i.cbsi.com/cnwk.1d/i/tim//2010/07/06/Damaged_Falcon_NW_610x406_610x406.jpg",
