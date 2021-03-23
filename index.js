@@ -3,7 +3,7 @@ const Discord = require("discord.js");
 const bot = new Discord.Client();
 
 const pk    = "";
-const token = "ODIzNjU4NDM4MjUyNTYwNDE1.YFkBsg.7PpjkJqt5tU4Ag2NzXg6iFfm4EA";
+const token = process.env.TOKEN_DISCORD;
 const lista = [
     "https://i.i.cbsi.com/cnwk.1d/i/tim//2010/07/06/Damaged_Falcon_NW_610x406_610x406.jpg",
     "https://support.cyberpowerpc.com/hc/article_attachments/360028078513/broken_PCI_01.jpg",
@@ -16,10 +16,17 @@ const lista = [
     "https://tecnoblog.net/meiobit/wp-content/uploads/2015/07/20150723elhdszu-634x475.jpg"
 ]
 
+function between(min, max) {  
+    return Math.floor(
+      Math.random() * (max - min) + min
+    )
+  }
+  
 bot.login(token);
 
 bot.on("message", msg =>{
     if(msg.content === "/placa"){
-        msg.reply();
+        msg.reply( lista[between(0, lista.length +1)] );
     }
 });
+
