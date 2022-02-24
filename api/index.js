@@ -29,9 +29,6 @@ function between(min, max) {
       Math.random() * (max - min) + min
     )
   }
-  
-  //process.env.TOKEN_DISCORD API
-bot.login(process.env.TOKEN_DISCORD);
 
 bot.on("message", msg =>{
   let user = "<@!320933526554017793>";
@@ -124,4 +121,11 @@ function getUserFromMention(mention) {
 	}
 }
 
-module.exports = bot;
+
+//process.env.TOKEN_DISCORD API
+bot.login(process.env.TOKEN_DISCORD);
+
+module.exports = (req, res) => {
+  const { name = 'World' } = req.query;
+  res.send(`Hello ${name}!`);
+};
