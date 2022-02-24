@@ -1,8 +1,8 @@
 {
-    "functions": {
-        "api/index.js": {
-          "memory": 1024,
-          "maxDuration": 5
-        }
+  "builds": [
+    {
+        "src": "./api/index.js",
+        "use": "@vercel/node"
     }
+  ]
 }

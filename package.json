@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev" : "node ."
+    "dev" : "node .",
+    "start": "node ./api/index.js"
     
   },
   "repository": {
