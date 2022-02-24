@@ -123,3 +123,5 @@ function getUserFromMention(mention) {
 		return bot.users.cache.get(mention);
 	}
 }
+
+module.exports = bot;
