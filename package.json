@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev" : "node ."
+    "dev" : "node .",
+    "vercel-build": "node ./api/index.js"
     
   },
   "repository": {
@@ -21,4 +22,5 @@
     "crypto": "^1.0.1",
     "discord.js": "^12.5.1"
   }
+  
 }
