@@ -11,7 +11,17 @@ const lista = [
     "https://h30434.www3.hp.com/t5/image/serverpage/image-id/254464i8E06E2C0756F0AAD/image-size/medium?v=1.0&px=400",
     "https://linustechtips.com/uploads/monthly_2018_08/15350564627742120147877.jpg.f7065233bc1fec7996df12d0bc92776d.jpg",
     "https://linustechtips.com/uploads/monthly_2016_03/IMG_20151111_205053-2.jpg.5478631829ab6adc6ee2929fa837e85a.jpg",
-    "https://tecnoblog.net/meiobit/wp-content/uploads/2015/07/20150723elhdszu-634x475.jpg"
+    "https://tecnoblog.net/meiobit/wp-content/uploads/2015/07/20150723elhdszu-634x475.jpg",
+    "https://i.imgur.com/W2NFfpZ.jpeg"
+]
+
+const listaProcessadores = [
+  "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQlZ7S6-O2_HKhxuZLSskmm6Cawut27VRgIMA&usqp=CAU",
+  "https://linustechtips.com/uploads/monthly_2019_10/20191013_072750.jpg.f8d0bd9a6355ba6ab5e9542ff07a0bf3.jpg",
+  "https://i.ytimg.com/vi/YUcbiIUZck0/maxresdefault.jpg",
+  "https://gizmodo.uol.com.br/wp-content/blogs.dir/8/files/2020/10/cooler-cpu-amdryzen.jpg",
+  "https://i.imgur.com/cz8nReE.jpg",
+  "https://i.ytimg.com/vi/ab-rx7t42yo/maxresdefault.jpg"
 ]
 
 function between(min, max) {  
@@ -20,11 +30,96 @@ function between(min, max) {
     )
   }
   
+  //process.env.TOKEN_DISCORD
 bot.login(process.env.TOKEN_DISCORD);
 
 bot.on("message", msg =>{
-    if(msg.content === "/placa"){
-        msg.reply( lista[between(0, lista.length +1)] );
+  let user = "<@!502978528820723712>"; //Leo: <@!320933526554017793> Lii:<@!502978528820723712>
+    if(msg.content.startsWith("/placa") || msg.content.startsWith("/praca")){
+      let message = "";
+      try{
+        let item = lista[between(0, lista.length)] ;
+        
+        if( ! item){
+          item = lista[0];
+        }
+        message = user + ", " + item;
+      }catch( ex ){
+        console.log(ex, " ex")
+        message = user + ", " + lista[0];
+      }
+      msg.delete();
+      return msg.channel.send(message);
+    }
+
+    if (msg.content.startsWith("/comprapc")) {
+      const withoutPrefix = msg.content.slice("/avatar".length);
+	    const split = withoutPrefix.split(/ +/);
+	    const command = split[0];
+	    const args = split.slice(1);
+      // 
+      if (args[0]) {
+        const user = getMention(args[0]);
+        if (!user) {
+          return msg.reply('Please use a proper mention if you want to see someone elses avatar.');
+        }
+        msg.delete();
+        return msg.channel.send(`${user}, Vai comprar a ***** do PC e vem jogar direito com a gente!`);
+      }
+      msg.delete();
+      return msg.channel.send(`<@!502978528820723712>, Vai comprar a ***** do PC e vem jogar direito com a gente!`);
+    }
+    if(msg.content.startsWith("/processador") ){
+      let message = "";
+      try{
+        let item = listaProcessadores[between(0, listaProcessadores.length)] ;
+        
+        if( ! item){
+          item = listaProcessadores[0];
+        }
+        message = "<@!346069887854182400>, " + item;
+      }catch( ex ){
+        console.log(ex, " ex")
+        message = "<@!346069887854182400>, " + listaProcessadores[0];
+      }
+      msg.delete();
+      return msg.channel.send(message);
+    }
+
+    if (msg.content.startsWith("/avatar")) {
+      const withoutPrefix = msg.content.slice("/avatar".length);
+	    const split = withoutPrefix.split(/ +/);
+	    const command = split[0];
+	    const args = split.slice(1);
+
+      if (args[0]) {
+        const user = getUserFromMention(args[0]);
+        if (!user) {
+          return msg.reply('Please use a proper mention if you want to see someone elses avatar.');
+        }
+        msg.delete();
+        return msg.channel.send(`${user.username}'s avatar: ${user.displayAvatarURL({ dynamic: true })}`);
+      }
+      msg.delete();
+      return msg.channel.send(`${msg.author.username}, your avatar: ${msg.author.displayAvatarURL({ dynamic: true })}`);
     }
 });
+function getMention(mention) {
+	if (!mention) return;
+	  
+  return mention;
+}
 
+function getUserFromMention(mention) {
+	if (!mention) return;
+
+	if (mention.startsWith('<@') && mention.endsWith('>')) {
+		mention = mention.slice(2, -1);
+
+		if (mention.startsWith('!')) {
+			mention = mention.slice(1);
+		}
+
+		return bot.users.cache.get(mention);
+	}
+}
