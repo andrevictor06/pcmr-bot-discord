@@ -30,11 +30,11 @@ function between(min, max) {
     )
   }
   
-  //process.env.TOKEN_DISCORD
+  //process.env.TOKEN_DISCORD API
 bot.login(process.env.TOKEN_DISCORD);
 
 bot.on("message", msg =>{
-  let user = "<@!502978528820723712>"; //Leo: <@!320933526554017793> Lii:<@!502978528820723712>
+  let user = "<@!320933526554017793>";
     if(msg.content.startsWith("/placa") || msg.content.startsWith("/praca")){
       let message = "";
       try{
@@ -67,7 +67,7 @@ bot.on("message", msg =>{
         return msg.channel.send(`${user}, Vai comprar a ***** do PC e vem jogar direito com a gente!`);
       }
       msg.delete();
-      return msg.channel.send(`<@!502978528820723712>, Vai comprar a ***** do PC e vem jogar direito com a gente!`);
+      return msg.channel.send(`<@!320933526554017793>, Vai comprar a ***** do PC e vem jogar direito com a gente!`);
     }
     if(msg.content.startsWith("/processador") ){
       let message = "";
@@ -77,10 +77,10 @@ bot.on("message", msg =>{
         if( ! item){
           item = listaProcessadores[0];
         }
-        message = "<@!346069887854182400>, " + item;
+        message = "<@!320933526554017793>, " + item;
       }catch( ex ){
         console.log(ex, " ex")
-        message = "<@!346069887854182400>, " + listaProcessadores[0];
+        message = "<@!320933526554017793>, " + listaProcessadores[0];
       }
       msg.delete();
       return msg.channel.send(message);
