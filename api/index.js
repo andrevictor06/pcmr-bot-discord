@@ -48,6 +48,11 @@ bot.on("message", msg =>{
       msg.delete();
       return msg.channel.send(message);
     }
+    
+    if (msg.content.trim().startsWith("https://www.twitch.tv/")) {
+      console.log(msg)
+      return msg.channel.send(msg.content);
+    }
 
     if (msg.content.startsWith("/comprapc")) {
       const withoutPrefix = msg.content.slice("/avatar".length);
