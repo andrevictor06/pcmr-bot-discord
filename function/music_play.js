@@ -35,6 +35,7 @@ async function execute(message, serverQueue) {
 
         try {
             var connection = await voiceChannel.join();
+            connection.voice.setSelfDeaf(true);
             queueContruct.connection = connection;
             play(message.guild, queueContruct.songs[0]);
         } catch (err) {
@@ -79,7 +80,7 @@ function stop(guild, serverQueue) {
 function run(bot, msg) {
     const serverQueue = queue.get(msg.guild.id);
 
-    if (msg.content.startsWith("/play ")) {
+    if (msg.content.startsWith("/play ") || msg.content.startsWith("*play ")) {
         execute(msg, serverQueue)
     }
 
@@ -89,7 +90,7 @@ function run(bot, msg) {
 }
 
 function canHandle(bot, msg) {
-    return (msg.content.startsWith("/play ") || msg.content.startsWith("/stop"));
+    return (msg.content.startsWith("/play ") || msg.content.startsWith("*play ") || msg.content.startsWith("/stop"));
 }
 
 module.exports = {
