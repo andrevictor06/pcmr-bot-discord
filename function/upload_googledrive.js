@@ -1,21 +1,19 @@
 const request = require('request').defaults({ encoding: null });
 
 function run( bot, msg ){
-    const url = process.env.URL_APPLETS;
-    request.get(url, function( error, response, body){
+    const args = msg.content.split(" ");
+    const url = process.env.URL_APPLETS + "subreddit/" + args[1];
+    console.log(url);
+    request.post(url, function( error, response, body){
         if (!error && response.statusCode == 200) {
-            const data = JSON.parse(Buffer.from(body).toString('utf8'));
-            if( data.applets){
-                data.applets.forEach(element => {
-                    msg.channel.send( "\```json \n " + JSON.stringify(element) + "\```");
-                });
-            }
+            const data = Buffer.from(body).toString('utf8');
+            msg.channel.send( data );
         }
     });
 }
 
 function canHandle( bot, msg ){
-    return (msg.content.startsWith("/upload"));
+    return (msg.content.startsWith("/subreddit "));
 }
 
 module.exports =  {

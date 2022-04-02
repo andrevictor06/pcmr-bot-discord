@@ -17,9 +17,13 @@
   },
   "homepage": "https://github.com/andrevictor06/pcmr-bot-discord#readme",
   "dependencies": {
-    "crypto": "^1.0.1",
-    "discord.js": "^12.5.1",
+    "@discordjs/opus": "^0.7.0",
+    "discord.js": "^12.5.3",
     "dotenv": "^16.0.0",
-    "request": "^2.88.2"
+    "ffmpeg": "0.0.4",
+    "ffmpeg-static": "^5.0.0",
+    "fluent-ffmpeg": "^2.1.2",
+    "request": "^2.88.2",
+    "ytdl-core": "^4.11.0"
   }
 }
