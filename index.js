@@ -7,6 +7,7 @@ const HistoryTwitch     = require("./function/history_twitch");
 const Processador       = require("./function/processador");
 const ComprarPC         = require("./function/comprar_pc");
 const MusicPlay         = require("./function/music_play");
+const VideoPlay         = require("./function/video_play");
 const Avatar            = require("./function/avatar");
 const Placa             = require("./function/placa");
 
@@ -16,6 +17,7 @@ const functions = [
   Processador,
   ComprarPC,
   MusicPlay,
+  VideoPlay,
   Avatar,
   Placa
 ]
