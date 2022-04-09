@@ -27,13 +27,16 @@ function run( bot, msg ){
     const req_body = {
         "files" : listFiles
     }
-    const str_req_body = JSON.stringify(req_body);
-    console.log(str_req_body, " body");
     if( args[1]){
         const url = process.env.URL_APPLETS + "upload";
         request.post({
             url: url,
-            body: str_req_body
+            method: 'POST',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(req_body)
         }, function( error, response, body){
             if (!error && response.statusCode == 200) {
                 const data = Buffer.from(body).toString('utf8');
