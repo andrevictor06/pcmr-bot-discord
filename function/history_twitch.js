@@ -20,7 +20,7 @@ async function sendMessageThread(channel, message){
 
 function run( bot, msg ){
     let criouTopico = false;
-    if(msg.content.trim().startsWith("/2ttlive")){
+    if(msg.content.trim().startsWith("/ttlive")){
         bot.channels.fetch('956197177623969832').then( channel => {
 
             channel.messages.fetch({limit: 100}).then(messages => {
@@ -61,7 +61,7 @@ function run( bot, msg ){
 function canHandle( bot, msg ){
     return ( msg.channel.id == '813916705222295582' && msg.content.trim().startsWith("https://www.twitch.tv/"))
     
-            || ( msg.channel.id == "956197177623969832" && msg.content.trim().startsWith("/2ttlive") );
+            || ( msg.channel.id == "956197177623969832" && msg.content.trim().startsWith("/ttlive") );
 }
 
 module.exports =  {
