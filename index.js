@@ -1,6 +1,6 @@
 require('dotenv/config');
-const Discord = require("discord.js");
-const bot = new Discord.Client();
+const { Client, Intents } = require("discord.js");
+const bot = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES] });
 
 const UploadGoogleDrive = require("./function/upload_googledrive");
 const HistoryTwitch     = require("./function/history_twitch");
