@@ -14,12 +14,13 @@ async function createThreads(channel, message){
 
 async function sendMessageThread(channel, message){
     const thread = channel.threads.cache.find(x => x.name === 'quem-esta-online');
-    thread.send({ content: message.content})
+    if(thread)
+        thread.send({ content: message.content})
 }
 
 function run( bot, msg ){
     let criouTopico = false;
-    if(msg.content.trim().startsWith("/ttlive")){
+    if(msg.content.trim().startsWith("/2ttlive")){
         bot.channels.fetch('956197177623969832').then( channel => {
 
             channel.messages.fetch({limit: 100}).then(messages => {
@@ -32,18 +33,20 @@ function run( bot, msg ){
                             createThreads(channel, message);
                         }
 
-                        const url = message.content.trim().split(" ")[0].trim();
-                        request.get({
-                            url: url,
-                            method: 'GET'
-                        }, function( error, response, body){
-                            if (!error && response.statusCode == 200) {
-                                const data = Buffer.from(body).toString('utf8');
-                                if( data.toString().includes(`"isLiveBroadcast":true`)){
-                                    sendMessageThread(channel, message );
+                        setTimeout(() => {
+                            const url = message.content.trim().split(" ")[0].trim();
+                            request.get({
+                                url: url,
+                                method: 'GET'
+                            }, function( error, response, body){
+                                if (!error && response.statusCode == 200) {
+                                    const data = Buffer.from(body).toString('utf8');
+                                    if( data.toString().includes(`"isLiveBroadcast":true`)){
+                                        sendMessageThread(channel, message );
+                                    }
                                 }
-                            }
-                        });
+                            });    
+                        }, 3000);
                     }                        
                 });
               });
@@ -58,7 +61,7 @@ function run( bot, msg ){
 function canHandle( bot, msg ){
     return ( msg.channel.id == '813916705222295582' && msg.content.trim().startsWith("https://www.twitch.tv/"))
     
-            || ( msg.channel.id == "956197177623969832" && msg.content.trim().startsWith("/ttlive") );
+            || ( msg.channel.id == "956197177623969832" && msg.content.trim().startsWith("/2ttlive") );
 }
 
 module.exports =  {
