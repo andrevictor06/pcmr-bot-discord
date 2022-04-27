@@ -1,30 +1,37 @@
 const request = require('request').defaults({ encoding: null });
 
 async function createThreads(channel, message){
-    /*console.log(message.channel.threads);
-    console.log();*/
-    const thread = await message.startThread({
-        name: 'food-talk',
+    const cache = channel.threads.cache.find(x => x.name === 'quem-esta-online');
+    if( cache)
+        return cache;
+
+    return await channel.threads.create({
+        name: 'quem-esta-online',
         autoArchiveDuration: 60,
-        reason: 'Needed a separate thread for food',
+        reason: 'Quem está online?',
     });
-    /*const thread = await channel.threads.create({
-        name: 'food-talk',
-        autoArchiveDuration: 60,
-        reason: 'Needed a separate thread for food',
-    });
-    return thread;*/
+}
+
+async function sendMessageThread(channel, message){
+    const thread = channel.threads.cache.find(x => x.name === 'quem-esta-online');
+    thread.send({ content: message.content})
 }
 
 function run( bot, msg ){
-    if(msg.content.trim().startsWith("/run")){
+    let criouTopico = false;
+    if(msg.content.trim().startsWith("/ttlive")){
         bot.channels.fetch('956197177623969832').then( channel => {
 
             channel.messages.fetch({limit: 100}).then(messages => {
                 //Iterate through the messages here with the variable "messages".
-                let encontrou = false;
                 messages.forEach((message) => {
+                
                     if( message.content.trim().startsWith("https://www.twitch.tv/")){
+                        if( !criouTopico){
+                            criouTopico= true;
+                            createThreads(channel, message);
+                        }
+
                         const url = message.content.trim().split(" ")[0].trim();
                         request.get({
                             url: url,
@@ -33,11 +40,7 @@ function run( bot, msg ){
                             if (!error && response.statusCode == 200) {
                                 const data = Buffer.from(body).toString('utf8');
                                 if( data.toString().includes(`"isLiveBroadcast":true`)){
-                                    if( ! encontrou ){
-                                        createThreads(channel, message);
-                                        encontrou = true;
-                                    }
-                                    console.log(url);
+                                    sendMessageThread(channel, message );
                                 }
                             }
                         });
@@ -54,7 +57,8 @@ function run( bot, msg ){
 
 function canHandle( bot, msg ){
     return ( msg.channel.id == '813916705222295582' && msg.content.trim().startsWith("https://www.twitch.tv/"))
-            || msg.content.trim().startsWith("/run");
+    
+            || ( msg.channel.id == "956197177623969832" && msg.content.trim().startsWith("/ttlive") );
 }
 
 module.exports =  {
