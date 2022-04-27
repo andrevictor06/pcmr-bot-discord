@@ -10,6 +10,7 @@ const MusicPlay         = require("./function/music_play");
 const VideoPlay         = require("./function/video_play");
 const Avatar            = require("./function/avatar");
 const Placa             = require("./function/placa");
+const Copy              = require("./function/copy");
 
 const functions = [
   UploadGoogleDrive,
@@ -19,7 +20,8 @@ const functions = [
   MusicPlay,
   VideoPlay,
   Avatar,
-  Placa
+  Placa,
+  Copy
 ]
 
 
