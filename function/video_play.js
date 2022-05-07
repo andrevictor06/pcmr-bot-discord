@@ -64,13 +64,13 @@ async function execute(message) {
 
 
 function run(bot, msg) {
-    if (msg.content.startsWith("/video ") || msg.content.startsWith("*video ")) {
+    if (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "video ")) {
         execute(msg)
     }
 }
 
 function canHandle(bot, msg) {
-    return (msg.content.startsWith("/video ") || msg.content.startsWith("*video "));
+    return (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION +  "video "));
 }
 
 module.exports = {
