@@ -80,17 +80,17 @@ function stop(guild, serverQueue) {
 function run(bot, msg) {
     const serverQueue = queue.get(msg.guild.id);
 
-    if (msg.content.startsWith("/play ") || msg.content.startsWith("*play ")) {
+    if (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "play ")) {
         execute(msg, serverQueue)
     }
 
-    if (msg.content.startsWith("/stop")) {
+    if (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "stop")) {
         stop(msg.guild, serverQueue);
     }
 }
 
 function canHandle(bot, msg) {
-    return (msg.content.startsWith("/play ") || msg.content.startsWith("*play ") || msg.content.startsWith("/stop"));
+    return (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "play ") || msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "stop"));
 }
 
 module.exports = {
