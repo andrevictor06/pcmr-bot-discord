@@ -15,38 +15,43 @@ async function createThreads(channel, message){
 async function sendMessageThread(channel, message){
     const thread = channel.threads.cache.find(x => x.name === 'quem-esta-online');
     if(thread)
-        thread.send({ content: message.content})
+        thread.send({ content: (message.content) ? message.content : message})
 }
 
 function run( bot, msg ){
     let criouTopico = false;
     if(msg.content.trim().startsWith("/ttlive")){
+        const hashLive = {};
         bot.channels.fetch('956197177623969832').then( channel => {
 
             channel.messages.fetch({limit: 100}).then(messages => {
                 //Iterate through the messages here with the variable "messages".
                 messages.forEach((message) => {
-                
+                    
                     if( message.content.trim().startsWith("https://www.twitch.tv/")){
-                        if( !criouTopico){
-                            criouTopico= true;
-                            createThreads(channel, message);
-                        }
-
-                        setTimeout(() => {
-                            const url = message.content.trim().split(" ")[0].trim();
-                            request.get({
-                                url: url,
-                                method: 'GET'
-                            }, function( error, response, body){
-                                if (!error && response.statusCode == 200) {
-                                    const data = Buffer.from(body).toString('utf8');
-                                    if( data.toString().includes(`"isLiveBroadcast":true`)){
-                                        sendMessageThread(channel, message );
+                        const url = message.content.trim().split(" ")[0].trim();
+                        if( ! hashLive[url]){
+                            if( !criouTopico){
+                                criouTopico= true;
+                                createThreads(channel, message);
+                            }
+    
+                            setTimeout(() => {
+                                
+                                request.get({
+                                    url: url,
+                                    method: 'GET'
+                                }, function( error, response, body){
+                                    if (!error && response.statusCode == 200) {
+                                        const data = Buffer.from(body).toString('utf8');
+                                        if( data.toString().includes(`"isLiveBroadcast":true`)){
+                                            hashLive[url] = url;
+                                            sendMessageThread(channel, url );
+                                        }
                                     }
-                                }
-                            });    
-                        }, 3000);
+                                });    
+                            }, 3000);
+                        }
                     }                        
                 });
               });
