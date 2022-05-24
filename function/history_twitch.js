@@ -3,7 +3,7 @@ const request = require('request').defaults({ encoding: null });
 async function createThreads(channel, message){
     const cache = channel.threads.cache.find(x => x.name === 'quem-esta-online');
     if( cache)
-        cache.delete();
+        await cache.delete();
 
     return await channel.threads.create({
         name: 'quem-esta-online',
