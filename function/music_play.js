@@ -1,5 +1,8 @@
+const { joinVoiceChannel, AudioPlayerStatus, createAudioResource, StreamType, createAudioPlayer } = require('@discordjs/voice');
+
 const ytdl = require("ytdl-core");
 const queue = new Map();
+
 
 async function execute(message, serverQueue) {
     const args = message.content.split(" ");
@@ -34,10 +37,19 @@ async function execute(message, serverQueue) {
         queueContruct.songs.push(song);
 
         try {
-            var connection = await voiceChannel.join();
-            connection.voice.setSelfDeaf(true);
+            const player = createAudioPlayer();
+
+            var connection = joinVoiceChannel({
+                channelId: voiceChannel.id,
+                guildId: voiceChannel.guild.id,
+                adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+            });
+
+            connection.subscribe(player);
+            //connection.voice.setSelfDeaf(true);
             queueContruct.connection = connection;
-            play(message.guild, queueContruct.songs[0]);
+            
+            play(message.guild, queueContruct.songs[0], player, message);
         } catch (err) {+
             console.log(err);
             queue.delete(message.guild.id);
@@ -49,27 +61,49 @@ async function execute(message, serverQueue) {
     }
 }
 
-function play(guild, song) {
+function play(guild, song, player, message) {
+    
     const serverQueue = queue.get(guild.id);
     if (!song) {
-        stop(guild, serverQueue);
+        stop(guild, serverQueue, message);
         return;
     }
+    
+    const stream = ytdl(song.url, { filter: 'audioonly' });
+    
+    const resource = createAudioResource(stream, { inputType: StreamType.Arbitrary });
+    player.play(resource);    
 
+    player.on(AudioPlayerStatus.Idle, () => {
+        serverQueue.songs.shift();
+        play(guild, serverQueue.songs[0], player, message);
+    }).on("error", error => console.error(error))
+    .on(AudioPlayerStatus.Paused, () =>{
+        serverQueue.textChannel.send(`Parado **${song.title}**`);
+    });
+
+    /*
+
+    console.log("serverQueue ", serverQueue);
     const dispatcher = serverQueue.connection
-        .play(ytdl(song.url))
+        .play(ytdl(song.url, { filter: 'audioonly' }))
         .on("finish", () => {
             serverQueue.songs.shift();
             play(guild, serverQueue.songs[0]);
         })
-        .on("error", error => console.error(error));
-    dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
+        .on("error", error => console.error(error));*/
+    //dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
     serverQueue.textChannel.send(`Start playing: **${song.title}**`);
 }
 
-function stop(guild, serverQueue) {
+function stop(guild, serverQueue, message) {
     if (serverQueue && serverQueue.voiceChannel) {
-        serverQueue.voiceChannel.leave();
+        const connection = joinVoiceChannel({
+            channelId: message.member.voice.channel.id,
+            guildId: message.member.guild.id,
+            adapterCreator: message.channel.guild.voiceAdapterCreator
+        })
+        connection.destroy()
     }
     if (guild) {
         queue.delete(guild.id);
@@ -85,7 +119,7 @@ function run(bot, msg) {
     }
 
     if (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "stop")) {
-        stop(msg.guild, serverQueue);
+        stop(msg.guild, serverQueue, msg);
     }
 }
 

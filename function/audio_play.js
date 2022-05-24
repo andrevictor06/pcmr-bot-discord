@@ -37,7 +37,7 @@ async function execute(message, serverQueue) {
             var connection = await voiceChannel.join();
             connection.voice.setSelfDeaf(true);
             queueContruct.connection = connection;
-            play(message.guild, queueContruct.songs[0]);
+            play(message.guild, queueContruct.songs[0], message);
         } catch (err) {+
             console.log(err);
             queue.delete(message.guild.id);
@@ -49,10 +49,10 @@ async function execute(message, serverQueue) {
     }
 }
 
-function play(guild, song) {
+function play(guild, song, message) {
     const serverQueue = queue.get(guild.id);
     if (!song) {
-        stop(guild, serverQueue);
+        stop(guild, serverQueue, message);
         return;
     }
 
@@ -67,9 +67,15 @@ function play(guild, song) {
     serverQueue.textChannel.send(`Start playing: **${song.title}**`);
 }
 
-function stop(guild, serverQueue) {
+function stop(guild, serverQueue, message) {
     if (serverQueue && serverQueue.voiceChannel) {
-        serverQueue.voiceChannel.leave();
+        const connection = joinVoiceChannel({
+            channelId: message.member.voice.channel.id,
+            guildId: message.member.guild.id,
+            adapterCreator: message.channel.guild.voiceAdapterCreator
+        })
+        connection.destroy();
+        //serverQueue.voiceChannel.leave();
     }
     if (guild) {
         queue.delete(guild.id);
@@ -85,7 +91,7 @@ function run(bot, msg) {
     }
 
     if (msg.content.startsWith("/videostop")) {
-        stop(msg.guild, serverQueue);
+        stop(msg.guild, serverQueue, msg);
     }
 }
 
