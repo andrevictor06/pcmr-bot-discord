@@ -1,5 +1,8 @@
+const { joinVoiceChannel, AudioPlayerStatus, createAudioResource, StreamType, createAudioPlayer } = require('@discordjs/voice');
+const { join } = require('node:path');
 const ytdl = require("ytdl-core");
 const queue = new Map();
+
 
 async function execute(message, serverQueue) {
     const args = message.content.split(" ");
@@ -34,10 +37,19 @@ async function execute(message, serverQueue) {
         queueContruct.songs.push(song);
 
         try {
-            var connection = await voiceChannel.join();
-            connection.voice.setSelfDeaf(true);
+            const player = createAudioPlayer();
+
+            var connection = joinVoiceChannel({
+                channelId: voiceChannel.id,
+                guildId: voiceChannel.guild.id,
+                adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+            });
+
+            connection.subscribe(player);
+            //connection.voice.setSelfDeaf(true);
             queueContruct.connection = connection;
-            play(message.guild, queueContruct.songs[0], message);
+            
+            play(message.guild, queueContruct.songs[0], player, message);
         } catch (err) {+
             console.log(err);
             queue.delete(message.guild.id);
@@ -49,21 +61,39 @@ async function execute(message, serverQueue) {
     }
 }
 
-function play(guild, song, message) {
+function play(guild, song, player, message) {
+    
     const serverQueue = queue.get(guild.id);
     if (!song) {
         stop(guild, serverQueue, message);
         return;
     }
+    
+    const stream = ytdl(song.url, { filter: 'audioonly' });
+    
+    console.log(join(__dirname, '/audio/tema-de-abertura-do-esporte-espetacular.mp3'));
+    const resource = createAudioResource(join(__dirname, '/audio/tema-de-abertura-do-esporte-espetacular.mp3'));
+    player.play(resource);    
 
+    player.on(AudioPlayerStatus.Idle, () => {
+        serverQueue.songs.shift();
+        play(guild, serverQueue.songs[0], player, message);
+    }).on("error", error => console.error(error))
+    .on(AudioPlayerStatus.Paused, () =>{
+        serverQueue.textChannel.send(`Parado **${song.title}**`);
+    });
+
+    /*
+
+    console.log("serverQueue ", serverQueue);
     const dispatcher = serverQueue.connection
-        .play(ytdl(song.url))
+        .play(ytdl(song.url, { filter: 'audioonly' }))
         .on("finish", () => {
             serverQueue.songs.shift();
             play(guild, serverQueue.songs[0]);
         })
-        .on("error", error => console.error(error));
-    dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
+        .on("error", error => console.error(error));*/
+    //dispatcher.setVolumeLogarithmic(serverQueue.volume / 5);
     serverQueue.textChannel.send(`Start playing: **${song.title}**`);
 }
 
@@ -74,8 +104,7 @@ function stop(guild, serverQueue, message) {
             guildId: message.member.guild.id,
             adapterCreator: message.channel.guild.voiceAdapterCreator
         })
-        connection.destroy();
-        //serverQueue.voiceChannel.leave();
+        connection.destroy()
     }
     if (guild) {
         queue.delete(guild.id);
@@ -86,17 +115,17 @@ function stop(guild, serverQueue, message) {
 function run(bot, msg) {
     const serverQueue = queue.get(msg.guild.id);
 
-    if (msg.content.startsWith("/video ") || msg.content.startsWith("*video ")) {
+    if (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "audio ")) {
         execute(msg, serverQueue)
     }
 
-    if (msg.content.startsWith("/videostop")) {
+    if (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "audio")) {
         stop(msg.guild, serverQueue, msg);
     }
 }
 
 function canHandle(bot, msg) {
-    return (msg.content.startsWith("/video ") || msg.content.startsWith("*video ") || msg.content.startsWith("/videostop"));
+    return (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "audio ") || msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "audio"));
 }
 
 module.exports = {
