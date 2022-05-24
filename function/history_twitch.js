@@ -31,6 +31,8 @@ function run( bot, msg ){
                     if( message.content.trim().startsWith("https://www.twitch.tv/")){
                         const url = message.content.trim().split(" ")[0].trim();
                         if( ! hashLive[url]){
+                            hashLive[url] = url;
+                            
                             if( !criouTopico){
                                 criouTopico= true;
                                 createThreads(channel, message);
@@ -45,7 +47,7 @@ function run( bot, msg ){
                                     if (!error && response.statusCode == 200) {
                                         const data = Buffer.from(body).toString('utf8');
                                         if( data.toString().includes(`"isLiveBroadcast":true`)){
-                                            hashLive[url] = url;
+                                            
                                             sendMessageThread(channel, url );
                                         }
                                     }
