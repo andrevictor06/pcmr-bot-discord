@@ -5,6 +5,7 @@ const bot = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MES
 const UploadGoogleDrive = require("./function/upload_googledrive");
 const HistoryTwitch     = require("./function/history_twitch");
 const Processador       = require("./function/processador");
+const LetraMusica       = require("./function/letra_musica");
 const ComprarPC         = require("./function/comprar_pc");
 const MusicPlay         = require("./function/music_play");
 const VideoPlay         = require("./function/video_play");
@@ -23,7 +24,8 @@ const functions = [
   AudioPlay,
   Avatar,
   Placa,
-  Copy
+  Copy,
+  LetraMusica
 ]
 
 
