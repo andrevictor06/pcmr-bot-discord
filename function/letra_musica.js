@@ -2,7 +2,6 @@ const request = require('request').defaults({ encoding: null });
 
 function run( bot, msg ){
 
-    console.log( msg.content);
     const params = msg.content.split("--")
     params.shift();
 
@@ -21,13 +20,11 @@ function run( bot, msg ){
             apikey = element.substring(7)
         }
     });
-    console.log( `https://api.vagalume.com.br/search.php?art=${artist}&mus=${song}&apikey=${apikey}`);
     request.get(`https://api.vagalume.com.br/search.php?art=${artist}&mus=${song}&apikey=${apikey}`, ( error, response, body)=>{
         if( ! error && response.statusCode === 200){
             let responseText = JSON.parse(Buffer.from(body).toString('utf8'));
             
             if( responseText && responseText.mus){
-                console.log(responseText);
             
                 let template_musica= "```" + responseText.mus[0].text + "```"
                 
@@ -39,26 +36,10 @@ function run( bot, msg ){
 
                 ${ template_musica}
                 `
-
                 return msg.reply(template);
             }
         }
     });
-
-/*    const withoutPrefix = msg.content.slice("/avatar".length);
-	const split         = withoutPrefix.split(/ +/);
-	const args = split.slice(1);
-
-    if (args[0]) {
-        const user = getUserFromMention(bot, args[0]);
-        if (!user) {
-          return msg.reply('Please use a proper mention if you want to see someone elses avatar.');
-        }
-        msg.delete();
-        return msg.channel.send(`${user.username}'s avatar: ${user.displayAvatarURL({ dynamic: true })}`);
-    }
-    msg.delete();
-    return msg.channel.send(`${msg.author.username}, your avatar: ${msg.author.displayAvatarURL({ dynamic: true })}`);*/
 }
 
 function canHandle( bot, msg ){
