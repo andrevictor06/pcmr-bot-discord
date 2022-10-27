@@ -21,9 +21,9 @@ function run( bot, msg ){
         }
     });
     request.get(`https://api.vagalume.com.br/search.php?art=${artist}&mus=${song}&apikey=${apikey}`, ( error, response, body)=>{
+        
         if( ! error && response.statusCode === 200){
             let responseText = JSON.parse(Buffer.from(body).toString('utf8'));
-            
             if( responseText && responseText.mus){
             
                 let template_musica= "```" + responseText.mus[0].text + "```"
@@ -37,6 +37,8 @@ function run( bot, msg ){
                 ${ template_musica}
                 `
                 return msg.reply(template);
+            }else{
+                return msg.reply(responseText.type);
             }
         }
     });

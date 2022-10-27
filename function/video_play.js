@@ -7,7 +7,7 @@ async function createWatch(message) {
     const args = message.content.split(" ");
     if( args [1] ){
         request.post({
-            url:"https://w2g.tv/rooms/create.json",
+            url:"https://api.w2g.tv/rooms/create.json",
             method: 'POST',
             headers: {
                 'Accept': 'application/json',
@@ -23,9 +23,11 @@ async function createWatch(message) {
             if (!error && response.statusCode == 200) {
                 dowloaded = JSON.parse(Buffer.from(body).toString('utf8'));
                 message.channel.send( "Sala no Watch2Gether criada com sucesso!! Para participar acesse: https://w2g.tv/rooms/" + dowloaded.streamkey);
+            }else{
+                message.channel.send( "Erro ao criar a sala!" );
             }
         });
-        
+            
     }
 }
 
