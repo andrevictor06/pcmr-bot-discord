@@ -1,6 +1,7 @@
 require('dotenv/config');
 const { Client, Intents } = require("discord.js");
-const bot = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES] });
+const bot = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_BANS,
+Intents.FLAGS.GUILD_PRESENCES, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_SCHEDULED_EVENTS, Intents.FLAGS.DIRECT_MESSAGES, , Intents.FLAGS.GUILD_WEBHOOKS] });
 
 const UploadGoogleDrive = require("./function/upload_googledrive");
 const HistoryTwitch     = require("./function/history_twitch");
@@ -13,6 +14,7 @@ const AudioPlay         = require("./function/audio_play");
 const Avatar            = require("./function/avatar");
 const Placa             = require("./function/placa");
 const Copy              = require("./function/copy");
+const MusicBan              = require("./function/music_ban");
 
 const functions = [
   UploadGoogleDrive,
@@ -25,7 +27,8 @@ const functions = [
   Avatar,
   Placa,
   Copy,
-  LetraMusica
+  LetraMusica,
+  MusicBan
 ]
 
 
