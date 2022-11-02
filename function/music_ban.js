@@ -1,5 +1,7 @@
 const { joinVoiceChannel, getVoiceConnection} = require("@discordjs/voice")
 const Discord = require("discord.js");
+const ytdl = require("ytdl-core");
+
 let revorve = [false, false, false, false, false, false]
 const qtd = 6
 
@@ -29,31 +31,49 @@ async function obrigadoamatar(bot, msg) {
         if(msg.mentions.users.size > 0 ){
             for (let member of msg.mentions.users) {
                 let member_obj = await msg.guild.members.cache.get(member[1].id)
-                member_obj.timeout(60000, "CORNO")
+                member_obj.timeout(10000, "CORNO")
             }
         }else{
-            msg.member.timeout(60000, "CORNO")   
+            msg.member.timeout(10000, "CORNO")   
         }
-    } catch (error) {
-        
-    }
+        if(msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "500conto")){
+            msg.channel.send(process.env.CARACTER_DEFAULT_FUNCTION + "stop")
+        }
+        if(msg.content.startsWith("+play")){
+            msg.channel.send("+stop")
+        }
+        if(msg.content.startsWith("-play")){
+            msg.channel.send("-stop")
+        }
+    } catch (error) { }
 
     msg.channel.send("Foi de arrasta pra cima")
 }
-
+function roletaRussa(bot, msg){
+    resetarRevorve();
+    if(roda()){    
+        obrigadoamatar(bot, msg);
+    }else{
+        msg.channel.send("Cu virado pra lua")
+    }
+}
 async function run(bot, msg) {
     try {
-        resetarRevorve();
-        if(roda()){    
-            obrigadoamatar(bot, msg);
-        }else{
-            msg.channel.send("Cu virado pra lua")
+        const args = msg.content.split(" ");
+        if( args.length > 1){
+            const songInfo = await ytdl.getInfo(args[1]);
+            if( songInfo.videoDetails.title.includes("Manoel Gomes") ){
+                roletaRussa(bot, msg)
+            }
         }
-    } catch (error) { }
+    } catch (error) { 
+        console.log( error);
+    }
 }
 
 function canHandle(bot, msg) {
-    return (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "500conto"));
+    return (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "500conto")
+    || msg.content.startsWith("+play ") || msg.content.startsWith("-play ") );
 }
 
 module.exports = {

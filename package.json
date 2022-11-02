@@ -27,6 +27,6 @@
     "node-fetch": "^3.2.3",
     "request": "^2.88.2",
     "tweetnacl": "^1.0.3",
-    "ytdl-core": "^4.11.0"
+    "ytdl-core": "^4.11.2"
   }
 }
