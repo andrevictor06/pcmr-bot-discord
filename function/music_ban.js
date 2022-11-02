@@ -44,8 +44,6 @@ async function obrigadoamatar(bot, msg) {
 }
 
 async function run(bot, msg) {
-    
-    obrigadoamatar(bot, msg);
     try {
         resetarRevorve();
         if(roda()){    
