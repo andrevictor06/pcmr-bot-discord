@@ -28,7 +28,7 @@ async function obrigadoamatar(bot, msg) {
     try {
         if(msg.mentions.users.size > 0 ){
             for (let member of msg.mentions.users) {
-                let member_obj = await msg.guild.members.cache.get(member)
+                let member_obj = await msg.guild.members.cache.get(member[1].id)
                 member_obj.timeout(60000, "CORNO")
             }
         }else{
@@ -37,8 +37,6 @@ async function obrigadoamatar(bot, msg) {
     } catch (error) {
         
     }
-
-    /**/
 
     msg.channel.send("Foi de arrasta pra cima")
 }
