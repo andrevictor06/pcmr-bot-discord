@@ -26,13 +26,13 @@ function resetarRevorve(){
 
 async function obrigadoamatar(bot, msg) {
     try {
-        if(msg.mentions.users ){
+        if(msg.mentions.users.size > 0 ){
             for (let member of msg.mentions.users) {
                 let member_obj = await msg.guild.members.cache.get(member)
-                member_obj.timeout(10000, "CORNO")
+                member_obj.timeout(60000, "CORNO")
             }
         }else{
-            msg.member.timeout(1000, "CORNO")   
+            msg.member.timeout(60000, "CORNO")   
         }
     } catch (error) {
         
@@ -45,6 +45,7 @@ async function obrigadoamatar(bot, msg) {
 
 async function run(bot, msg) {
     
+    obrigadoamatar(bot, msg);
     try {
         resetarRevorve();
         if(roda()){    
