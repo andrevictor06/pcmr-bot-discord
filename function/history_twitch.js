@@ -22,7 +22,7 @@ function run( bot, msg ){
     let criouTopico = false;
     if(msg.content.trim().startsWith("/ttlive")){
         const hashLive = {};
-        bot.channels.fetch('956197177623969832').then( channel => {
+        bot.channels.fetch(process.env.ID_CHANNEL_ATWITCH).then( channel => {
 
             channel.messages.fetch({limit: 100}).then(messages => {
                 //Iterate through the messages here with the variable "messages".
@@ -59,16 +59,16 @@ function run( bot, msg ){
               });
         });
     }else{
-        bot.channels.fetch('956197177623969832').then( channel => { 
+        bot.channels.fetch(process.env.ID_CHANNEL_ATWITCH).then( channel => { 
             channel.send(msg.content);
         });
     }
 }
 
 function canHandle( bot, msg ){
-    return ( msg.channel.id == '813916705222295582' && msg.content.trim().startsWith("https://www.twitch.tv/"))
+    return ( msg.channel.id == process.env.ID_CHANNEL_UPGOOGLE && msg.content.trim().startsWith("https://www.twitch.tv/"))
     
-            || ( msg.channel.id == "956197177623969832" && msg.content.trim().startsWith("/ttlive") );
+            || ( msg.channel.id == process.env.ID_CHANNEL_ATWITCH && msg.content.trim().startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "ttlive") );
 }
 
 module.exports =  {

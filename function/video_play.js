@@ -1,7 +1,7 @@
 const ytdl = require("ytdl-core");
 const request = require('request').defaults({ encoding: null });
 
-const LAST_WATCH = "seuxv2botpwmbrp90e";
+const LAST_WgitATCH = "seuxv2botpwmbrp90e";
 
 async function createWatch(message) {
     const args = message.content.split(" ");
@@ -22,6 +22,7 @@ async function createWatch(message) {
         }, ( error, response, body)=>{
             if (!error && response.statusCode == 200) {
                 dowloaded = JSON.parse(Buffer.from(body).toString('utf8'));
+                console.log(dowloaded, " dowloaded");
                 message.channel.send( "Sala no Watch2Gether criada com sucesso!! Para participar acesse: https://w2g.tv/rooms/" + dowloaded.streamkey);
             }else{
                 message.channel.send( "Erro ao criar a sala!" );
@@ -66,9 +67,7 @@ async function execute(message) {
 
 
 function run(bot, msg) {
-    if (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "video ")) {
-        execute(msg)
-    }
+    execute(msg)
 }
 
 function canHandle(bot, msg) {
