@@ -1,3 +1,4 @@
+const fs = require('fs');
 require('dotenv/config');
 const { Client, Intents } = require("discord.js");
 const bot = new Client({ intents: [Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_BANS,
@@ -14,7 +15,7 @@ const AudioPlay         = require("./function/audio_play");
 const Avatar            = require("./function/avatar");
 const Placa             = require("./function/placa");
 const Copy              = require("./function/copy");
-const MusicBan              = require("./function/music_ban");
+const MusicBan          = require("./function/music_ban");
 
 const functions = [
   UploadGoogleDrive,
@@ -40,3 +41,10 @@ bot.on("message", msg =>{
 });
 
 bot.login(process.env.TOKEN_DISCORD);//process.env.TOKEN_DISCORD API
+
+/*------- INICIANDO OS JOBS------------------*/
+let jobs = fs.readdirSync( "./schedule")
+jobs.forEach( (job) => {
+  const JOB = require("./schedule/" + job);
+  JOB.initJob(bot)
+});
