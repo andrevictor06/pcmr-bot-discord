@@ -20,7 +20,7 @@ async function sendMessageThread(channel, message){
 
 function run( bot, msg ){
     let criouTopico = false;
-    if(msg.content.trim().startsWith("/ttlive")){
+    if(msg.content.trim().startsWith(process.env.ID_CHANNEL_ATWITCH + "ttlive")){
         const hashLive = {};
         bot.channels.fetch(process.env.ID_CHANNEL_ATWITCH).then( channel => {
 
@@ -57,10 +57,6 @@ function run( bot, msg ){
                     }                        
                 });
               });
-        });
-    }else{
-        bot.channels.fetch(process.env.ID_CHANNEL_ATWITCH).then( channel => { 
-            channel.send(msg.content);
         });
     }
 }
