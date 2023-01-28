@@ -5,7 +5,7 @@ function initJob(bot){
 }
 
 function getSchedule(){
-    return "0 50 23 * * 0";
+    return process.env.SCHEDULE_DOMINGAO_NOITE; //"0 50 23 * * 0";
 }
 
 function run(bot){

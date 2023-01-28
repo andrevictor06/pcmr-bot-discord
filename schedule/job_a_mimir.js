@@ -5,7 +5,7 @@ function initJob(bot){
 }
 
 function getSchedule(){
-    return "0 59 23 * * *";
+    return process.env.SCHEDULE_A_MIMIR; //"0 59 23 * * *";
 }
 
 function run(bot){
