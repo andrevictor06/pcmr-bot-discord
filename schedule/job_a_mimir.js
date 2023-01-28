@@ -5,7 +5,7 @@ function initJob(bot){
 }
 
 function getSchedule(){
-    return "* 59 23 * * *";
+    return "0 59 23 * * *";
 }
 
 function run(bot){
