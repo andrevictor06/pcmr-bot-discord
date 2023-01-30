@@ -159,7 +159,12 @@ async function playSong(songURL) {
             .sort((format1, format2) => format1.audioBitrate - format2.audioBitrate)
             .find(format => format.audioBitrate >= 60 && format.audioBitrate <= 128)
 
-        const stream = ytdl(song.videoDetails.video_url, { highWaterMark: 104857600, dlChunkSize: 3145728, format: lowerBitrateFormat })
+        console.log(lowerBitrateFormat)
+        const stream = ytdl(song.videoDetails.video_url, {
+            highWaterMark: Number(lowerBitrateFormat.contentLength),
+            dlChunkSize: 3145728,
+            format: lowerBitrateFormat
+        })
         const resource = createAudioResource(stream)
         serverQueue.player.play(resource)
         serverQueue.currentSong = song
