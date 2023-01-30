@@ -43,7 +43,7 @@ const commands = {
         fn: currentSong,
         help: {
             name: Utils.command("current"),
-            value: "Mostra o nome da música atual",
+            value: "Mostra a música que está tocando",
             inline: false
         }
     },
@@ -51,7 +51,7 @@ const commands = {
         fn: nextSong,
         help: {
             name: Utils.command("next"),
-            value: "Mostra o nome da próxima música",
+            value: "Mostra a próxima música na fila",
             inline: false
         }
     }
@@ -224,14 +224,18 @@ function queue() {
 
 function currentSong() {
     if (serverQueue) {
-        serverQueue.textChannel.send(`Current song: **${serverQueue.currentSong.videoDetails.title}**`)
+        serverQueue.textChannel.send(`Current song: ${serverQueue.currentSong.videoDetails.video_url}`)
     }
 }
 
 async function nextSong() {
     if (serverQueue) {
-        const basicInfo = await ytdl.getBasicInfo(serverQueue.songs[0])
-        serverQueue.textChannel.send(`Next song: **${basicInfo.videoDetails.title}**`)
+        if (serverQueue.songs.length > 0) {
+            const basicInfo = await ytdl.getBasicInfo(serverQueue.songs[0])
+            serverQueue.textChannel.send(`Next song: ${basicInfo.videoDetails.video_url}`)
+        } else {
+            serverQueue.textChannel.send("Queue is **empty**")
+        }
     }
 }
 
