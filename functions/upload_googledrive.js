@@ -51,6 +51,14 @@ function canHandle(bot, msg) {
     return msg.content.startsWith(Utils.command("subreddit"))
 }
 
+function helpComand(bot, msg){
+    return {
+        name: Utils.command("subreddit") + " [name-subreddit]",
+        value: "Meia noite te conto",
+        inline: false
+    }
+}
+
 module.exports = {
-    run, canHandle
+    run, canHandle, helpComand
 }

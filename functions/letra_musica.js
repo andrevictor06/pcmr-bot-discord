@@ -49,6 +49,15 @@ function canHandle(bot, msg) {
     return msg.content.startsWith(Utils.command("letra "))
 }
 
+function helpComand(bot, msg){
+    return {
+        name: Utils.command("letra -mus=[nome-musica] -art=[nome-artista]"),
+        value: "Consulta a letra da música informada",
+        url:"https://www.vagalume.com.br/",
+        inline: false
+    }
+}
+
 module.exports = {
-    run, canHandle
+    run, canHandle, helpComand
 }

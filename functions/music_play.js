@@ -151,6 +151,26 @@ function canHandle(bot, msg) {
     return Utils.startWithCommand(msg, "play") || Utils.startWithCommand(msg, "stop") || Utils.startWithCommand(msg, "skip")
 }
 
+function helpComand(bot, msg){
+    return [
+        {
+            name: Utils.command("play") + " [url-musica-yt]",
+            value: "Inicia ou coloca em fila a musica informada",
+            inline: false
+        },
+        {
+            name: Utils.command("stop"),
+            value: "Para a execução de musica",
+            inline: false
+        },
+        {
+            name: Utils.command("skip"),
+            value: "Pula para a proxima musica",
+            inline: false
+        }
+    ]
+}
+
 module.exports = {
-    run, canHandle
+    run, canHandle, helpComand
 }

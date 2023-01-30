@@ -52,7 +52,6 @@ async function execute(message, serverQueue) {
 
             play(message.guild, queueContruct.songs[0], player, message)
         } catch (err) {
-            +
             console.log(err)
             queue.delete(message.guild.id)
             return message.channel.send(err)
@@ -130,6 +129,14 @@ function canHandle(bot, msg) {
     return msg.content.startsWith(Utils.command("audio "))
 }
 
+function helpComand(bot, msg){
+    return {
+        name: Utils.command("audio") + " [name-audio]",
+        value: "Inicia um audio",
+        inline: false
+    }
+}
+
 module.exports = {
-    run, canHandle
+    run, canHandle, helpComand
 }

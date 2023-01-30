@@ -28,6 +28,14 @@ function canHandle(bot, msg) {
     return msg.content.startsWith(Utils.command("comprapc"))
 }
 
+function helpComand(bot, msg){
+    return {
+        name: Utils.command("comprapc") + " [@mention]",
+        value: "Envia uma mensagem saudável para o membro, avisando de atualizar o PC Master Race",
+        inline: false
+    }
+}
+
 module.exports = {
-    run, canHandle
+    run, canHandle, helpComand
 }
