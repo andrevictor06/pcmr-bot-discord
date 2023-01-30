@@ -1,16 +1,16 @@
 const schedule = require('node-schedule');
 
 function initJob(bot){
-    return schedule.scheduleJob(getSchedule(), ()=> run(bot));
+    return schedule.scheduleJob(getSchedule(), ()=> run(bot))
 }
 
 function getSchedule(){
-    return process.env.SCHEDULE_A_MIMIR; //"0 59 23 * * *";
+    return process.env.SCHEDULE_A_MIMIR
 }
 
 function run(bot){
     bot.channels.fetch(process.env.ID_CHANNEL_UPGOOGLE).then( channel => { 
-        channel.send("<@&1007421639014756372> https://media.tenor.co/0LT-R-NaHuwAAAAC/monkey-sleep.gif");
+        channel.send({content: "<@&1007421639014756372>", files: ["./images/monkey-sleep.gif"]})
     });
 }
 
