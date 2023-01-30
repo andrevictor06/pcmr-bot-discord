@@ -1,16 +1,16 @@
-const fs = require('fs');
+const fs = require('fs')
 const Utils = require("../utils/Utils")
 
 function run(bot, msg) {
-    let comands = "";
-    let fields = [];
-    fs.readdirSync("./functions") .forEach(fnFile => {
+    let comands = ""
+    let fields = []
+    fs.readdirSync("./functions").forEach(fnFile => {
         try {
             const fn = require("../functions/" + fnFile)
             fields.push(fn.helpComand(bot, msg))
-        } catch (error) { 
-            console.log( fnFile);
-        } 
+        } catch (error) {
+            console.log(fnFile)
+        }
     })
 
     const exampleEmbed = {
@@ -22,17 +22,17 @@ function run(bot, msg) {
         description: 'Lista dos comandos disponíveis neste servidor Discord',
         fields: fields,
         timestamp: new Date().toISOString()
-    };
-    
-    msg.reply({embeds: [exampleEmbed]})
+    }
+
+    msg.reply({ embeds: [exampleEmbed] })
 }
 
 function canHandle(bot, msg) {
-    return msg.content.startsWith(Utils.command("help"))
+    return Utils.startWithCommand(msg, "help")
 }
 
 
-function helpComand(bot, msg){
+function helpComand(bot, msg) {
     return {
         name: Utils.command("help"),
         value: "Lista os comandos disponíveis neste servidor Discord",
