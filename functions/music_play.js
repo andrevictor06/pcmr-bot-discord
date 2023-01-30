@@ -73,16 +73,14 @@ async function play(message) {
             return message.channel.send("Music not found!")
         }
 
-        if (serverQueue) {
-            addToQueue(info)
-        } else {
-            let song = info
+        if (!serverQueue) {
             createServerQueue(message, voiceChannel)
-            if (Array.isArray(info)) {
-                song = info.shift()
-                addToQueue(info, false)
-            }
-            playSong(song)
+        }
+
+        const isIdle = serverQueue.player.state.status == AudioPlayerStatus.Idle
+        addToQueue(info, message, isIdle)
+        if (isIdle) {
+            next()
         }
     } catch (err) {
         console.log(err)
@@ -112,22 +110,14 @@ async function getURL(message) {
     return null
 }
 
-async function addToQueue(songURL, playIfIdle = true) {
+async function addToQueue(songURL, message, isIdle) {
     if (Array.isArray(songURL)) {
         serverQueue.songs = serverQueue.songs.concat(songURL)
+        message.channel.send(`Added ${songURL.length} songs to the queue!`)
     } else {
         serverQueue.songs.push(songURL)
-    }
-
-    if (serverQueue.player.state.status == AudioPlayerStatus.Idle && playIfIdle) {
-        next()
-    } else {
-        if (Array.isArray(songURL)) {
-            serverQueue.textChannel.send(`Added ${songURL.length} songs to the queue!`)
-        } else {
-            const basicInfo = await ytdl.getBasicInfo(songURL)
-            serverQueue.textChannel.send(`${basicInfo.videoDetails.title} has been added to the queue!`)
-        }
+        const basicInfo = await ytdl.getBasicInfo(songURL)
+        if (!isIdle) message.channel.send(`${basicInfo.videoDetails.title} has been added to the queue!`)
     }
 }
 
@@ -169,7 +159,12 @@ async function playSong(songURL) {
             .sort((format1, format2) => format1.audioBitrate - format2.audioBitrate)
             .find(format => format.audioBitrate >= 60 && format.audioBitrate <= 128)
 
-        const stream = ytdl(song.videoDetails.video_url, { highWaterMark: 104857600, dlChunkSize: 3145728, format: lowerBitrateFormat })
+        console.log(lowerBitrateFormat)
+        const stream = ytdl(song.videoDetails.video_url, {
+            highWaterMark: Number(lowerBitrateFormat.contentLength),
+            dlChunkSize: 3145728,
+            format: lowerBitrateFormat
+        })
         const resource = createAudioResource(stream)
         serverQueue.player.play(resource)
         serverQueue.currentSong = song
@@ -216,25 +211,25 @@ function next() {
     playSong(serverQueue.songs.shift())
 }
 
-function queue() {
+function queue(message) {
     if (serverQueue && serverQueue.songs.length > 0) {
-        serverQueue.textChannel.send(`There is **${serverQueue.songs.length}** songs in the queue!`)
+        message.channel.send(`There is **${serverQueue.songs.length}** songs in the queue!`)
     }
 }
 
-function currentSong() {
+function currentSong(message) {
     if (serverQueue) {
-        serverQueue.textChannel.send(`Current song: ${serverQueue.currentSong.videoDetails.video_url}`)
+        message.channel.send(`Current song: ${serverQueue.currentSong.videoDetails.video_url}`)
     }
 }
 
-async function nextSong() {
+async function nextSong(message) {
     if (serverQueue) {
         if (serverQueue.songs.length > 0) {
             const basicInfo = await ytdl.getBasicInfo(serverQueue.songs[0])
-            serverQueue.textChannel.send(`Next song: ${basicInfo.videoDetails.video_url}`)
+            message.channel.send(`Next song: ${basicInfo.videoDetails.video_url}`)
         } else {
-            serverQueue.textChannel.send("Queue is **empty**")
+            message.channel.send("Queue is **empty**")
         }
     }
 }
