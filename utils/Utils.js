@@ -52,9 +52,37 @@ function startWithCommand(msg, commandName) {
     return msg.content.startsWith(command(commandName))
 }
 
+function containsCommand(msg, commands) {
+    for (const command in commands) {
+        if (startWithCommand(msg, command)) return true
+    }
+    return false
+}
+
+function executeCommand(msg, commands) {
+    for (const command in commands) {
+        if (startWithCommand(msg, command)) {
+            commands[command].fn(msg)
+        }
+    }
+}
+
+function isValidHttpUrl(string) {
+    let url;
+    try {
+        url = new URL(string);
+    } catch (_) {
+        return false;
+    }
+    return url.protocol === "http:" || url.protocol === "https:";
+}
+
 module.exports = {
     getRandomPlacaMae,
     getRandomProcessador,
     command,
-    startWithCommand
+    startWithCommand,
+    isValidHttpUrl,
+    containsCommand,
+    executeCommand
 }
