@@ -72,6 +72,14 @@ function canHandle(bot, msg) {
         || msg.channel.id == process.env.ID_CHANNEL_ATWITCH && msg.content.trim().startsWith(Utils.command("ttlive"))
 }
 
+function helpComand(bot, msg){
+    return {
+        name: Utils.command("ttlive"),
+        value: "Consulta se os canais Twitch selecionados estão online",
+        inline: false
+    }
+}
+
 module.exports = {
-    run, canHandle
+    run, canHandle, helpComand
 }

@@ -35,6 +35,14 @@ function canHandle(bot, msg) {
     return msg.content.startsWith(Utils.command("avatar"))
 }
 
+function helpComand(bot, msg){
+    return {
+        name: Utils.command("avatar") + " [@mention]",
+        value: "Mostra o avatar do membro no Discord, é possível selecionar outro membro",
+        inline: false
+    }
+}
+
 module.exports = {
-    run, canHandle
+    run, canHandle, helpComand
 }

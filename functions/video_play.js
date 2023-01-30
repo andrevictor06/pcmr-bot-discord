@@ -72,6 +72,14 @@ function canHandle(bot, msg) {
     return msg.content.startsWith(Utils.command("video "))
 }
 
+function helpComand(bot, msg){
+    return {
+        name: Utils.command("video") + " [url-video]",
+        value: "Abre uma sala no Watch2Gether com o vídeo informado",
+        inline: false
+    }
+}
+
 module.exports = {
-    run, canHandle
+    run, canHandle, helpComand
 }
