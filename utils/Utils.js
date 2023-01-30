@@ -52,9 +52,20 @@ function startWithCommand(msg, commandName) {
     return msg.content.startsWith(command(commandName))
 }
 
+function isValidHttpUrl(string) {
+    let url;
+    try {
+        url = new URL(string);
+    } catch (_) {
+        return false;
+    }
+    return url.protocol === "http:" || url.protocol === "https:";
+}
+
 module.exports = {
     getRandomPlacaMae,
     getRandomProcessador,
     command,
-    startWithCommand
+    startWithCommand,
+    isValidHttpUrl
 }

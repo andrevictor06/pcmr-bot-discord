@@ -1,13 +1,12 @@
-const { joinVoiceChannel, AudioPlayerStatus, createAudioResource, StreamType, createAudioPlayer } = require('@discordjs/voice')
+const { joinVoiceChannel, AudioPlayerStatus, createAudioResource, createAudioPlayer } = require('@discordjs/voice')
 const ytdl = require("ytdl-core")
 const Utils = require("../utils/Utils")
+const ytsr = require('ytsr');
 
 let serverQueue = null
 let timeoutId = null
 
 async function play(message) {
-    const args = message.content.split(" ")
-
     const voiceChannel = message.member.voice.channel
     if (!voiceChannel)
         return message.channel.send("You need to be in a voice channel to play music!")
@@ -18,61 +17,82 @@ async function play(message) {
     }
 
     try {
-        const song = await ytdl.getInfo(args[1])
+        const song = await getSongInfo(message)
+        if (!song) {
+            return message.channel.send("Music not found!")
+        }
 
         if (serverQueue) {
-            serverQueue.songs.push(song)
-            console.log(serverQueue.player.state)
-            if (serverQueue.player.state.status == AudioPlayerStatus.Idle) {
-                playSong(serverQueue.songs.shift())
-            } else {
-                message.channel.send(`${song.videoDetails.title} has been added to the queue!`)
-            }
+            addToQueue(song)
         } else {
-            serverQueue = {
-                player: createAudioPlayer(),
-                textChannel: message.channel,
-                voiceChannel: voiceChannel,
-                connection: joinVoiceChannel({
-                    channelId: voiceChannel.id,
-                    guildId: voiceChannel.guild.id,
-                    adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-                }),
-                songs: [],
-                volume: 5,
-                playing: true
-            }
-            serverQueue.songs.push(song)
-            serverQueue.connection.subscribe(serverQueue.player)
-            serverQueue.player = serverQueue.player
-
-            serverQueue.player
-                .on(AudioPlayerStatus.Idle, () => playSong(serverQueue.songs.shift()))
-                .on("error", error => console.error(error))
-                .on(AudioPlayerStatus.Paused, state => {
-                    console.log(state)
-                    // serverQueue.textChannel.send(`Parado **${song.title}**`)
-                })
-
-            playSong(serverQueue.songs.shift())
+            createServerQueue(message, voiceChannel)
+            playSong(song)
         }
     } catch (err) {
         console.log(err)
-        serverQueue = null
+        if (serverQueue) stop()
         return message.channel.send(err)
     }
+}
+
+async function getSongInfo(message) {
+    const args = message.content.split(" ")
+    if (Utils.isValidHttpUrl(args[1])) {
+        return await ytdl.getInfo(args[1])
+    }
+
+    const search = args.slice(1).join(" ")
+    const filter = (await ytsr.getFilters(search)).get('Type').get('Video')
+    const searchResults = await ytsr(filter.url, { limit: 1 });
+    if (searchResults.results > 0) {
+        return await ytdl.getInfo(searchResults.items[0].url)
+    }
+    return null
+}
+
+function addToQueue(song) {
+    serverQueue.songs.push(song)
+    if (serverQueue.player.state.status == AudioPlayerStatus.Idle) {
+        playSong(serverQueue.songs.shift())
+    } else {
+        serverQueue.textChannel.send(`${song.videoDetails.title} has been added to the queue!`)
+    }
+}
+
+function createServerQueue(message, voiceChannel) {
+    serverQueue = {
+        player: createAudioPlayer(),
+        textChannel: message.channel,
+        voiceChannel: voiceChannel,
+        connection: joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: voiceChannel.guild.id,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+        }),
+        songs: [],
+        volume: 5,
+        playing: true
+    }
+    serverQueue.connection.subscribe(serverQueue.player)
+
+    serverQueue.player
+        .on(AudioPlayerStatus.Idle, () => playSong(serverQueue.songs.shift()))
+        .on("error", error => console.error(error))
+        .on(AudioPlayerStatus.Paused, state => {
+            console.log(state)
+            // serverQueue.textChannel.send(`Parado **${song.title}**`)
+        })
 }
 
 function playSong(song) {
     if (song) {
         clearDelayedStopTimeout()
-        const audioFormats = ytdl.filterFormats(song.formats, 'audioonly')
-        const selectedFormat = audioFormats
+        const lowerBitrateFormat = ytdl.filterFormats(song.formats, 'audioonly')
             .filter(format => format.audioBitrate != null)
             .sort((format1, format2) => format1.audioBitrate - format2.audioBitrate)
-            .find(element => element.audioBitrate >= 64)
+            .find(element => element.audioBitrate >= 60)
 
-        const stream = ytdl(song.videoDetails.video_url, { highWaterMark: 10485760, dlChunkSize: 5242880, format: selectedFormat })
+        const stream = ytdl(song.videoDetails.video_url, { highWaterMark: 10485760, dlChunkSize: 5242880, format: lowerBitrateFormat })
         const resource = createAudioResource(stream)
         serverQueue.player.play(resource)
         return serverQueue.textChannel.send(`Start playing: **${song.videoDetails.title}**`)
@@ -92,7 +112,7 @@ function delayedStop() {
     timeoutId = setTimeout(() => {
         stop()
         timeoutId = null
-    }, 10000)
+    }, 30000)
 }
 
 function stop() {
@@ -106,7 +126,7 @@ function skip() {
     if (serverQueue) {
         const song = serverQueue.songs.shift()
         if (song) {
-            playSong(serverQueue.songs.shift())
+            playSong(song)
         } else {
             stop()
         }
