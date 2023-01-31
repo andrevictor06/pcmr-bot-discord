@@ -204,6 +204,7 @@ function stop() {
         serverQueue.textChannel.send("Bye!")
         clearInactivityInterval()
         clearDelayedStopTimeout()
+        stopPlayer()
         serverQueue.connection.destroy()
     }
     serverQueue = null
@@ -213,7 +214,7 @@ function skip() {
     if (serverQueue) {
         const song = serverQueue.songs.shift()
         if (song) {
-            serverQueue.player.stop(true)
+            stopPlayer()
             playSong(song)
         } else {
             stop()
@@ -250,6 +251,10 @@ async function nextSong(message) {
 
 function playerIsIdle() {
     return serverQueue.player.state.status == AudioPlayerStatus.Idle
+}
+
+function stopPlayer() {
+    serverQueue.player.stop(true)
 }
 
 function run(bot, msg) {
