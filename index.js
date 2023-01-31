@@ -38,7 +38,7 @@ bot.login(process.env.TOKEN_DISCORD);
 
 bot.on('ready', () => {
     try {
-        if(process.env.ID_CHANNEL_LOG_BOT){
+        if(process.env.ENVIRONMENT === "PRD" && process.env.ID_CHANNEL_LOG_BOT){
             bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then(channel => {
                 channel.send({content: "Bot iniciado em: " + new Date().toLocaleString("pt-BR")})
             })
@@ -47,4 +47,3 @@ bot.on('ready', () => {
 
     } catch (error) {}
 });
-
