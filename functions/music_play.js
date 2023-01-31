@@ -267,7 +267,7 @@ async function logError(bot, error) {
     console.error(error)
     const channel = await bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
     const errorContent = error.stack ? error.stack : error
-    channel.send({ content: '> Erro no AudioPlayer\n```' + errorContent + '```' })
+    channel.send({ content: '> Erro no music_play.js\n```' + errorContent + '```' })
 }
 
 function run(bot, msg) {

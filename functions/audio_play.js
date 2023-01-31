@@ -5,88 +5,89 @@ const path = require("path")
 const musicPlay = require('./music_play')
 
 let serverQueue = null
-let discordBot = null
 let hasListener = false
 
-function stop(serverQueue) {
+function stop(shouldDesconect) {
     serverQueue.player.removeAllListeners()
     serverQueue.player.stop(true)
-    serverQueue.connection.destroy()
+    if (shouldDesconect) {
+        serverQueue.connection.destroy()
+    }
+    serverQueue = null
 }
 
 async function play(bot, msg, audio) {
     try {
-        const voiceChannel = msg.member.voice.channel
-        if (!serverQueue) {
-            serverQueue = {
-                player: createAudioPlayer(),
-                textChannel: msg.channel,
-                voiceChannel: voiceChannel,
-                connection: joinVoiceChannel({
-                    channelId: voiceChannel.id,
-                    guildId: voiceChannel.guild.id,
-                    adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-                }),
-                songs: [],
-                volume: 5,
-                playing: true
-            }
-
-            serverQueue.player.on(AudioPlayerStatus.Idle, () => {
-                const musicQueue = musicPlay.getServerQueue()
-                if (musicQueue) {
-                    console.log("Resuming")
-                    serverQueue.connection.subscribe(musicQueue.player)
-                    musicQueue.player.unpause()
-                } else {
-                    stop(serverQueue)
-                }
-            })
-        }
-
         const musicQueue = musicPlay.getServerQueue()
-        if (musicQueue) {
-            console.log("Pausing")
+        if (musicQueue && musicQueue.player.state.status != AudioPlayerStatus.Paused) {
             musicQueue.player.pause(true)
-            serverQueue.connection.subscribe(serverQueue.player)
         }
-        if (serverQueue) {
+        if (!serverQueue) {
+            createServerQueue(msg)
+        }
+        if (serverQueue && serverQueue.player.state.status != AudioPlayerStatus.Idle) {
+            serverQueue.player.off(AudioPlayerStatus.Idle, idleListener)
             serverQueue.player.stop(true)
+            serverQueue.player.on(AudioPlayerStatus.Idle, idleListener)
         }
 
         const audioPath = path.resolve("audio", audio)
         const resource = createAudioResource(fs.createReadStream(audioPath))
-
         serverQueue.player.play(resource)
     } catch (error) {
-        logError(error)
+        logError(bot, error)
     }
 }
 
-async function logError(error) {
+function createServerQueue(msg) {
+    const voiceChannel = msg.member.voice.channel
+    serverQueue = {
+        player: createAudioPlayer(),
+        textChannel: msg.channel,
+        voiceChannel: voiceChannel,
+        connection: joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: voiceChannel.guild.id,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+        }),
+        songs: [],
+        volume: 5,
+        playing: true
+    }
+    serverQueue.connection.subscribe(serverQueue.player)
+    serverQueue.player.on(AudioPlayerStatus.Idle, idleListener)
+}
+
+function idleListener() {
+    const musicQueue = musicPlay.getServerQueue()
+    if (musicQueue) {
+        serverQueue.connection.subscribe(musicQueue.player)
+        musicQueue.player.unpause()
+    }
+    stop(!musicQueue)
+}
+
+async function logError(bot, error) {
     console.error(error)
-    const channel = await discordBot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
+    const channel = await bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
     const errorContent = error.stack ? error.stack : error
-    channel.send({ content: '> Erro no AudioPlayer\n```' + errorContent + '```' })
+    channel.send({ content: '> Erro no audio_play.js\n```' + errorContent + '```' })
 }
 
 function run(bot, msg) {
     const audios = fs.readdirSync("./audio")
-    let buttons = []
-    audios.forEach(audio => {
-        let label = audio.split("-").join(" ").replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())
-        buttons.push({
-            "type": 1,
-            "components": [
+    const buttons = audios.map(audio => {
+        return {
+            type: 1,
+            components: [
                 {
-                    "type": 2,
-                    "label": label,
-                    "style": 1,
-                    "custom_id": "btn_audio_" + audio,
-                    "audio_name": audio
+                    type: 2,
+                    label: getAudioName(audio),
+                    style: 1,
+                    custom_id: "btn_audio_" + audio,
                 }
             ]
-        })
+        }
     })
 
     msg.reply({ "components": buttons })
@@ -99,11 +100,20 @@ function run(bot, msg) {
                 if (customId.startsWith("btn_audio_")) {
                     let audio = customId.split("btn_audio_")[1]
                     play(bot, msg, audio)
+                    event.update({
+                        content: `Playing ${getAudioName(audio)}`,
+                        components: []
+                    })
                 }
-                return true
-            } catch (error) { console.log(error) }
+            } catch (error) {
+                logError(bot, error)
+            }
         })
     }
+}
+
+function getAudioName(audio) {
+    return audio.split("-").join(" ").replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())
 }
 
 function canHandle(bot, msg) {
