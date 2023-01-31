@@ -9,6 +9,7 @@ const dlChunkSize = oneMB * 3
 let serverQueue = null
 let timeoutId = null
 let inactivityIntervalId = null
+let discordBot = null
 
 const commands = {
     play: {
@@ -83,13 +84,12 @@ async function play(message) {
         }
 
         addToQueue(info, message, firstTime)
-        if (firstTime) {
+        if (firstTime || playerIsIdle()) {
             next()
         }
-    } catch (err) {
-        console.log(err)
+    } catch (error) {
+        logError(error)
         if (serverQueue) stop()
-        return message.channel.send(err)
     }
 }
 
@@ -145,7 +145,7 @@ function createServerQueue(message, voiceChannel) {
 
     serverQueue.player
         .on(AudioPlayerStatus.Idle, () => next())
-        .on("error", error => console.error(error))
+        .on("error", error => logError(error))
 
     inactivityIntervalId = setInterval(() => {
         if (!serverQueue) {
@@ -159,7 +159,9 @@ function createServerQueue(message, voiceChannel) {
 }
 
 async function playSong(songURL) {
-    if (songURL) {
+    try {
+        if (!songURL) return delayedStop()
+
         clearDelayedStopTimeout()
         const song = await ytdl.getInfo(songURL)
         if (!song) {
@@ -180,8 +182,8 @@ async function playSong(songURL) {
         serverQueue.player.play(resource)
         serverQueue.currentSong = song
         return serverQueue.textChannel.send(`Start playing: **${song.videoDetails.title}**`)
-    } else {
-        delayedStop()
+    } catch (error) {
+        logError(error)
     }
 }
 
@@ -201,6 +203,10 @@ function clearInactivityInterval() {
 
 function delayedStop() {
     timeoutId = setTimeout(() => stop(), 30000)
+}
+
+function playerIsIdle() {
+    return serverQueue.player.state.status == AudioPlayerStatus.Idle && serverQueue.songs.length == 0
 }
 
 function stop() {
@@ -258,7 +264,15 @@ function stopPlayer() {
     }
 }
 
+async function logError(error) {
+    console.error(error)
+    const channel = await discordBot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
+    const errorContent = error.stack ? error.stack : error
+    channel.send({ content: '> Erro no AudioPlayer\n```' + errorContent + '```' })
+}
+
 function run(bot, msg) {
+    discordBot = bot
     Utils.executeCommand(msg, commands)
 }
 
