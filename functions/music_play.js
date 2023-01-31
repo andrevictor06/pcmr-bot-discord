@@ -5,6 +5,7 @@ const ytsr = require('ytsr')
 const ytpl = require('ytpl')
 
 const oneMB = 1048576
+const dlChunkSize = oneMB * 3
 let serverQueue = null
 let timeoutId = null
 let inactivityIntervalId = null
@@ -76,12 +77,13 @@ async function play(message) {
             return message.channel.send("Music not found!")
         }
 
-        if (!serverQueue) {
+        const firstTime = !serverQueue
+        if (firstTime) {
             createServerQueue(message, voiceChannel)
         }
 
-        addToQueue(info, message)
-        if (playerIsIdle()) {
+        addToQueue(info, message, firstTime)
+        if (firstTime) {
             next()
         }
     } catch (err) {
@@ -112,14 +114,16 @@ async function getURL(message) {
     return null
 }
 
-async function addToQueue(songURL, message) {
+async function addToQueue(songURL, message, firstTime = false) {
     if (Array.isArray(songURL)) {
         serverQueue.songs = serverQueue.songs.concat(songURL)
         message.channel.send(`Added ${songURL.length} songs to the queue!`)
     } else {
         serverQueue.songs.push(songURL)
-        const basicInfo = await ytdl.getBasicInfo(songURL)
-        if (!playerIsIdle()) message.channel.send(`${basicInfo.videoDetails.title} has been added to the queue!`)
+        if (!firstTime) {
+            const basicInfo = await ytdl.getBasicInfo(songURL)
+            message.channel.send(`${basicInfo.videoDetails.title} has been added to the queue!`)
+        }
     }
 }
 
@@ -168,8 +172,8 @@ async function playSong(songURL) {
             .find(format => format.audioBitrate >= 60 && format.audioBitrate <= 128)
 
         const stream = ytdl(song.videoDetails.video_url, {
-            highWaterMark: Number(lowerBitrateFormat.contentLength) + oneMB,
-            dlChunkSize: 3145728,
+            highWaterMark: parseInt(lowerBitrateFormat.contentLength) + oneMB,
+            dlChunkSize: dlChunkSize,
             format: lowerBitrateFormat
         })
         const resource = createAudioResource(stream)
@@ -246,11 +250,6 @@ async function nextSong(message) {
             message.channel.send("Queue is **empty**")
         }
     }
-}
-
-function playerIsIdle() {
-    if (!serverQueue) return false
-    return serverQueue.player.state.status == AudioPlayerStatus.Idle
 }
 
 function stopPlayer() {
