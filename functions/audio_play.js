@@ -20,7 +20,7 @@ function stop(guild, serverQueue, message) {
 
 }
 
-async function play(bot, msg) {
+async function play(bot, msg, audio) {
     try {
         let serverQueue = queue.get(msg.guild.id)
         const message = msg
@@ -40,11 +40,10 @@ async function play(bot, msg) {
         }
         serverQueue.connection.subscribe(serverQueue.player)
         
-        const caminho_audio = path.resolve("audio","yamete-kudasai.mp3")
+        const caminho_audio = path.resolve("audio", audio)
         const resource = await createAudioResource(fs.createReadStream(caminho_audio))
         
         serverQueue.player.play(resource);
-        return serverQueue.textChannel.send(`Start playing: `)
     } catch (error) {
         logError(error)
     }
@@ -58,21 +57,54 @@ async function logError(error) {
     channel.send({ content: '> Erro no AudioPlayer\n```' + errorContent + '```' })*/
 }
 
+let hasListener = false;
+
 function run(bot, msg) {
-    const serverQueue = queue.get(msg.guild.id)
-    if (msg.content.startsWith(Utils.command("audio "))) {
-        play(bot, msg)
+    const audios = fs.readdirSync("./audio")
+    let buttons = []
+    audios.forEach(audio => {
+        let label = audio.split("-").join(" ").replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+        buttons.push({
+            "type": 1,
+            "components": [
+                {
+                    "type": 2,
+                    "label": label,
+                    "style": 1,
+                    "custom_id": "btn_audio_" + audio,
+                    "audio_name": audio
+                }
+            ]
+        })
+    });
+    
+    msg.reply( { "components": buttons})
+
+    if( ! hasListener){
+        hasListener = true
+        bot.on('interactionCreate', (event) => {
+            try {
+                const customId = event.customId
+                if(customId.startsWith("btn_audio_")){
+                    let audio = customId.split("btn_audio_")[1]
+                    play(bot, msg, audio)
+                }
+                return true
+            } catch (error) {console.log(error)}
+        })
     }
+    
+
 }
 
 function canHandle(bot, msg) {
-    return msg.content.startsWith(Utils.command("audio "))
+    return msg.content.startsWith(Utils.command("audio"))
 }
 
 function helpComand(bot, msg){
     return {
-        name: Utils.command("audio") + " [name-audio]",
-        value: "Inicia um audio",
+        name: Utils.command("audio"),
+        value: "Lista os audios disponiveis",
         inline: false
     }
 }

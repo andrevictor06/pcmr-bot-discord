@@ -47,3 +47,31 @@ bot.on('ready', () => {
 
     } catch (error) {}
 });
+
+function listAllAudios(event){
+    const audios = fs.readdirSync("./audio")
+    console.log(event);
+    audios.forEach(audio => {
+        console.log(audio);
+        let label = audio.split("-").join(" ").replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase());
+
+        const embed = {
+            "components": [
+                {
+                    "type": 1,
+                    "components": [
+                        {
+                            "type": 2,
+                            "label": label,
+                            "style": 1,
+                            "custom_id": "btn_audio_" + audio,
+                            "audio_name": audio
+                        }
+                    ]
+        
+                }
+            ]
+        }
+        event.message.channel.send(embed)
+    });
+}
