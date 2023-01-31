@@ -38,10 +38,13 @@ bot.login(process.env.TOKEN_DISCORD);
 
 bot.on('ready', () => {
     try {
-        bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then(channel => {
-            channel.send({content: "Bot iniciado em: " + new Date().toLocaleString("pt-BR")})
-        })
-        console.log(`Logged in as ${bot.user.tag}!`);    
+        if(process.env.ID_CHANNEL_LOG_BOT){
+            bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then(channel => {
+                channel.send({content: "Bot iniciado em: " + new Date().toLocaleString("pt-BR")})
+            })
+            console.log(`Logged in as ${bot.user.tag}!`);
+        }
+
     } catch (error) {}
 });
 
