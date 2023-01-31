@@ -200,10 +200,11 @@ function delayedStop() {
 }
 
 function stop() {
-    if (serverQueue && serverQueue.connection) {
+    if (serverQueue) {
         serverQueue.textChannel.send("Bye!")
         clearInactivityInterval()
         clearDelayedStopTimeout()
+        serverQueue.player.removeAllListeners()
         stopPlayer()
         serverQueue.connection.destroy()
     }
@@ -212,12 +213,10 @@ function stop() {
 
 function skip() {
     if (serverQueue) {
-        const song = serverQueue.songs.shift()
-        if (song) {
+        if (serverQueue.songs.length > 0) {
             stopPlayer()
-            playSong(song)
         } else {
-            stop()
+            serverQueue.textChannel.send("Queue is **empty**")
         }
     }
 }
@@ -250,11 +249,14 @@ async function nextSong(message) {
 }
 
 function playerIsIdle() {
+    if (!serverQueue) return false
     return serverQueue.player.state.status == AudioPlayerStatus.Idle
 }
 
 function stopPlayer() {
-    serverQueue.player.stop(true)
+    if (serverQueue) {
+        serverQueue.player.stop(true)
+    }
 }
 
 function run(bot, msg) {
