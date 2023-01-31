@@ -14,7 +14,7 @@ const commands = {
     play: {
         fn: play,
         help: {
-            name: Utils.command("play") + " [url-yt,termo]",
+            name: Utils.command("play") + " [url-yt/termo]",
             value: "Inicia ou coloca em fila a música informada",
             inline: false
         }
