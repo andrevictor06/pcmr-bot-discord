@@ -4,8 +4,11 @@ const Utils = require("../utils/Utils")
 const ytsr = require('ytsr')
 const ytpl = require('ytpl')
 
+const oneMB = 1048576
 let serverQueue = null
 let timeoutId = null
+let inactivityIntervalId = null
+
 const commands = {
     play: {
         fn: play,
@@ -73,16 +76,13 @@ async function play(message) {
             return message.channel.send("Music not found!")
         }
 
-        if (serverQueue) {
-            addToQueue(info)
-        } else {
-            let song = info
+        if (!serverQueue) {
             createServerQueue(message, voiceChannel)
-            if (Array.isArray(info)) {
-                song = info.shift()
-                addToQueue(info, false)
-            }
-            playSong(song)
+        }
+
+        addToQueue(info, message)
+        if (playerIsIdle()) {
+            next()
         }
     } catch (err) {
         console.log(err)
@@ -112,22 +112,14 @@ async function getURL(message) {
     return null
 }
 
-async function addToQueue(songURL, playIfIdle = true) {
+async function addToQueue(songURL, message) {
     if (Array.isArray(songURL)) {
         serverQueue.songs = serverQueue.songs.concat(songURL)
+        message.channel.send(`Added ${songURL.length} songs to the queue!`)
     } else {
         serverQueue.songs.push(songURL)
-    }
-
-    if (serverQueue.player.state.status == AudioPlayerStatus.Idle && playIfIdle) {
-        next()
-    } else {
-        if (Array.isArray(songURL)) {
-            serverQueue.textChannel.send(`Added ${songURL.length} songs to the queue!`)
-        } else {
-            const basicInfo = await ytdl.getBasicInfo(songURL)
-            serverQueue.textChannel.send(`${basicInfo.videoDetails.title} has been added to the queue!`)
-        }
+        const basicInfo = await ytdl.getBasicInfo(songURL)
+        if (!playerIsIdle()) message.channel.send(`${basicInfo.videoDetails.title} has been added to the queue!`)
     }
 }
 
@@ -150,10 +142,16 @@ function createServerQueue(message, voiceChannel) {
     serverQueue.player
         .on(AudioPlayerStatus.Idle, () => next())
         .on("error", error => console.error(error))
-        .on(AudioPlayerStatus.Paused, state => {
-            console.log(state)
-            // serverQueue.textChannel.send(`Parado **${song.title}**`)
-        })
+
+    inactivityIntervalId = setInterval(() => {
+        if (!serverQueue) {
+            clearInactivityInterval()
+        }
+
+        if (!serverQueue.voiceChannel.members || serverQueue.voiceChannel.members.size == 0) {
+            delayedStop()
+        }
+    }, 60000)
 }
 
 async function playSong(songURL) {
@@ -169,7 +167,11 @@ async function playSong(songURL) {
             .sort((format1, format2) => format1.audioBitrate - format2.audioBitrate)
             .find(format => format.audioBitrate >= 60 && format.audioBitrate <= 128)
 
-        const stream = ytdl(song.videoDetails.video_url, { highWaterMark: 104857600, dlChunkSize: 3145728, format: lowerBitrateFormat })
+        const stream = ytdl(song.videoDetails.video_url, {
+            highWaterMark: Number(lowerBitrateFormat.contentLength) + oneMB,
+            dlChunkSize: 3145728,
+            format: lowerBitrateFormat
+        })
         const resource = createAudioResource(stream)
         serverQueue.player.play(resource)
         serverQueue.currentSong = song
@@ -186,16 +188,24 @@ function clearDelayedStopTimeout() {
     }
 }
 
+function clearInactivityInterval() {
+    if (inactivityIntervalId) {
+        clearInterval(inactivityIntervalId);
+        inactivityIntervalId = null
+    }
+}
+
 function delayedStop() {
-    timeoutId = setTimeout(() => {
-        serverQueue.textChannel.send("Desconectado por inatividade, faz o **pix**")
-        stop()
-        timeoutId = null
-    }, 30000)
+    timeoutId = setTimeout(() => stop(), 30000)
 }
 
 function stop() {
-    if (serverQueue && serverQueue.connection) {
+    if (serverQueue) {
+        serverQueue.textChannel.send("Bye!")
+        clearInactivityInterval()
+        clearDelayedStopTimeout()
+        serverQueue.player.removeAllListeners()
+        stopPlayer()
         serverQueue.connection.destroy()
     }
     serverQueue = null
@@ -203,11 +213,10 @@ function stop() {
 
 function skip() {
     if (serverQueue) {
-        const song = serverQueue.songs.shift()
-        if (song) {
-            playSong(song)
+        if (serverQueue.songs.length > 0) {
+            stopPlayer()
         } else {
-            stop()
+            serverQueue.textChannel.send("Queue is **empty**")
         }
     }
 }
@@ -216,26 +225,37 @@ function next() {
     playSong(serverQueue.songs.shift())
 }
 
-function queue() {
+function queue(message) {
     if (serverQueue && serverQueue.songs.length > 0) {
-        serverQueue.textChannel.send(`There is **${serverQueue.songs.length}** songs in the queue!`)
+        message.channel.send(`There is **${serverQueue.songs.length}** songs in the queue!`)
     }
 }
 
-function currentSong() {
+function currentSong(message) {
     if (serverQueue) {
-        serverQueue.textChannel.send(`Current song: ${serverQueue.currentSong.videoDetails.video_url}`)
+        message.channel.send(`Current song: ${serverQueue.currentSong.videoDetails.video_url}`)
     }
 }
 
-async function nextSong() {
+async function nextSong(message) {
     if (serverQueue) {
         if (serverQueue.songs.length > 0) {
             const basicInfo = await ytdl.getBasicInfo(serverQueue.songs[0])
-            serverQueue.textChannel.send(`Next song: ${basicInfo.videoDetails.video_url}`)
+            message.channel.send(`Next song: ${basicInfo.videoDetails.video_url}`)
         } else {
-            serverQueue.textChannel.send("Queue is **empty**")
+            message.channel.send("Queue is **empty**")
         }
+    }
+}
+
+function playerIsIdle() {
+    if (!serverQueue) return false
+    return serverQueue.player.state.status == AudioPlayerStatus.Idle
+}
+
+function stopPlayer() {
+    if (serverQueue) {
+        serverQueue.player.stop(true)
     }
 }
 
