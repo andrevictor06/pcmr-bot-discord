@@ -142,10 +142,6 @@ function createServerQueue(message, voiceChannel) {
     serverQueue.player
         .on(AudioPlayerStatus.Idle, () => next())
         .on("error", error => console.error(error))
-        .on(AudioPlayerStatus.Paused, state => {
-            console.log(state)
-            // serverQueue.textChannel.send(`Parado **${song.title}**`)
-        })
 
     inactivityIntervalId = setInterval(() => {
         if (!serverQueue) {
