@@ -286,6 +286,10 @@ function helpComand(bot, msg) {
         .filter(value => value != null)
 }
 
+function getServerQueue() {
+    return serverQueue
+}
+
 module.exports = {
-    run, canHandle, helpComand
+    run, canHandle, helpComand, getServerQueue
 }
