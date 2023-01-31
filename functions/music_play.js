@@ -9,7 +9,6 @@ const dlChunkSize = oneMB * 3
 let serverQueue = null
 let timeoutId = null
 let inactivityIntervalId = null
-let discordBot = null
 
 const commands = {
     play: {
@@ -62,7 +61,7 @@ const commands = {
     }
 }
 
-async function play(message) {
+async function play(bot, message) {
     const voiceChannel = message.member.voice.channel
     if (!voiceChannel)
         return message.channel.send("You need to be in a voice channel to play music!")
@@ -80,15 +79,15 @@ async function play(message) {
 
         const firstTime = !serverQueue
         if (firstTime) {
-            createServerQueue(message, voiceChannel)
+            createServerQueue(bot, message, voiceChannel)
         }
 
         addToQueue(info, message, firstTime)
         if (firstTime || playerIsIdle()) {
-            next()
+            next(bot)
         }
     } catch (error) {
-        logError(error)
+        logError(bot, error)
         if (serverQueue) stop()
     }
 }
@@ -127,7 +126,7 @@ async function addToQueue(songURL, message, firstTime = false) {
     }
 }
 
-function createServerQueue(message, voiceChannel) {
+function createServerQueue(bot, message, voiceChannel) {
     serverQueue = {
         player: createAudioPlayer(),
         textChannel: message.channel,
@@ -144,8 +143,8 @@ function createServerQueue(message, voiceChannel) {
     serverQueue.connection.subscribe(serverQueue.player)
 
     serverQueue.player
-        .on(AudioPlayerStatus.Idle, () => next())
-        .on("error", error => logError(error))
+        .on(AudioPlayerStatus.Idle, () => next(bot))
+        .on("error", error => logError(bot, error))
 
     inactivityIntervalId = setInterval(() => {
         if (!serverQueue) {
@@ -158,7 +157,7 @@ function createServerQueue(message, voiceChannel) {
     }, 60000)
 }
 
-async function playSong(songURL) {
+async function playSong(bot, songURL) {
     try {
         if (!songURL) return delayedStop()
 
@@ -166,7 +165,7 @@ async function playSong(songURL) {
         const song = await ytdl.getInfo(songURL)
         if (!song) {
             serverQueue.textChannel.send(`Song with URL ${songURL} not found! Skipping...`)
-            return next()
+            return next(bot)
         }
         const lowerBitrateFormat = ytdl.filterFormats(song.formats, 'audioonly')
             .filter(format => format.audioBitrate != null)
@@ -183,7 +182,7 @@ async function playSong(songURL) {
         serverQueue.currentSong = song
         return serverQueue.textChannel.send(`Start playing: **${song.videoDetails.title}**`)
     } catch (error) {
-        logError(error)
+        logError(bot, error)
     }
 }
 
@@ -231,8 +230,8 @@ function skip() {
     }
 }
 
-function next() {
-    playSong(serverQueue.songs.shift())
+function next(bot) {
+    playSong(bot, serverQueue.songs.shift())
 }
 
 function queue(message) {
@@ -264,16 +263,15 @@ function stopPlayer() {
     }
 }
 
-async function logError(error) {
+async function logError(bot, error) {
     console.error(error)
-    const channel = await discordBot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
+    const channel = await bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
     const errorContent = error.stack ? error.stack : error
-    channel.send({ content: '> Erro no AudioPlayer\n```' + errorContent + '```' })
+    channel.send({ content: '> Erro no music_play.js\n```' + errorContent + '```' })
 }
 
 function run(bot, msg) {
-    discordBot = bot
-    Utils.executeCommand(msg, commands)
+    Utils.executeCommand(bot, msg, commands)
 }
 
 function canHandle(bot, msg) {
@@ -286,6 +284,10 @@ function helpComand(bot, msg) {
         .filter(value => value != null)
 }
 
+function getServerQueue() {
+    return serverQueue
+}
+
 module.exports = {
-    run, canHandle, helpComand
+    run, canHandle, helpComand, getServerQueue
 }
