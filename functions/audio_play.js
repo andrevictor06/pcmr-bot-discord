@@ -1,102 +1,9 @@
-const { joinVoiceChannel, AudioPlayerStatus, createAudioResource, StreamType, createAudioPlayer } = require('@discordjs/voice')
-const { join } = require('node:path')
-const ytdl = require("ytdl-core")
+const { joinVoiceChannel, createAudioResource, createAudioPlayer } = require('@discordjs/voice')
 const queue = new Map()
 const Utils = require("../utils/Utils")
+const fs = require('fs')
+const path = require("path")
 
-
-async function execute(message, serverQueue) {
-    const args = message.content.split(" ")
-
-    const voiceChannel = message.member.voice.channel
-    if (!voiceChannel)
-        return message.channel.send("You need to be in a voice channel to play music!")
-
-    const permissions = voiceChannel.permissionsFor(message.client.user)
-    if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-        return message.channel.send("I need the permissions to join and speak in your voice channel!")
-    }
-
-    const songInfo = await ytdl.getInfo(args[1])
-    const song = {
-        title: songInfo.videoDetails.title,
-        url: songInfo.videoDetails.video_url,
-    }
-
-    if (!serverQueue) {
-        const queueContruct = {
-            textChannel: message.channel,
-            voiceChannel: voiceChannel,
-            connection: null,
-            songs: [],
-            volume: 5,
-            playing: true
-        }
-
-        queue.set(message.guild.id, queueContruct)
-
-        queueContruct.songs.push(song)
-
-        try {
-            const player = createAudioPlayer()
-
-            var connection = joinVoiceChannel({
-                channelId: voiceChannel.id,
-                guildId: voiceChannel.guild.id,
-                adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-            })
-
-            connection.subscribe(player)
-            //connection.voice.setSelfDeaf(true)
-            queueContruct.connection = connection
-
-            play(message.guild, queueContruct.songs[0], player, message)
-        } catch (err) {
-            console.log(err)
-            queue.delete(message.guild.id)
-            return message.channel.send(err)
-        }
-    } else {
-        serverQueue.songs.push(song)
-        return message.channel.send(`${song.title} has been added to the queue!`)
-    }
-}
-
-function play(guild, song, player, message) {
-
-    const serverQueue = queue.get(guild.id)
-    if (!song) {
-        stop(guild, serverQueue, message)
-        return
-    }
-
-    const stream = ytdl(song.url, { filter: 'audioonly' })
-
-    console.log(join(__dirname, '/audio/tema-de-abertura-do-esporte-espetacular.mp3'))
-    const resource = createAudioResource(join(__dirname, '/audio/tema-de-abertura-do-esporte-espetacular.mp3'))
-    player.play(resource)
-
-    player.on(AudioPlayerStatus.Idle, () => {
-        serverQueue.songs.shift()
-        play(guild, serverQueue.songs[0], player, message)
-    }).on("error", error => console.error(error))
-        .on(AudioPlayerStatus.Paused, () => {
-            serverQueue.textChannel.send(`Parado **${song.title}**`)
-        })
-
-    /*
-
-    console.log("serverQueue ", serverQueue)
-    const dispatcher = serverQueue.connection
-        .play(ytdl(song.url, { filter: 'audioonly' }))
-        .on("finish", () => {
-            serverQueue.songs.shift()
-            play(guild, serverQueue.songs[0])
-        })
-        .on("error", error => console.error(error))*/
-    //dispatcher.setVolumeLogarithmic(serverQueue.volume / 5)
-    serverQueue.textChannel.send(`Start playing: **${song.title}**`)
-}
 
 function stop(guild, serverQueue, message) {
     if (serverQueue && serverQueue.voiceChannel) {
@@ -113,15 +20,48 @@ function stop(guild, serverQueue, message) {
 
 }
 
+async function play(bot, msg) {
+    try {
+        let serverQueue = queue.get(msg.guild.id)
+        const message = msg
+        const voiceChannel = message.member.voice.channel
+        serverQueue = {
+            player: createAudioPlayer(),
+            textChannel: message.channel,
+            voiceChannel: voiceChannel,
+            connection: joinVoiceChannel({
+                channelId: voiceChannel.id,
+                guildId: voiceChannel.guild.id,
+                adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+            }),
+            songs: [],
+            volume: 5,
+            playing: true
+        }
+        serverQueue.connection.subscribe(serverQueue.player)
+        
+        const caminho_audio = path.resolve("audio","yamete-kudasai.mp3")
+        const resource = await createAudioResource(fs.createReadStream(caminho_audio))
+        
+        serverQueue.player.play(resource);
+        return serverQueue.textChannel.send(`Start playing: `)
+    } catch (error) {
+        logError(error)
+    }
+}
+
+
+async function logError(error) {
+    console.error(error)
+    /*const channel = await discordBot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
+    const errorContent = error.stack ? error.stack : error
+    channel.send({ content: '> Erro no AudioPlayer\n```' + errorContent + '```' })*/
+}
+
 function run(bot, msg) {
     const serverQueue = queue.get(msg.guild.id)
-
-    if (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "audio ")) {
-        execute(msg, serverQueue)
-    }
-
-    if (msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION + "audio")) {
-        stop(msg.guild, serverQueue, msg)
+    if (msg.content.startsWith(Utils.command("audio "))) {
+        play(bot, msg)
     }
 }
 
