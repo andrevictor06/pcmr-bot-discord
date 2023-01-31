@@ -59,10 +59,10 @@ function containsCommand(msg, commands) {
     return false
 }
 
-function executeCommand(msg, commands) {
+function executeCommand(bot, msg, commands) {
     for (const command in commands) {
         if (startWithCommand(msg, command)) {
-            commands[command].fn(msg)
+            commands[command].fn(bot, msg)
         }
     }
 }
