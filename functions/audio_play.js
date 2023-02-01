@@ -18,11 +18,10 @@ function stop(shouldDesconect) {
 
 async function play(bot, msg, audio) {
     const musicQueue = musicPlay.getServerQueue()
-    const currentVoiceChannel = msg.member.voice.channel
 
     if (musicQueue) {
+        const currentVoiceChannel = msg.member.voice.channel
         if (musicQueue.voiceChannel.id != currentVoiceChannel.id) {
-            console.log("validating...")
             throw new Error("I'm running in another voice channel!")
         }
         if (musicQueue.player.state.status != AudioPlayerStatus.Paused) {
@@ -41,8 +40,6 @@ async function play(bot, msg, audio) {
     const audioPath = path.resolve("audio", audio)
     const resource = createAudioResource(fs.createReadStream(audioPath))
     serverQueue.player.play(resource)
-    console.log("playing...")
-
 }
 
 function createServerQueue(msg) {
@@ -117,9 +114,8 @@ function run(bot, msg) {
                 }
             } catch (error) {
                 logError(bot, error)
-                const message = error.message ? error.message : error
                 event.update({
-                    content: `Unexpected error: ${message}`,
+                    content: `Unexpected error: ${Utils.getMessageError(error)}`,
                     components: []
                 })
             }
@@ -129,6 +125,10 @@ function run(bot, msg) {
 
 function getAudioName(audio) {
     return audio.split("-").join(" ").replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())
+}
+
+function getServerQueue() {
+    return serverQueue
 }
 
 function canHandle(bot, msg) {
@@ -144,5 +144,5 @@ function helpComand(bot, msg) {
 }
 
 module.exports = {
-    run, canHandle, helpComand
+    run, canHandle, helpComand, getServerQueue
 }

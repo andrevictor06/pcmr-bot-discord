@@ -3,6 +3,7 @@ const ytdl = require("ytdl-core")
 const Utils = require("../utils/Utils")
 const ytsr = require('ytsr')
 const ytpl = require('ytpl')
+const audioPlay = require('./audio_play')
 
 const oneMB = 1048576
 const dlChunkSize = oneMB * 3
@@ -88,7 +89,7 @@ async function play(bot, message) {
         }
     } catch (error) {
         logError(bot, error)
-        if (serverQueue) stop()
+        message.channel.send(`Unexpected error: ${Utils.getMessageError(error)}`)
     }
 }
 
@@ -127,6 +128,7 @@ async function addToQueue(songURL, message, firstTime = false) {
 }
 
 function createServerQueue(bot, message, voiceChannel) {
+    if (audioPlay.getServerQueue()) throw new Error("An audio is running!")
     serverQueue = {
         player: createAudioPlayer(),
         textChannel: message.channel,
@@ -180,9 +182,11 @@ async function playSong(bot, songURL) {
         const resource = createAudioResource(stream)
         serverQueue.player.play(resource)
         serverQueue.currentSong = song
-        return serverQueue.textChannel.send(`Start playing: **${song.videoDetails.title}**`)
+        serverQueue.textChannel.send(`Start playing: **${song.videoDetails.title}**`)
     } catch (error) {
         logError(bot, error)
+        serverQueue.textChannel.send(`Unexpected error: ${Utils.getMessageError(error)}`)
+        next(bot)
     }
 }
 
