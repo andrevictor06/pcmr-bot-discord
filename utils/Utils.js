@@ -51,7 +51,9 @@ function command(commandName) {
 }
 
 function startWithCommand(msg, commandName) {
-    return msg.content.startsWith(command(commandName))
+    if (!msg.content) return false
+    const possibleCommand = msg.content.split(' ')
+    return possibleCommand[0] == command(commandName)
 }
 
 function containsCommand(msg, commands) {
