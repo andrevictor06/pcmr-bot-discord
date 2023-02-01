@@ -1,3 +1,5 @@
+const path = require('path');
+
 LISTA_IMAGENS_PLACAS_MAE = [
     "https://support.cyberpowerpc.com/hc/article_attachments/360028078513/broken_PCI_01.jpg",
     "https://pbs.twimg.com/media/EWOQ55PXQAAFghT.jpg",
@@ -81,6 +83,13 @@ function getMessageError(error) {
     return error.message ? error.message : error
 }
 
+async function logError(bot, error, filename) {
+    console.error(error)
+    const channel = await bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
+    const errorContent = error.stack ? error.stack : error
+    channel.send({ content: '> Erro no ' + path.basename(filename) + '\n```' + errorContent + '```' })
+}
+
 module.exports = {
     getRandomPlacaMae,
     getRandomProcessador,
@@ -89,5 +98,6 @@ module.exports = {
     isValidHttpUrl,
     containsCommand,
     executeCommand,
-    getMessageError
+    getMessageError,
+    logError
 }

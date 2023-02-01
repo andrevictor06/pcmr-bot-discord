@@ -88,7 +88,7 @@ async function play(bot, message) {
             next(bot)
         }
     } catch (error) {
-        logError(bot, error)
+        Utils.logError(bot, error, __filename)
         message.channel.send(`Unexpected error: ${Utils.getMessageError(error)}`)
     }
 }
@@ -146,7 +146,7 @@ function createServerQueue(bot, message, voiceChannel) {
 
     serverQueue.player
         .on(AudioPlayerStatus.Idle, () => next(bot))
-        .on("error", error => logError(bot, error))
+        .on("error", error => Utils.logError(bot, error, __filename))
 
     inactivityIntervalId = setInterval(() => {
         if (!serverQueue) {
@@ -184,7 +184,7 @@ async function playSong(bot, songURL) {
         serverQueue.currentSong = song
         serverQueue.textChannel.send(`Start playing: **${song.videoDetails.title}**`)
     } catch (error) {
-        logError(bot, error)
+        Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(`Unexpected error: ${Utils.getMessageError(error)}`)
         next(bot)
     }
@@ -265,13 +265,6 @@ function stopPlayer() {
     if (serverQueue) {
         serverQueue.player.stop(true)
     }
-}
-
-async function logError(bot, error) {
-    console.error(error)
-    const channel = await bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
-    const errorContent = error.stack ? error.stack : error
-    channel.send({ content: '> Erro no music_play.js\n```' + errorContent + '```' })
 }
 
 function run(bot, msg) {

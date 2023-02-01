@@ -74,13 +74,6 @@ function idleListener() {
     stop(!musicQueue)
 }
 
-async function logError(bot, error) {
-    console.error(error)
-    const channel = await bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
-    const errorContent = error.stack ? error.stack : error
-    channel.send({ content: '> Erro no audio_play.js\n```' + errorContent + '```' })
-}
-
 function run(bot, msg) {
     const audios = fs.readdirSync("./audio")
     const buttons = audios.map(audio => {
@@ -113,7 +106,7 @@ function run(bot, msg) {
                     })
                 }
             } catch (error) {
-                logError(bot, error)
+                Utils.logError(bot, error, __filename)
                 event.update({
                     content: `Unexpected error: ${Utils.getMessageError(error)}`,
                     components: []
