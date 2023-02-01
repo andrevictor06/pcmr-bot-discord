@@ -41,15 +41,20 @@ async function play(bot, msg, audio) {
 
 function createServerQueue(msg) {
     const voiceChannel = msg.member.voice.channel
+    const musicQueue = musicPlay.getServerQueue()
     serverQueue = {
         player: createAudioPlayer(),
         textChannel: msg.channel,
-        voiceChannel: voiceChannel,
-        connection: joinVoiceChannel({
-            channelId: voiceChannel.id,
-            guildId: voiceChannel.guild.id,
-            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-        }),
+        voiceChannel: musicQueue
+            ? musicQueue.voiceChannel
+            : voiceChannel,
+        connection: musicQueue
+            ? musicQueue.connection
+            : joinVoiceChannel({
+                channelId: voiceChannel.id,
+                guildId: voiceChannel.guild.id,
+                adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+            }),
         songs: [],
         volume: 5,
         playing: true
