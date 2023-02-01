@@ -17,44 +17,49 @@ function stop(shouldDesconect) {
 }
 
 async function play(bot, msg, audio) {
-    try {
-        const musicQueue = musicPlay.getServerQueue()
-        if (musicQueue && musicQueue.player.state.status != AudioPlayerStatus.Paused) {
+    const musicQueue = musicPlay.getServerQueue()
+    const currentVoiceChannel = msg.member.voice.channel
+
+    if (musicQueue) {
+        if (musicQueue.voiceChannel.id != currentVoiceChannel.id) {
+            console.log("validating...")
+            throw new Error("I'm running in another voice channel!")
+        }
+        if (musicQueue.player.state.status != AudioPlayerStatus.Paused) {
             musicQueue.player.pause(true)
         }
-        if (!serverQueue) {
-            createServerQueue(msg)
-        }
-        if (serverQueue && serverQueue.player.state.status != AudioPlayerStatus.Idle) {
-            serverQueue.player.off(AudioPlayerStatus.Idle, idleListener)
-            serverQueue.player.stop(true)
-            serverQueue.player.on(AudioPlayerStatus.Idle, idleListener)
-        }
-
-        const audioPath = path.resolve("audio", audio)
-        const resource = createAudioResource(fs.createReadStream(audioPath))
-        serverQueue.player.play(resource)
-    } catch (error) {
-        logError(bot, error)
     }
+    if (!serverQueue) {
+        createServerQueue(msg)
+    }
+    if (serverQueue && serverQueue.player.state.status != AudioPlayerStatus.Idle) {
+        serverQueue.player.off(AudioPlayerStatus.Idle, idleListener)
+        serverQueue.player.stop(true)
+        serverQueue.player.on(AudioPlayerStatus.Idle, idleListener)
+    }
+
+    const audioPath = path.resolve("audio", audio)
+    const resource = createAudioResource(fs.createReadStream(audioPath))
+    serverQueue.player.play(resource)
+    console.log("playing...")
+
 }
 
 function createServerQueue(msg) {
-    const voiceChannel = msg.member.voice.channel
     const musicQueue = musicPlay.getServerQueue()
+    const voiceChannel = musicQueue ? musicQueue.voiceChannel : msg.member.voice.channel
+    const connection = musicQueue
+        ? musicQueue.connection
+        : joinVoiceChannel({
+            channelId: voiceChannel.id,
+            guildId: voiceChannel.guild.id,
+            adapterCreator: voiceChannel.guild.voiceAdapterCreator,
+        })
     serverQueue = {
         player: createAudioPlayer(),
         textChannel: msg.channel,
-        voiceChannel: musicQueue
-            ? musicQueue.voiceChannel
-            : voiceChannel,
-        connection: musicQueue
-            ? musicQueue.connection
-            : joinVoiceChannel({
-                channelId: voiceChannel.id,
-                guildId: voiceChannel.guild.id,
-                adapterCreator: voiceChannel.guild.voiceAdapterCreator,
-            }),
+        voiceChannel,
+        connection,
         songs: [],
         volume: 5,
         playing: true
@@ -99,12 +104,12 @@ function run(bot, msg) {
 
     if (!hasListener) {
         hasListener = true
-        bot.on('interactionCreate', (event) => {
+        bot.on('interactionCreate', async (event) => {
             try {
                 const customId = event.customId
                 if (customId.startsWith("btn_audio_")) {
                     let audio = customId.split("btn_audio_")[1]
-                    play(bot, msg, audio)
+                    await play(bot, msg, audio)
                     event.update({
                         content: `Playing ${getAudioName(audio)}`,
                         components: []
@@ -112,6 +117,11 @@ function run(bot, msg) {
                 }
             } catch (error) {
                 logError(bot, error)
+                const message = error.message ? error.message : error
+                event.update({
+                    content: `Unexpected error: ${message}`,
+                    components: []
+                })
             }
         })
     }
