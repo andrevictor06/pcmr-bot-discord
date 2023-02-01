@@ -64,12 +64,14 @@ function createServerQueue(msg) {
 }
 
 function idleListener() {
-    const musicQueue = getMusicPlay().getServerQueue()
-    if (musicQueue) {
-        serverQueue.connection.subscribe(musicQueue.player)
-        musicQueue.player.unpause()
+    if( serverQueue && serverQueue.connection){
+        const musicQueue = getMusicPlay().getServerQueue()
+        if (musicQueue) {
+            serverQueue.connection.subscribe(musicQueue.player)
+            musicQueue.player.unpause()
+        }
+        stop(!musicQueue)
     }
-    stop(!musicQueue)
 }
 
 function run(bot, msg) {
@@ -108,7 +110,7 @@ function run(bot, msg) {
                                         type: 2,
                                         label: "Para ae, na moral!",
                                         style: 1,
-                                        custom_id: "btn_stop_audio",
+                                        custom_id: process.env.ENVIRONMENT + "btn_stop_audio",
                                     }
                                 ]
                             }
@@ -116,7 +118,7 @@ function run(bot, msg) {
                     })
                 }
 
-                if( customId === "btn_stop_audio"){
+                if( customId === process.env.ENVIRONMENT + "btn_stop_audio"){
                     idleListener();
                     event.update({
                         content: `Stoped`,
