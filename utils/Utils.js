@@ -77,6 +77,10 @@ function isValidHttpUrl(string) {
     return url.protocol === "http:" || url.protocol === "https:";
 }
 
+function getMessageError(error) {
+    return error.message ? error.message : error
+}
+
 module.exports = {
     getRandomPlacaMae,
     getRandomProcessador,
@@ -84,5 +88,6 @@ module.exports = {
     startWithCommand,
     isValidHttpUrl,
     containsCommand,
-    executeCommand
+    executeCommand,
+    getMessageError
 }
