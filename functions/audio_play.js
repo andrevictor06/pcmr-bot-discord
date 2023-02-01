@@ -2,8 +2,6 @@ const { joinVoiceChannel, createAudioResource, createAudioPlayer, AudioPlayerSta
 const Utils = require("../utils/Utils")
 const fs = require('fs')
 const path = require("path")
-const musicPlay = require('./music_play')
-
 let serverQueue = null
 let hasListener = false
 
@@ -17,7 +15,7 @@ function stop(shouldDesconect) {
 }
 
 async function play(bot, msg, audio) {
-    const musicQueue = musicPlay.getServerQueue()
+    const musicQueue = getMusicPlay().getServerQueue()
 
     if (musicQueue) {
         const currentVoiceChannel = msg.member.voice.channel
@@ -43,7 +41,7 @@ async function play(bot, msg, audio) {
 }
 
 function createServerQueue(msg) {
-    const musicQueue = musicPlay.getServerQueue()
+    const musicQueue = getMusicPlay().getServerQueue()
     const voiceChannel = musicQueue ? musicQueue.voiceChannel : msg.member.voice.channel
     const connection = musicQueue
         ? musicQueue.connection
@@ -66,7 +64,7 @@ function createServerQueue(msg) {
 }
 
 function idleListener() {
-    const musicQueue = musicPlay.getServerQueue()
+    const musicQueue = getMusicPlay().getServerQueue()
     if (musicQueue) {
         serverQueue.connection.subscribe(musicQueue.player)
         musicQueue.player.unpause()
@@ -84,7 +82,7 @@ function run(bot, msg) {
                     type: 2,
                     label: getAudioName(audio),
                     style: 1,
-                    custom_id: "btn_audio_" + audio,
+                    custom_id: process.env.ENVIRONMENT + "btn_audio_" + audio,
                 }
             ]
         }
@@ -97,12 +95,32 @@ function run(bot, msg) {
         bot.on('interactionCreate', async (event) => {
             try {
                 const customId = event.customId
-                if (customId.startsWith("btn_audio_")) {
-                    let audio = customId.split("btn_audio_")[1]
+                if (customId.startsWith(process.env.ENVIRONMENT + "btn_audio_")) {
+                    let audio = customId.split(process.env.ENVIRONMENT + "btn_audio_")[1]
                     await play(bot, msg, audio)
                     event.update({
                         content: `Playing ${getAudioName(audio)}`,
-                        components: []
+                        components: [
+                            {
+                                type: 1,
+                                components: [
+                                    {
+                                        type: 2,
+                                        label: "Para ae, na moral!",
+                                        style: 1,
+                                        custom_id: "btn_stop_audio",
+                                    }
+                                ]
+                            }
+                        ]
+                    })
+                }
+
+                if( customId === "btn_stop_audio"){
+                    idleListener();
+                    event.update({
+                        content: `Stoped`,
+                        components:[]
                     })
                 }
             } catch (error) {
@@ -134,6 +152,10 @@ function helpComand(bot, msg) {
         value: "Lista os audios disponiveis",
         inline: false
     }
+}
+
+function getMusicPlay(){
+    return require('./music_play')
 }
 
 module.exports = {
