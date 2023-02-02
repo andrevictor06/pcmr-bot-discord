@@ -16,12 +16,10 @@ function helpComand(bot, msg) {
 
 function run(bot, msg){
     const audioPath = path.resolve(process.env.PATH_LOG)
-    console.log(audioPath);
     msg.reply({
         content: "Ta na mão, corno",
         files:[audioPath]
     })
-    console.log("bot, msg");
 }
 module.exports = {
     run, canHandle, helpComand
