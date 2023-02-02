@@ -14,6 +14,7 @@ function helpComand(bot, msg) {
     }
 }
 
+
 function run(bot, msg){
     const logPath = path.resolve(process.env.PATH_LOG)
     
@@ -30,25 +31,28 @@ function run(bot, msg){
                 files:[path.resolve(logPath, path_logs[0])]
             })    
         }else{
-            const logs = path_logs.map(log => {
-                return {
-                    type: 1,
-                    components: [
-                        {
-                            type: 2,
-                            label: log,
-                            style: 1,
-                            custom_id: process.env.ENVIRONMENT + "adm_log" + log,
-                        }
-                    ]
-                }
-            })
-            console.log( logs, " logs ");
-            msg.reply({
-                content: "Tem esses logs, corno",
-                components:logs
-            })
+            Utils.chunkArray(path_logs, 5).forEach( list =>{
+                const logs = []
+                list.forEach((log)=>{
+                    logs.push({
+                        type: 1,
+                        components: [
+                            {
+                                type: 2,
+                                label: log,
+                                style: 1,
+                                custom_id: process.env.ENVIRONMENT + "adm_log" + log,
+                            }
+                        ]
+                    })
+                })
 
+                msg.reply({
+                    content: "Tem esses logs, corno",
+                    components:logs
+                })
+            })
+            
             bot.on('interactionCreate', async (event) => {
                 try {
                     const customId = event.customId
