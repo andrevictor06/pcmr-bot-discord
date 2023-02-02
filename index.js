@@ -1,5 +1,6 @@
 const fs = require('fs');
 require('dotenv/config');
+const Utils = require("./utils/Utils")
 const { Client, Intents } = require("discord.js");
 
 const bot = new Client({
@@ -18,8 +19,12 @@ function listenMessages() {
         })
     bot.on("message", msg => {
         functions.forEach((fn) => {
-            if (fn.canHandle(bot, msg))
-                fn.run(bot, msg)
+            try {
+                if (fn.canHandle(bot, msg))
+                    fn.run(bot, msg)   
+            } catch (error) {
+                Utils.logError(bot, error, __filename)
+            }
         });
     });
 }
@@ -41,9 +46,9 @@ bot.on('ready', () => {
         if (process.env.ENVIRONMENT === "PRD" && process.env.ID_CHANNEL_LOG_BOT) {
             bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then(channel => {
                 channel.send({ content: "Bot iniciado em: " + new Date().toLocaleString("pt-BR") })
-            })
-            console.log(`Logged in as ${bot.user.tag}!`);
+            })            
         }
+        console.log(`Logged in as ${bot.user.tag}!`);
 
     } catch (error) { }
 });
