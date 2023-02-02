@@ -1,13 +1,9 @@
 const { joinVoiceChannel, AudioPlayerStatus, createAudioResource, createAudioPlayer } = require('@discordjs/voice')
-const ytdl = require("ytdl-core")
 const Utils = require("../utils/Utils")
-const ytsr = require('ytsr')
-const ytpl = require('ytpl')
 const audioPlay = require('./audio_play')
 const { ExpectedError } = require('../utils/expected_error')
+const playdl = require('play-dl');
 
-const oneMB = 1048576
-const dlChunkSize = oneMB * 3
 let serverQueue = null
 let timeoutId = null
 let inactivityIntervalId = null
@@ -71,10 +67,10 @@ async function play(bot, message) {
             createServerQueue(bot, message, message.member.voice.channel)
         }
 
-        const info = await getURL(bot, message)
-        if (!info) throw new ExpectedError("Music not found!")
+        const url = await getURL(bot, message)
+        if (!url) throw new ExpectedError("Nothing found!")
 
-        addToQueue(info, message, firstTime)
+        await addToQueue(url, message, firstTime)
         if (firstTime || playerIsIdle()) {
             next(bot)
         }
@@ -90,8 +86,9 @@ async function getURL(bot, message) {
         const url = new URL(args[1])
         if (url.searchParams.has("list")) {
             try {
-                const playlist = await ytpl(url.searchParams.get("list"), { limit: 30 })
-                return playlist.items.map(item => item.url)
+                const playlistInfo = await playdl.playlist_info(args[1], { incomplete: true })
+                const videos = await playlistInfo.all_videos()
+                return videos.filter(v => v.url != null).map(v => v.url)
             } catch (error) {
                 Utils.logError(bot, error, __filename)
             }
@@ -101,10 +98,9 @@ async function getURL(bot, message) {
     }
 
     const search = args.slice(1).join(" ")
-    const filter = (await ytsr.getFilters(search)).get('Type').get('Video')
-    const searchResults = await ytsr(filter.url, { limit: 1 })
-    if (searchResults.results > 0) {
-        return searchResults.items[0].url
+    const result = await playdl.search(search, { source: { youtube: 'video' }, limit: 1 })
+    if (result && result.length > 0) {
+        return result[0].url
     }
     return null
 }
@@ -114,10 +110,10 @@ async function addToQueue(songURL, message, firstTime = false) {
         serverQueue.songs = serverQueue.songs.concat(songURL)
         message.channel.send(`Added ${songURL.length} songs to the queue!`)
     } else {
-        serverQueue.songs.push(songURL)
+        const basicInfo = await loadSongInfo(songURL)
+        serverQueue.songs.push(basicInfo)
         if (!firstTime) {
-            const basicInfo = await ytdl.getBasicInfo(songURL)
-            message.channel.send(`${basicInfo.videoDetails.title} has been added to the queue!`)
+            message.channel.send(`**${basicInfo.video_details.title}** has been added to the queue!`)
         }
     }
 }
@@ -157,28 +153,18 @@ function createServerQueue(bot, message, voiceChannel) {
     }, 60000)
 }
 
-async function playSong(bot, songURL) {
+async function playSong(bot, song) {
     try {
-        if (!songURL) return delayedStop()
+        if (!song) return delayedStop()
         clearDelayedStopTimeout()
 
-        const song = await ytdl.getInfo(songURL)
-        if (!song) throw new ExpectedError(`Song with URL ${songURL} not found! Skipping...`)
+        const songWithInfo = await loadSongInfo(song)
+        const stream = await playdl.stream(songWithInfo.video_details.url, { quality: 1 })
+        const resource = createAudioResource(stream.stream, { inputType: stream.type })
 
-        const lowerBitrateFormat = ytdl.filterFormats(song.formats, 'audioonly')
-            .filter(format => format.audioBitrate != null)
-            .sort((format1, format2) => format1.audioBitrate - format2.audioBitrate)
-            .find(format => format.audioBitrate >= 60 && format.audioBitrate <= 128)
-
-        const stream = ytdl(song.videoDetails.video_url, {
-            highWaterMark: parseInt(lowerBitrateFormat.contentLength) + oneMB,
-            dlChunkSize: dlChunkSize,
-            format: lowerBitrateFormat
-        })
-        const resource = createAudioResource(stream)
         serverQueue.player.play(resource)
-        serverQueue.currentSong = song
-        serverQueue.textChannel.send(`Start playing: **${song.videoDetails.title}**`)
+        serverQueue.currentSong = songWithInfo
+        serverQueue.textChannel.send(`Start playing: **${songWithInfo.video_details.title}**`)
     } catch (error) {
         Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(Utils.getMessageError(error))
@@ -212,12 +198,12 @@ function stop(bot, message) {
     try {
         if (serverQueue) {
             if (audioPlay.getServerQueue()) throw new ExpectedError("An audio is running!")
-            serverQueue.textChannel.send("Falou man")
             clearInactivityInterval()
             clearDelayedStopTimeout()
             serverQueue.player.removeAllListeners()
             stopPlayer()
             serverQueue.connection.destroy()
+            serverQueue.textChannel.send("Falou man")
         }
         serverQueue = null
     } catch (error) {
@@ -239,27 +225,41 @@ function next(bot) {
     playSong(bot, serverQueue.songs.shift())
 }
 
-function queue(message) {
+function queue(bot, message) {
     if (serverQueue && serverQueue.songs.length > 0) {
         message.channel.send(`There is **${serverQueue.songs.length}** songs in the queue!`)
     }
 }
 
-function currentSong(message) {
+function currentSong(bot, message) {
     if (serverQueue) {
-        message.channel.send(`Current song: ${serverQueue.currentSong.videoDetails.video_url}`)
+        message.channel.send(`Current song: ${serverQueue.currentSong.video_details.url}`)
     }
 }
 
-async function nextSong(message) {
+async function nextSong(bot, message) {
     if (serverQueue) {
         if (serverQueue.songs.length > 0) {
-            const basicInfo = await ytdl.getBasicInfo(serverQueue.songs[0])
-            message.channel.send(`Next song: ${basicInfo.videoDetails.video_url}`)
+            try {
+                const songWithInfo = await loadSongInfo(serverQueue.songs[0])
+                message.channel.send(`Next song: ${songWithInfo.video_details.url}`)
+            } catch (error) {
+                Utils.logError(error)
+                message.channel.send(Utils.getMessageError(error))
+            }
         } else {
             message.channel.send("Queue is **empty**")
         }
     }
+}
+
+async function loadSongInfo(possibleSongInfo) {
+    if (typeof possibleSongInfo == 'string') {
+        const songWithInfo = await playdl.video_basic_info(possibleSongInfo)
+        if (!songWithInfo) throw new ExpectedError("Fail to load song info")
+        return songWithInfo
+    }
+    return possibleSongInfo
 }
 
 function stopPlayer() {
