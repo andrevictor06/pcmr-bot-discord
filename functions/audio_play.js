@@ -106,7 +106,7 @@ function run(bot, msg) {
                 const customId = event.customId
                 if (customId.startsWith(process.env.ENVIRONMENT + "btn_audio_")) {
                     let audio = customId.split(process.env.ENVIRONMENT + "btn_audio_")[1]
-                    await play(bot, msg, audio)
+                    await play(bot, event, audio)
                     event.update({
                         content: `Playing ${getAudioName(audio)}`,
                         components: [
