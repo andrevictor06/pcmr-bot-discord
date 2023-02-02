@@ -38,7 +38,7 @@ async function play(bot, msg, audio) {
         }
     }
     if (!serverQueue) {
-        createServerQueue(msg)
+        createServerQueue(bot, msg)
     }
     if (serverQueue && serverQueue.player.state.status != AudioPlayerStatus.Idle) {
         serverQueue.player.off(AudioPlayerStatus.Idle, stop)
@@ -51,7 +51,7 @@ async function play(bot, msg, audio) {
     serverQueue.player.play(resource)
 }
 
-function createServerQueue(msg) {
+function createServerQueue(bot, msg) {
     const musicQueue = getMusicPlay().getServerQueue()
     const voiceChannel = musicQueue ? musicQueue.voiceChannel : msg.member.voice.channel
     const connection = musicQueue
@@ -71,7 +71,12 @@ function createServerQueue(msg) {
         playing: true
     }
     serverQueue.connection.subscribe(serverQueue.player)
-    serverQueue.player.on(AudioPlayerStatus.Idle, stop)
+    serverQueue.player
+        .on(AudioPlayerStatus.Idle, stop)
+        .on("error", error => {
+            Utils.logError(bot, error, __filename)
+            msg.channel.send(Utils.getMessageError(error))
+        })
 }
 
 function run(bot, msg) {
