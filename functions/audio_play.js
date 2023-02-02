@@ -2,25 +2,36 @@ const { joinVoiceChannel, createAudioResource, createAudioPlayer, AudioPlayerSta
 const Utils = require("../utils/Utils")
 const fs = require('fs')
 const path = require("path")
+const { ExpectedError } = require('../utils/expected_error')
+
 let serverQueue = null
 let hasListener = false
 
-function stop(shouldDesconect) {
-    serverQueue.player.removeAllListeners()
-    serverQueue.player.stop(true)
-    if (shouldDesconect) {
-        serverQueue.connection.destroy()
+function stop() {
+    if (!serverQueue) throw new Error("Not playing anything!")
+    const musicQueue = getMusicPlay().getServerQueue()
+    if (musicQueue) {
+        serverQueue.connection.subscribe(musicQueue.player)
+        musicQueue.player.unpause()
+    }
+    if (serverQueue) {
+        serverQueue.player.removeAllListeners()
+        serverQueue.player.stop(true)
+        if (!musicQueue) {
+            serverQueue.connection.destroy()
+        }
     }
     serverQueue = null
 }
 
 async function play(bot, msg, audio) {
+    Utils.checkVoiceChannelPreConditions(msg)
     const musicQueue = getMusicPlay().getServerQueue()
 
     if (musicQueue) {
         const currentVoiceChannel = msg.member.voice.channel
         if (musicQueue.voiceChannel.id != currentVoiceChannel.id) {
-            throw new Error("I'm running in another voice channel!")
+            throw new ExpectedError("I'm running in another voice channel!")
         }
         if (musicQueue.player.state.status != AudioPlayerStatus.Paused) {
             musicQueue.player.pause(true)
@@ -30,9 +41,9 @@ async function play(bot, msg, audio) {
         createServerQueue(msg)
     }
     if (serverQueue && serverQueue.player.state.status != AudioPlayerStatus.Idle) {
-        serverQueue.player.off(AudioPlayerStatus.Idle, idleListener)
+        serverQueue.player.off(AudioPlayerStatus.Idle, stop)
         serverQueue.player.stop(true)
-        serverQueue.player.on(AudioPlayerStatus.Idle, idleListener)
+        serverQueue.player.on(AudioPlayerStatus.Idle, stop)
     }
 
     const audioPath = path.resolve("audio", audio)
@@ -60,18 +71,7 @@ function createServerQueue(msg) {
         playing: true
     }
     serverQueue.connection.subscribe(serverQueue.player)
-    serverQueue.player.on(AudioPlayerStatus.Idle, idleListener)
-}
-
-function idleListener() {
-    if( serverQueue && serverQueue.connection){
-        const musicQueue = getMusicPlay().getServerQueue()
-        if (musicQueue) {
-            serverQueue.connection.subscribe(musicQueue.player)
-            musicQueue.player.unpause()
-        }
-        stop(!musicQueue)
-    }
+    serverQueue.player.on(AudioPlayerStatus.Idle, stop)
 }
 
 function run(bot, msg) {
@@ -118,17 +118,17 @@ function run(bot, msg) {
                     })
                 }
 
-                if( customId === process.env.ENVIRONMENT + "btn_stop_audio"){
-                    idleListener();
+                if (customId === process.env.ENVIRONMENT + "btn_stop_audio") {
+                    stop()
                     event.update({
-                        content: `Stoped`,
-                        components:[]
+                        content: `Parei man`,
+                        components: []
                     })
                 }
             } catch (error) {
                 Utils.logError(bot, error, __filename)
                 event.update({
-                    content: `Unexpected error: ${Utils.getMessageError(error)}`,
+                    content: Utils.getMessageError(error),
                     components: []
                 })
             }
@@ -156,7 +156,7 @@ function helpComand(bot, msg) {
     }
 }
 
-function getMusicPlay(){
+function getMusicPlay() {
     return require('./music_play')
 }
 

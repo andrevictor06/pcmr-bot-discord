@@ -1,4 +1,5 @@
 const path = require('path');
+const { ExpectedError } = require('./expected_error')
 
 LISTA_IMAGENS_PLACAS_MAE = [
     "https://support.cyberpowerpc.com/hc/article_attachments/360028078513/broken_PCI_01.jpg",
@@ -82,7 +83,11 @@ function isValidHttpUrl(string) {
 }
 
 function getMessageError(error) {
-    return error.message ? error.message : error
+    const message = error.message ? error.message : error
+    if (error instanceof ExpectedError) {
+        return message
+    }
+    return `Unexpected error: ${message}`
 }
 
 async function logError(bot, error, filename) {
@@ -90,6 +95,17 @@ async function logError(bot, error, filename) {
     const channel = await bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
     const errorContent = error.stack ? error.stack : error
     channel.send({ content: '> Erro no ' + path.basename(filename) + '\n```' + errorContent + '```' })
+}
+
+function checkVoiceChannelPreConditions(message) {
+    const voiceChannel = message.member.voice.channel
+    if (!voiceChannel)
+        throw new ExpectedError("You need to be in a voice channel to play music!")
+
+    const permissions = voiceChannel.permissionsFor(message.client.user)
+    if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
+        throw new ExpectedError("I need the permissions to join and speak in your voice channel!")
+    }
 }
 
 module.exports = {
@@ -101,5 +117,6 @@ module.exports = {
     containsCommand,
     executeCommand,
     getMessageError,
-    logError
+    logError,
+    checkVoiceChannelPreConditions
 }

@@ -4,6 +4,7 @@ const Utils = require("../utils/Utils")
 const ytsr = require('ytsr')
 const ytpl = require('ytpl')
 const audioPlay = require('./audio_play')
+const { ExpectedError } = require('../utils/expected_error')
 
 const oneMB = 1048576
 const dlChunkSize = oneMB * 3
@@ -63,25 +64,15 @@ const commands = {
 }
 
 async function play(bot, message) {
-    const voiceChannel = message.member.voice.channel
-    if (!voiceChannel)
-        return message.channel.send("You need to be in a voice channel to play music!")
-
-    const permissions = voiceChannel.permissionsFor(message.client.user)
-    if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-        return message.channel.send("I need the permissions to join and speak in your voice channel!")
-    }
-
     try {
-        const info = await getURL(message)
-        if (!info) {
-            return message.channel.send("Music not found!")
-        }
-
+        Utils.checkVoiceChannelPreConditions(message)
         const firstTime = !serverQueue
         if (firstTime) {
-            createServerQueue(bot, message, voiceChannel)
+            createServerQueue(bot, message, message.member.voice.channel)
         }
+
+        const info = await getURL(message)
+        if (!info) throw new ExpectedError("Music not found!")
 
         addToQueue(info, message, firstTime)
         if (firstTime || playerIsIdle()) {
@@ -89,7 +80,7 @@ async function play(bot, message) {
         }
     } catch (error) {
         Utils.logError(bot, error, __filename)
-        message.channel.send(`Unexpected error: ${Utils.getMessageError(error)}`)
+        message.channel.send(Utils.getMessageError(error))
     }
 }
 
@@ -165,10 +156,9 @@ async function playSong(bot, songURL) {
 
         clearDelayedStopTimeout()
         const song = await ytdl.getInfo(songURL)
-        if (!song) {
-            serverQueue.textChannel.send(`Song with URL ${songURL} not found! Skipping...`)
-            return next(bot)
-        }
+
+        if (!song) throw new ExpectedError(`Song with URL ${songURL} not found! Skipping...`)
+
         const lowerBitrateFormat = ytdl.filterFormats(song.formats, 'audioonly')
             .filter(format => format.audioBitrate != null)
             .sort((format1, format2) => format1.audioBitrate - format2.audioBitrate)
@@ -185,7 +175,7 @@ async function playSong(bot, songURL) {
         serverQueue.textChannel.send(`Start playing: **${song.videoDetails.title}**`)
     } catch (error) {
         Utils.logError(bot, error, __filename)
-        serverQueue.textChannel.send(`Unexpected error: ${Utils.getMessageError(error)}`)
+        serverQueue.textChannel.send(Utils.getMessageError(error))
         next(bot)
     }
 }
@@ -212,16 +202,21 @@ function playerIsIdle() {
     return serverQueue.player.state.status == AudioPlayerStatus.Idle && serverQueue.songs.length == 0
 }
 
-function stop() {
-    if (serverQueue) {
-        serverQueue.textChannel.send("Bye!")
-        clearInactivityInterval()
-        clearDelayedStopTimeout()
-        serverQueue.player.removeAllListeners()
-        stopPlayer()
-        serverQueue.connection.destroy()
+function stop(bot, message) {
+    try {
+        if (serverQueue) {
+            if (audioPlay.getServerQueue()) throw new ExpectedError("An audio is running!")
+            serverQueue.textChannel.send("Bye!")
+            clearInactivityInterval()
+            clearDelayedStopTimeout()
+            serverQueue.player.removeAllListeners()
+            stopPlayer()
+            serverQueue.connection.destroy()
+        }
+        serverQueue = null
+    } catch (error) {
+        message.channel.send(Utils.getMessageError(error))
     }
-    serverQueue = null
 }
 
 function skip() {
