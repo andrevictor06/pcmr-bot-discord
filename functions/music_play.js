@@ -203,7 +203,8 @@ function stop(bot, message) {
             serverQueue.player.removeAllListeners()
             stopPlayer()
             serverQueue.connection.destroy()
-            serverQueue.textChannel.send("Falou man")
+            const textChannel = message && message.channel ? message.channel : serverQueue.textChannel
+            textChannel.send("Falou man")
         }
         serverQueue = null
     } catch (error) {
