@@ -119,7 +119,7 @@ async function addToQueue(songURL, message, firstTime = false) {
 }
 
 function createServerQueue(bot, message, voiceChannel) {
-    if (audioPlay.getServerQueue()) throw new Error("An audio is running!")
+    if (audioPlay.getServerQueue()) throw new ExpectedError("An audio is running!")
     serverQueue = {
         player: createAudioPlayer(),
         textChannel: message.channel,
@@ -187,7 +187,7 @@ function clearInactivityInterval() {
 }
 
 function delayedStop(bot, message) {
-    timeoutId = setTimeout(() => stop(bot, message), 60000)
+    timeoutId = setTimeout(() => stop(bot, message), 5000)
 }
 
 function playerIsIdle() {
@@ -197,14 +197,15 @@ function playerIsIdle() {
 function stop(bot, message) {
     try {
         if (serverQueue) {
-            if (audioPlay.getServerQueue()) throw new ExpectedError("An audio is running!")
             clearInactivityInterval()
             clearDelayedStopTimeout()
             serverQueue.player.removeAllListeners()
             stopPlayer()
-            serverQueue.connection.destroy()
-            const textChannel = message && message.channel ? message.channel : serverQueue.textChannel
-            textChannel.send("Falou man")
+            if (!audioPlay.getServerQueue()) {
+                serverQueue.connection.destroy()
+                const textChannel = message && message.channel ? message.channel : serverQueue.textChannel
+                textChannel.send("Falou man")
+            }
         }
         serverQueue = null
     } catch (error) {
