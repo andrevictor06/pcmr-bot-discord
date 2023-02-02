@@ -148,14 +148,14 @@ function createServerQueue(bot, message, voiceChannel) {
         }
 
         if (!serverQueue.voiceChannel.members || serverQueue.voiceChannel.members.size == 0) {
-            delayedStop()
+            delayedStop(bot, message)
         }
     }, 60000)
 }
 
 async function playSong(bot, song) {
     try {
-        if (!song) return delayedStop()
+        if (!song) return delayedStop(bot)
         clearDelayedStopTimeout()
 
         const songWithInfo = await loadSongInfo(song)
@@ -186,8 +186,8 @@ function clearInactivityInterval() {
     }
 }
 
-function delayedStop() {
-    timeoutId = setTimeout(() => stop(), 30000)
+function delayedStop(bot, message) {
+    timeoutId = setTimeout(() => stop(bot, message), 60000)
 }
 
 function playerIsIdle() {
@@ -203,11 +203,14 @@ function stop(bot, message) {
             serverQueue.player.removeAllListeners()
             stopPlayer()
             serverQueue.connection.destroy()
-            serverQueue.textChannel.send("Falou man")
+            const textChannel = message && message.channel ? message.channel : serverQueue.textChannel
+            textChannel.send("Falou man")
         }
         serverQueue = null
     } catch (error) {
-        message.channel.send(Utils.getMessageError(error))
+        if (message) {
+            message.channel.send(Utils.getMessageError(error))
+        }
     }
 }
 
