@@ -187,7 +187,7 @@ function clearInactivityInterval() {
 }
 
 function delayedStop(bot, message) {
-    timeoutId = setTimeout(() => stop(bot, message), 5000)
+    timeoutId = setTimeout(() => stop(bot, message), 60000)
 }
 
 function playerIsIdle() {
