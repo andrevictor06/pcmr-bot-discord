@@ -10,7 +10,7 @@ let hasListener = false
 // TODO: ta_pegando_fogo_bixo.mp3
 
 function stop() {
-    if (!serverQueue) throw new ExpectedError("Not playing anything!")
+    if (!serverQueue) throw new ExpectedError("Já parei man")
     const musicQueue = getMusicPlay().getServerQueue()
     if (musicQueue) {
         serverQueue.connection.subscribe(musicQueue.player)
@@ -49,7 +49,7 @@ async function play(bot, msg, audio) {
     }
 
     const audioPath = path.resolve("audio", audio)
-    const resource = createAudioResource(fs.createReadStream(audioPath))
+    const resource = createAudioResource(fs.createReadStream(audioPath, { highWaterMark: 1024 * 1024 }))
     serverQueue.player.play(resource)
 }
 

@@ -1,4 +1,4 @@
-const ytdl = require("ytdl-core")
+const playdl = require('play-dl');
 const Utils = require("../utils/Utils")
 
 let revorve = [false, false, false, false, false, false]
@@ -60,8 +60,8 @@ async function run(bot, msg) {
     try {
         const args = msg.content.split(" ")
         if (args.length > 1) {
-            const songInfo = await ytdl.getInfo(args[1])
-            if (songInfo.videoDetails.title.includes("Manoel Gomes")) {
+            const songInfo = await playdl.video_basic_info(args[1])
+            if (songInfo.video_details.title.includes("Manoel Gomes")) {
                 roletaRussa(bot, msg)
             }
         }
