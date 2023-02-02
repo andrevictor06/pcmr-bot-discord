@@ -16,8 +16,7 @@ function helpComand(bot, msg) {
 
 function run(bot, msg){
     const logPath = path.resolve(process.env.PATH_LOG)
-    const message = {};
-    const logs = []
+    
     const path_logs = fs.readdirSync(logPath)
     
     if( ! path_logs){
@@ -31,19 +30,20 @@ function run(bot, msg){
                 files:[path.resolve(logPath, path_logs[0])]
             })    
         }else{
-            path_logs.forEach(file => {
-                logs.push({
+            const logs = path_logs.map(log => {
+                return {
                     type: 1,
                     components: [
                         {
                             type: 2,
-                            label: file,
+                            label: log,
                             style: 1,
-                            custom_id: process.env.ENVIRONMENT + "adm_log" + file,
+                            custom_id: process.env.ENVIRONMENT + "adm_log" + log,
                         }
                     ]
-                })
+                }
             })
+            console.log( logs, " logs ");
             msg.reply({
                 content: "Tem esses logs, corno",
                 components:logs
