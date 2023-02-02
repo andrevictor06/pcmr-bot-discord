@@ -71,7 +71,7 @@ async function play(bot, message) {
             createServerQueue(bot, message, message.member.voice.channel)
         }
 
-        const info = await getURL(message)
+        const info = await getURL(bot, message)
         if (!info) throw new ExpectedError("Music not found!")
 
         addToQueue(info, message, firstTime)
@@ -84,13 +84,17 @@ async function play(bot, message) {
     }
 }
 
-async function getURL(message) {
+async function getURL(bot, message) {
     const args = message.content.split(" ")
     if (Utils.isValidHttpUrl(args[1])) {
         const url = new URL(args[1])
         if (url.searchParams.has("list")) {
-            const playlist = await ytpl(url.searchParams.get("list"), { limit: 30 })
-            return playlist.items.map(item => item.url)
+            try {
+                const playlist = await ytpl(url.searchParams.get("list"), { limit: 30 })
+                return playlist.items.map(item => item.url)
+            } catch (error) {
+                Utils.logError(bot, error, __filename)
+            }
         }
 
         return args[1]
@@ -137,7 +141,10 @@ function createServerQueue(bot, message, voiceChannel) {
 
     serverQueue.player
         .on(AudioPlayerStatus.Idle, () => next(bot))
-        .on("error", error => Utils.logError(bot, error, __filename))
+        .on("error", error => {
+            Utils.logError(bot, error, __filename)
+            message.channel.send(Utils.getMessageError(error))
+        })
 
     inactivityIntervalId = setInterval(() => {
         if (!serverQueue) {
