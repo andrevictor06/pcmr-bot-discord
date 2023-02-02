@@ -19,8 +19,8 @@ function run(bot, msg){
     const logPath = path.resolve(process.env.PATH_LOG)
     
     const path_logs = fs.readdirSync(logPath)
-    
-    if( ! path_logs){
+    console.log(path_logs, " path_logs");
+    if( path_logs.length == 0){
         msg.reply({
             content: "Não tem log, corno"
         })
