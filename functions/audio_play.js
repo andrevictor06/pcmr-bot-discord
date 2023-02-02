@@ -6,12 +6,13 @@ const { ExpectedError } = require('../utils/expected_error')
 
 let serverQueue = null
 let hasListener = false
+let musicPlay = null
 
 // TODO: ta_pegando_fogo_bixo.mp3
 
 function stop() {
     if (!serverQueue) throw new ExpectedError("Já parei man")
-    const musicQueue = getMusicPlay().getServerQueue()
+    const musicQueue = musicPlay.getServerQueue()
     if (musicQueue) {
         serverQueue.connection.subscribe(musicQueue.player)
         musicQueue.player.unpause()
@@ -28,7 +29,7 @@ function stop() {
 
 async function play(bot, msg, audio) {
     Utils.checkVoiceChannelPreConditions(msg)
-    const musicQueue = getMusicPlay().getServerQueue()
+    const musicQueue = musicPlay.getServerQueue()
 
     if (musicQueue) {
         const currentVoiceChannel = msg.member.voice.channel
@@ -54,7 +55,7 @@ async function play(bot, msg, audio) {
 }
 
 function createServerQueue(bot, msg) {
-    const musicQueue = getMusicPlay().getServerQueue()
+    const musicQueue = musicPlay.getServerQueue()
     const voiceChannel = musicQueue ? musicQueue.voiceChannel : msg.member.voice.channel
     const connection = musicQueue
         ? musicQueue.connection
@@ -82,6 +83,7 @@ function createServerQueue(bot, msg) {
 }
 
 function run(bot, msg) {
+    if (!musicPlay) musicPlay = getMusicPlay()
     const audios = fs.readdirSync("./audio")
     const buttons = audios.map(audio => {
         return {
