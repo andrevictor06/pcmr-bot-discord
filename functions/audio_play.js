@@ -7,6 +7,8 @@ const { ExpectedError } = require('../utils/expected_error')
 let serverQueue = null
 let hasListener = false
 
+// TODO: ta_pegando_fogo_bixo.mp3
+
 function stop() {
     if (!serverQueue) throw new ExpectedError("Not playing anything!")
     const musicQueue = getMusicPlay().getServerQueue()
