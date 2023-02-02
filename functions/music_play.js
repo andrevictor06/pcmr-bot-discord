@@ -153,10 +153,9 @@ function createServerQueue(bot, message, voiceChannel) {
 async function playSong(bot, songURL) {
     try {
         if (!songURL) return delayedStop()
-
         clearDelayedStopTimeout()
-        const song = await ytdl.getInfo(songURL)
 
+        const song = await ytdl.getInfo(songURL)
         if (!song) throw new ExpectedError(`Song with URL ${songURL} not found! Skipping...`)
 
         const lowerBitrateFormat = ytdl.filterFormats(song.formats, 'audioonly')
@@ -206,7 +205,7 @@ function stop(bot, message) {
     try {
         if (serverQueue) {
             if (audioPlay.getServerQueue()) throw new ExpectedError("An audio is running!")
-            serverQueue.textChannel.send("Bye!")
+            serverQueue.textChannel.send("Falou man")
             clearInactivityInterval()
             clearDelayedStopTimeout()
             serverQueue.player.removeAllListeners()

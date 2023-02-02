@@ -8,7 +8,7 @@ let serverQueue = null
 let hasListener = false
 
 function stop() {
-    if (!serverQueue) throw new Error("Not playing anything!")
+    if (!serverQueue) throw new ExpectedError("Not playing anything!")
     const musicQueue = getMusicPlay().getServerQueue()
     if (musicQueue) {
         serverQueue.connection.subscribe(musicQueue.player)
