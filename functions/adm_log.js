@@ -33,7 +33,6 @@ function run(bot, msg){
         }else{
             path_logs.forEach(file => {
                 logs.push({
-                    log: file,
                     type: 1,
                     components: [
                         {
