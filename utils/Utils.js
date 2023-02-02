@@ -92,9 +92,11 @@ function getMessageError(error) {
 
 async function logError(bot, error, filename) {
     console.error(error)
-    const channel = await bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
-    const errorContent = error.stack ? error.stack : error
-    channel.send({ content: '> Erro no ' + path.basename(filename) + '\n```' + errorContent + '```' })
+    if (!(error instanceof ExpectedError)) {
+        const channel = await bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
+        const errorContent = error.stack ? error.stack : error
+        channel.send({ content: '> Erro no ' + path.basename(filename) + '\n```' + errorContent + '```' })
+    }
 }
 
 function checkVoiceChannelPreConditions(message) {

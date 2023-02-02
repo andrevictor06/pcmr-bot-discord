@@ -1,6 +1,4 @@
-class ExpectedError extends Error {
-
-}
+class ExpectedError extends Error { }
 
 module.exports = {
     ExpectedError
