@@ -9,7 +9,7 @@ function canHandle(bot, msg) {
 function helpComand(bot, msg) {
     return {
         name: Utils.command("adm_log"),
-        value: "Retorna o log de erro do sistema",
+        value: "Retorna o log do sistema",
         inline: false
     }
 }
