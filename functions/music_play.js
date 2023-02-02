@@ -201,9 +201,11 @@ function stop(bot, message) {
             clearDelayedStopTimeout()
             serverQueue.player.removeAllListeners()
             stopPlayer()
-            if (!audioPlay.getServerQueue()) {
+            const textChannel = message && message.channel ? message.channel : serverQueue.textChannel
+            if (audioPlay.getServerQueue()) {
+                textChannel.send("Parei as músicas aqui man")
+            } else {
                 serverQueue.connection.destroy()
-                const textChannel = message && message.channel ? message.channel : serverQueue.textChannel
                 textChannel.send("Falou man")
             }
         }
@@ -242,18 +244,18 @@ function currentSong(bot, message) {
 }
 
 async function nextSong(bot, message) {
-    if (serverQueue) {
-        if (serverQueue.songs.length > 0) {
-            try {
+    try {
+        if (serverQueue) {
+            if (serverQueue.songs.length > 0) {
                 const songWithInfo = await loadSongInfo(serverQueue.songs[0])
                 message.channel.send(`Next song: ${songWithInfo.video_details.url}`)
-            } catch (error) {
-                Utils.logError(error)
-                message.channel.send(Utils.getMessageError(error))
+            } else {
+                message.channel.send("Queue is **empty**")
             }
-        } else {
-            message.channel.send("Queue is **empty**")
         }
+    } catch (error) {
+        Utils.logError(error)
+        message.channel.send(Utils.getMessageError(error))
     }
 }
 
