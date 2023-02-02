@@ -211,14 +211,16 @@ function stop(bot, message) {
         }
         serverQueue = null
     } catch (error) {
+        Utils.logError(error)
         if (message) {
             message.channel.send(Utils.getMessageError(error))
         }
     }
 }
 
-function skip() {
+function skip(bot, message) {
     if (serverQueue) {
+        if (audioPlay.getServerQueue()) return message.channel.send("Tem um áudio tocando man, calma ae")
         if (serverQueue.songs.length > 0) {
             stopPlayer()
         } else {
