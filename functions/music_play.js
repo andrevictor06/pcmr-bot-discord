@@ -70,8 +70,9 @@ async function play(bot, message) {
         const url = await getURL(bot, message)
         if (!url) throw new ExpectedError("Nothing found!")
 
-        await addToQueue(url, message, firstTime)
-        if (firstTime || playerIsIdle() || timeoutId) {
+        const isIdle = playerIsIdle()
+        await addToQueue(url, message, !firstTime && !isIdle)
+        if (firstTime || isIdle) {
             next(bot)
         }
     } catch (error) {
@@ -105,14 +106,14 @@ async function getURL(bot, message) {
     return null
 }
 
-async function addToQueue(songURL, message, firstTime = false) {
+async function addToQueue(songURL, message, showAddedMessage = false) {
     if (Array.isArray(songURL)) {
         serverQueue.songs = serverQueue.songs.concat(songURL)
         message.channel.send(`Added ${songURL.length} songs to the queue!`)
     } else {
         const basicInfo = await loadSongInfo(songURL)
         serverQueue.songs.push(basicInfo)
-        if (!firstTime) {
+        if (showAddedMessage) {
             message.channel.send(`**${basicInfo.video_details.title}** has been added to the queue!`)
         }
     }
@@ -191,7 +192,7 @@ function delayedStop(bot, message) {
 }
 
 function playerIsIdle() {
-    return serverQueue.player.state.status == AudioPlayerStatus.Idle && serverQueue.songs.length == 0
+    return serverQueue.player.state.status == AudioPlayerStatus.Idle && timeoutId
 }
 
 function stop(bot, message) {
