@@ -102,25 +102,25 @@ async function logError(bot, error, filename) {
 function checkVoiceChannelPreConditions(message) {
     const voiceChannel = message.member.voice.channel
     if (!voiceChannel)
-        throw new ExpectedError("You need to be in a voice channel to play music!")
+        throw new ExpectedError("Cadê o canal de voz?")
 
     const permissions = voiceChannel.permissionsFor(message.client.user)
     if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-        throw new ExpectedError("I need the permissions to join and speak in your voice channel!")
+        throw new ExpectedError("Tô sem permissão, fala com o corno do adm!")
     }
 }
 
 
-function chunkArray (arr, len) {
+function chunkArray(arr, len) {
 
     var chunks = [],
         i = 0,
         n = arr.length;
-  
+
     while (i < n) {
-      chunks.push(arr.slice(i, i += len));
+        chunks.push(arr.slice(i, i += len));
     }
-  
+
     return chunks;
 }
 module.exports = {
