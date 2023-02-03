@@ -62,13 +62,15 @@ const commands = {
 async function play(bot, message) {
     try {
         Utils.checkVoiceChannelPreConditions(message)
+
+        if (message.content.split(" ").length == 1) throw new ExpectedError("Cadê a música man?")
         const firstTime = !serverQueue
         if (firstTime) {
             createServerQueue(bot, message, message.member.voice.channel)
         }
 
         const url = await getURL(bot, message)
-        if (!url) throw new ExpectedError("Nothing found!")
+        if (!url) throw new ExpectedError("Achei nada man")
 
         const isIdle = playerIsIdle()
         await addToQueue(url, message, !firstTime && !isIdle)
@@ -109,12 +111,12 @@ async function getURL(bot, message) {
 async function addToQueue(songURL, message, showAddedMessage = false) {
     if (Array.isArray(songURL)) {
         serverQueue.songs = serverQueue.songs.concat(songURL)
-        message.channel.send(`Added ${songURL.length} songs to the queue!`)
+        message.channel.send(`Adicionei ${songURL.length} músicas na fila!`)
     } else {
         const basicInfo = await loadSongInfo(songURL)
         serverQueue.songs.push(basicInfo)
         if (showAddedMessage) {
-            message.channel.send(`**${basicInfo.video_details.title}** has been added to the queue!`)
+            message.channel.send(`**${basicInfo.video_details.title}** foi adicionada na fila!`)
         }
     }
 }
@@ -140,7 +142,7 @@ function createServerQueue(bot, message, voiceChannel) {
         .on(AudioPlayerStatus.Idle, () => next(bot))
         .on("error", error => {
             Utils.logError(bot, error, __filename)
-            message.channel.send(Utils.getMessageError(error))
+            serverQueue.textChannel.send(Utils.getMessageError(error))
         })
 
     inactivityIntervalId = setInterval(() => {
@@ -149,14 +151,17 @@ function createServerQueue(bot, message, voiceChannel) {
         }
 
         if (!serverQueue.voiceChannel.members || serverQueue.voiceChannel.members.size == 0) {
-            delayedStop(bot, message)
+            delayedStop(bot)
         }
     }, 60000)
 }
 
 async function playSong(bot, song) {
     try {
-        if (!song) return delayedStop(bot)
+        if (!song) {
+            serverQueue.currentSong = null
+            return delayedStop(bot)
+        }
         clearDelayedStopTimeout()
 
         const songWithInfo = await loadSongInfo(song)
@@ -165,7 +170,7 @@ async function playSong(bot, song) {
 
         serverQueue.player.play(resource)
         serverQueue.currentSong = songWithInfo
-        serverQueue.textChannel.send(`Start playing: **${songWithInfo.video_details.title}**`)
+        serverQueue.textChannel.send(`Tocando: **${songWithInfo.video_details.title}**`)
     } catch (error) {
         Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(Utils.getMessageError(error))
@@ -210,6 +215,7 @@ function stop(bot, message) {
                 textChannel.send("Falou man")
             }
         }
+
         serverQueue = null
     } catch (error) {
         Utils.logError(error)
@@ -220,13 +226,12 @@ function stop(bot, message) {
 }
 
 function skip(bot, message) {
-    if (serverQueue) {
-        if (audioPlay.getServerQueue()) return message.channel.send("Tem um áudio tocando man, calma ae")
-        if (serverQueue.songs.length > 0) {
-            stopPlayer()
-        } else {
-            serverQueue.textChannel.send("Queue is **empty**")
-        }
+    if (audioPlay.getServerQueue()) return message.channel.send("Tem um áudio tocando man, calma ae")
+
+    if (serverQueue.songs.length > 0) {
+        stopPlayer()
+    } else {
+        message.channel.send("Fila tá vazia man")
     }
 }
 
@@ -235,26 +240,28 @@ function next(bot) {
 }
 
 function queue(bot, message) {
-    if (serverQueue && serverQueue.songs.length > 0) {
-        message.channel.send(`There is **${serverQueue.songs.length}** songs in the queue!`)
+    if (serverQueue.songs.length > 0) {
+        message.channel.send(`Tem **${serverQueue.songs.length}** música(s) na fila!`)
+    } else {
+        message.channel.send("Fila tá vazia man")
     }
 }
 
 function currentSong(bot, message) {
-    if (serverQueue) {
-        message.channel.send(`Current song: ${serverQueue.currentSong.video_details.url}`)
+    if (serverQueue.currentSong) {
+        message.channel.send(`Tá tocando isso aqui: ${serverQueue.currentSong.video_details.url}`)
+    } else {
+        message.channel.send("Tem nada tocando man")
     }
 }
 
 async function nextSong(bot, message) {
     try {
-        if (serverQueue) {
-            if (serverQueue.songs.length > 0) {
-                const songWithInfo = await loadSongInfo(serverQueue.songs[0])
-                message.channel.send(`Next song: ${songWithInfo.video_details.url}`)
-            } else {
-                message.channel.send("Queue is **empty**")
-            }
+        if (serverQueue.songs.length > 0) {
+            const songWithInfo = await loadSongInfo(serverQueue.songs[0])
+            message.channel.send(`Próxima música: ${songWithInfo.video_details.url}`)
+        } else {
+            message.channel.send("Fila tá vazia man")
         }
     } catch (error) {
         Utils.logError(error)
@@ -265,19 +272,21 @@ async function nextSong(bot, message) {
 async function loadSongInfo(possibleSongInfo) {
     if (typeof possibleSongInfo == 'string') {
         const songWithInfo = await playdl.video_basic_info(possibleSongInfo)
-        if (!songWithInfo) throw new ExpectedError("Fail to load song info")
+        if (!songWithInfo) throw new ExpectedError("Não consegui achar a música man")
         return songWithInfo
     }
     return possibleSongInfo
 }
 
 function stopPlayer() {
-    if (serverQueue) {
-        serverQueue.player.stop(true)
-    }
+    if (!serverQueue) throw new ExpectedError("Opa, tem nada tocando man")
+
+    serverQueue.player.stop(true)
 }
 
 function run(bot, msg) {
+    if (!Utils.startWithCommand(msg, "play") && !serverQueue) return msg.channel.send("Nem tô na sala man")
+
     Utils.executeCommand(bot, msg, commands)
 }
 
