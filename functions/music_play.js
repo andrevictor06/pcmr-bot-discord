@@ -158,7 +158,10 @@ function createServerQueue(bot, message, voiceChannel) {
 
 async function playSong(bot, song) {
     try {
-        if (!song) return delayedStop(bot)
+        if (!song) {
+            serverQueue.currentSong = null
+            return delayedStop(bot)
+        }
         clearDelayedStopTimeout()
 
         const songWithInfo = await loadSongInfo(song)
@@ -199,19 +202,20 @@ function playerIsIdle() {
 
 function stop(bot, message) {
     try {
-        if (!serverQueue) return message.channel.send("Tem nada tocando man")
-
-        clearInactivityInterval()
-        clearDelayedStopTimeout()
-        serverQueue.player.removeAllListeners()
-        stopPlayer()
-        const textChannel = message && message.channel ? message.channel : serverQueue.textChannel
-        if (audioPlay.getServerQueue()) {
-            textChannel.send("Parei as músicas aqui man")
-        } else {
-            serverQueue.connection.destroy()
-            textChannel.send("Falou man")
+        if (serverQueue) {
+            clearInactivityInterval()
+            clearDelayedStopTimeout()
+            serverQueue.player.removeAllListeners()
+            stopPlayer()
+            const textChannel = message && message.channel ? message.channel : serverQueue.textChannel
+            if (audioPlay.getServerQueue()) {
+                textChannel.send("Parei as músicas aqui man")
+            } else {
+                serverQueue.connection.destroy()
+                textChannel.send("Falou man")
+            }
         }
+
         serverQueue = null
     } catch (error) {
         Utils.logError(error)
@@ -222,7 +226,6 @@ function stop(bot, message) {
 }
 
 function skip(bot, message) {
-    if (!serverQueue) return message.channel.send("Tem nada tocando man")
     if (audioPlay.getServerQueue()) return message.channel.send("Tem um áudio tocando man, calma ae")
 
     if (serverQueue.songs.length > 0) {
@@ -237,8 +240,6 @@ function next(bot) {
 }
 
 function queue(bot, message) {
-    if (!serverQueue) return message.channel.send("Tem nada tocando man")
-
     if (serverQueue.songs.length > 0) {
         message.channel.send(`Tem **${serverQueue.songs.length}** música(s) na fila!`)
     } else {
@@ -247,8 +248,6 @@ function queue(bot, message) {
 }
 
 function currentSong(bot, message) {
-    if (!serverQueue) return message.channel.send("Tem nada tocando man")
-
     if (serverQueue.currentSong) {
         message.channel.send(`Tá tocando isso aqui: ${serverQueue.currentSong.video_details.url}`)
     } else {
@@ -258,11 +257,9 @@ function currentSong(bot, message) {
 
 async function nextSong(bot, message) {
     try {
-        if (!serverQueue) return message.channel.send("Tem nada tocando man")
-
         if (serverQueue.songs.length > 0) {
             const songWithInfo = await loadSongInfo(serverQueue.songs[0])
-            message.channel.send(`Next song: ${songWithInfo.video_details.url}`)
+            message.channel.send(`Próxima música: ${songWithInfo.video_details.url}`)
         } else {
             message.channel.send("Fila tá vazia man")
         }
@@ -288,6 +285,8 @@ function stopPlayer() {
 }
 
 function run(bot, msg) {
+    if (!Utils.startWithCommand(msg, "play") && !serverQueue) return msg.channel.send("Nem tô na sala man")
+
     Utils.executeCommand(bot, msg, commands)
 }
 
