@@ -92,6 +92,7 @@ function getMessageError(error) {
 
 async function logError(bot, error, filename) {
     console.error(error)
+    console.log(error)
     if (!(error instanceof ExpectedError) && process.env.ENVIRONMENT === "PRD") {
         const channel = await bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
         const errorContent = error.stack ? error.stack : error
@@ -110,6 +111,19 @@ function checkVoiceChannelPreConditions(message) {
     }
 }
 
+
+function chunkArray (arr, len) {
+
+    var chunks = [],
+        i = 0,
+        n = arr.length;
+  
+    while (i < n) {
+      chunks.push(arr.slice(i, i += len));
+    }
+  
+    return chunks;
+}
 module.exports = {
     getRandomPlacaMae,
     getRandomProcessador,
@@ -120,5 +134,6 @@ module.exports = {
     executeCommand,
     getMessageError,
     logError,
-    checkVoiceChannelPreConditions
+    checkVoiceChannelPreConditions,
+    chunkArray
 }
