@@ -71,7 +71,7 @@ async function play(bot, message) {
         if (!url) throw new ExpectedError("Nothing found!")
 
         await addToQueue(url, message, firstTime)
-        if (firstTime || playerIsIdle()) {
+        if (firstTime || playerIsIdle() || timeoutId) {
             next(bot)
         }
     } catch (error) {
@@ -119,7 +119,7 @@ async function addToQueue(songURL, message, firstTime = false) {
 }
 
 function createServerQueue(bot, message, voiceChannel) {
-    if (audioPlay.getServerQueue()) throw new ExpectedError("An audio is running!")
+    if (audioPlay.getServerQueue()) throw new ExpectedError("Tem um áudio tocando man, calma ae")
     serverQueue = {
         player: createAudioPlayer(),
         textChannel: message.channel,
