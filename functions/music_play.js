@@ -63,13 +63,15 @@ async function play(bot, message) {
     try {
         Utils.checkVoiceChannelPreConditions(message)
 
-        if (message.content.split(" ").length == 1) throw new ExpectedError("Cadê a música man?")
+        const args = message.content.split(" ")
+        if (args.length == 1) throw new ExpectedError("Cadê a música man?")
+
         const firstTime = !serverQueue
         if (firstTime) {
             createServerQueue(bot, message, message.member.voice.channel)
         }
 
-        const url = await getURL(bot, message)
+        const url = await getURL(bot, args)
         if (!url) throw new ExpectedError("Achei nada man")
 
         const isIdle = playerIsIdle()
@@ -83,8 +85,7 @@ async function play(bot, message) {
     }
 }
 
-async function getURL(bot, message) {
-    const args = message.content.split(" ")
+async function getURL(bot, args) {
     if (Utils.isValidHttpUrl(args[1])) {
         const url = new URL(args[1])
         if (url.searchParams.has("list")) {
