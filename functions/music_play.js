@@ -71,7 +71,7 @@ async function play(bot, message) {
         if (!url) throw new ExpectedError("Nothing found!")
 
         await addToQueue(url, message, firstTime)
-        if (firstTime || playerIsIdle()) {
+        if (firstTime || playerIsIdle() || timeoutId) {
             next(bot)
         }
     } catch (error) {
