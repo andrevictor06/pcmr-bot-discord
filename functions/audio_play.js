@@ -3,16 +3,16 @@ const Utils = require("../utils/Utils")
 const fs = require('fs')
 const path = require("path")
 const { ExpectedError } = require('../utils/expected_error')
+const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, setSharedVariable, getSharedVariable, deleteSharedVariable } = require("../utils/shared_variables")
 
-let serverQueue = null
 let hasListener = false
-let musicPlay = null
 
 // TODO: ta_pegando_fogo_bixo.mp3
 
 function stop() {
+    const serverQueue = getSharedVariable(AUDIO_QUEUE_NAME)
     if (!serverQueue) throw new ExpectedError("Já parei man")
-    const musicQueue = musicPlay.getServerQueue()
+    const musicQueue = getSharedVariable(MUSIC_QUEUE_NAME)
     if (musicQueue) {
         serverQueue.connection.subscribe(musicQueue.player)
         musicQueue.player.unpause()
@@ -24,12 +24,13 @@ function stop() {
             serverQueue.connection.destroy()
         }
     }
-    serverQueue = null
+    deleteSharedVariable(AUDIO_QUEUE_NAME)
 }
 
 async function play(bot, msg, audio) {
     Utils.checkVoiceChannelPreConditions(msg)
-    const musicQueue = musicPlay.getServerQueue()
+    const musicQueue = getSharedVariable(MUSIC_QUEUE_NAME)
+    const serverQueue = getSharedVariable(AUDIO_QUEUE_NAME)
 
     if (musicQueue) {
         const currentVoiceChannel = msg.member.voice.channel
@@ -55,7 +56,7 @@ async function play(bot, msg, audio) {
 }
 
 function createServerQueue(bot, msg) {
-    const musicQueue = musicPlay.getServerQueue()
+    const musicQueue = getSharedVariable(MUSIC_QUEUE_NAME)
     const voiceChannel = musicQueue ? musicQueue.voiceChannel : msg.member.voice.channel
     const connection = musicQueue
         ? musicQueue.connection
@@ -64,7 +65,7 @@ function createServerQueue(bot, msg) {
             guildId: voiceChannel.guild.id,
             adapterCreator: voiceChannel.guild.voiceAdapterCreator,
         })
-    serverQueue = {
+    const serverQueue = {
         player: createAudioPlayer(),
         textChannel: msg.channel,
         voiceChannel,
@@ -80,10 +81,10 @@ function createServerQueue(bot, msg) {
             Utils.logError(bot, error, __filename)
             msg.channel.send(Utils.getMessageError(error))
         })
+    setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
 }
 
 function run(bot, msg) {
-    if (!musicPlay) musicPlay = getMusicPlay()
     const audios = fs.readdirSync("./audio")
     const buttons = audios.map(audio => {
         return {
@@ -149,10 +150,6 @@ function getAudioName(audio) {
     return audio.split("-").join(" ").replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())
 }
 
-function getServerQueue() {
-    return serverQueue
-}
-
 function canHandle(bot, msg) {
     return msg.content.startsWith(Utils.command("audio"))
 }
@@ -165,10 +162,6 @@ function helpComand(bot, msg) {
     }
 }
 
-function getMusicPlay() {
-    return require('./music_play')
-}
-
 module.exports = {
-    run, canHandle, helpComand, getServerQueue
+    run, canHandle, helpComand
 }

@@ -67,7 +67,7 @@ function containsCommand(msg, commands) {
 function executeCommand(bot, msg, commands) {
     for (const command in commands) {
         if (startWithCommand(msg, command)) {
-            commands[command].fn(bot, msg)
+            return commands[command].fn(bot, msg)
         }
     }
 }
@@ -123,6 +123,7 @@ function chunkArray(arr, len) {
 
     return chunks;
 }
+
 module.exports = {
     getRandomPlacaMae,
     getRandomProcessador,
