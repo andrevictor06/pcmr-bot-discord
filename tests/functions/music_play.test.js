@@ -338,6 +338,31 @@ describe("stop", () => {
         expect(stop).toBeCalledTimes(1)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
     })
+
+    test("não deveria desconectar quando tiver um áudio rodando", async () => {
+        const send = jest.fn()
+        const removeAllListeners = jest.fn()
+        const destroy = jest.fn()
+        const stop = jest.fn()
+        const message = {
+            content: Utils.command("stop"),
+            channel: { send }
+        }
+        const serverQueue = {
+            player: { removeAllListeners, stop },
+            connection: { destroy }
+        }
+        setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
+        setSharedVariable(AUDIO_QUEUE_NAME, {})
+
+        await run(null, message)
+
+        expect(send).toBeCalledTimes(1)
+        expect(removeAllListeners).toBeCalledTimes(1)
+        expect(destroy).toBeCalledTimes(0)
+        expect(stop).toBeCalledTimes(1)
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
+    })
 })
 
 describe("skip", () => {
