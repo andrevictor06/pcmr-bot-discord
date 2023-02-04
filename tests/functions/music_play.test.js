@@ -138,8 +138,8 @@ describe("play", () => {
         const player = mockAudioPlayer()
         const message = mockMessage("play", url)
         mockVoiceConnection()
-        playdl.stream.mockImplementation(async () => ({ stream: {} }))
         mockBasicInfo(url, "titulo")
+        playdl.stream.mockImplementation(async () => ({ stream: {} }))
 
         await run(null, message)
 
@@ -154,15 +154,16 @@ describe("play", () => {
         const player = mockAudioPlayer()
         const message = mockMessage("play", "queen")
         mockVoiceConnection()
-        mockBasicInfo(url, "titulo")
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
-        playdl.search.mockImplementation(async () => {
-            return [{ url }]
-        })
+        playdl.search.mockImplementation(async () => ([{ url }, { url: "random text" }]))
+        playdl.video_basic_info.mockImplementation(async (url) => ({
+            video_details: { url, title: "titulo" }
+        }))
 
         await run(null, message)
 
         expect(player.play).toBeCalledTimes(1)
+        expect(playdl.stream).toBeCalledWith(url, { quality: 1 })
         expect(message.channel.send).toBeCalledTimes(1)
         expect(player.on).toBeCalledTimes(2)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
