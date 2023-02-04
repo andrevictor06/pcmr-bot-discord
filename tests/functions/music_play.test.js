@@ -1,7 +1,7 @@
 const { expect, test } = require("@jest/globals")
 const { run } = require("../../functions/music_play")
 const Utils = require("../../utils/Utils")
-const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables } = require("../../utils/shared_variables")
+const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable } = require("../../utils/shared_variables")
 const { joinVoiceChannel, createAudioPlayer, AudioPlayerStatus } = require("@discordjs/voice")
 const playdl = require('play-dl')
 
@@ -180,7 +180,7 @@ describe("play", () => {
         const on = jest.fn(() => createAudioPlayer)
         const play = jest.fn()
         const message = {
-            content: Utils.command("play") + " musica",
+            content: Utils.command("play") + " queen",
             client: {
                 user: {}
             },
@@ -230,20 +230,112 @@ describe("play", () => {
         expect(on).toBeCalledTimes(2)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
+
+    test("deveria tocar uma música com link de playlist", async () => {
+        const url = "https://www.youtube.com/watch?v=u9Dg-g7t2l4&list=PLX8S4ptxX3CHezw1JDnwAH7CZLFGpj0z-"
+        const videos = [{ url }, { url }, { url }]
+        const send = jest.fn()
+        const has = jest.fn(str => true)
+        const permissionsFor = jest.fn(() => {
+            return { has }
+        })
+        const subscribe = jest.fn()
+        const on = jest.fn(() => createAudioPlayer)
+        const play = jest.fn()
+        const message = {
+            content: Utils.command("play") + " " + url,
+            client: {
+                user: {}
+            },
+            channel: { send },
+            member: {
+                voice: {
+                    channel: {
+                        permissionsFor,
+                        guild: {
+                            id: "id",
+                            voiceAdapterCreator: {}
+                        },
+                        members: [1]
+                    }
+                }
+            }
+        }
+        joinVoiceChannel.mockImplementation(() => {
+            return { subscribe }
+        })
+        createAudioPlayer.mockImplementation(() => {
+            return {
+                on,
+                state: AudioPlayerStatus.Idle,
+                play
+            }
+        })
+        playdl.stream.mockImplementation(async () => {
+            return { stream: {} }
+        })
+        playdl.video_basic_info.mockImplementation(async () => {
+            return {
+                video_details: {
+                    url,
+                    title: 'titulo'
+                }
+            }
+        })
+        playdl.playlist_info.mockImplementation(() => {
+            return {
+                all_videos: async () => {
+                    return videos
+                }
+            }
+        })
+
+        await run(null, message)
+
+        expect(play).toBeCalledTimes(1)
+        expect(send).toBeCalledTimes(2)
+        expect(on).toBeCalledTimes(2)
+        expect(getSharedVariable(MUSIC_QUEUE_NAME).songs.length).toEqual(videos.length - 1)
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
 })
 
 describe("stop", () => {
-    test("não deveria executar se o comando play não estiver rodando", () => {
+    test("não deveria executar se o comando play não estiver rodando", async () => {
         const send = jest.fn()
         const message = {
             content: Utils.command("stop"),
             channel: { send }
         }
 
-        run(null, message)
+        await run(null, message)
 
         expect(send).toBeCalledTimes(1)
         expect(send).toHaveBeenCalledWith("Nem tô na sala man")
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
+    })
+
+    test("deveria parar com sucesso", async () => {
+        const send = jest.fn()
+        const removeAllListeners = jest.fn()
+        const destroy = jest.fn()
+        const stop = jest.fn()
+        const message = {
+            content: Utils.command("stop"),
+            channel: { send }
+        }
+        const serverQueue = {
+            player: { removeAllListeners, stop },
+            connection: { destroy }
+        }
+        setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
+
+        await run(null, message)
+
+        expect(send).toBeCalledTimes(1)
+        expect(removeAllListeners).toBeCalledTimes(1)
+        expect(destroy).toBeCalledTimes(1)
+        expect(stop).toBeCalledTimes(1)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
     })
 })

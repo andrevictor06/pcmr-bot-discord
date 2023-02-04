@@ -139,8 +139,7 @@ function createServerQueue(bot, message, voiceChannel) {
     }
     serverQueue.connection.subscribe(serverQueue.player)
 
-    serverQueue.player
-        .on(AudioPlayerStatus.Idle, () => next(bot))
+    serverQueue.player.on(AudioPlayerStatus.Idle, () => next(bot))
     serverQueue.player.on("error", error => {
         Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(Utils.getMessageError(error))
