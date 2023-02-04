@@ -75,6 +75,20 @@ function mockPlaylistInfo(videos) {
     return playlistInfo
 }
 
+function mockMusicQueue() {
+    const serverQueue = {
+        player: {
+            removeAllListeners: jest.fn(),
+            stop: jest.fn()
+        },
+        connection: {
+            destroy: jest.fn()
+        }
+    }
+    setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
+    return serverQueue
+}
+
 describe("play", () => {
     test("não deveria iniciar a música quando o usuário não estiver em um canal de voz", async () => {
         const message = mockMessage("play")
@@ -190,43 +204,29 @@ describe("stop", () => {
     })
 
     test("deveria parar com sucesso", async () => {
-        const removeAllListeners = jest.fn()
-        const destroy = jest.fn()
-        const stop = jest.fn()
         const message = mockMessage("stop")
-        const serverQueue = {
-            player: { removeAllListeners, stop },
-            connection: { destroy }
-        }
-        setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
+        const musicQueue = mockMusicQueue()
 
         await run(null, message)
 
         expect(message.channel.send).toBeCalledTimes(1)
-        expect(removeAllListeners).toBeCalledTimes(1)
-        expect(destroy).toBeCalledTimes(1)
-        expect(stop).toBeCalledTimes(1)
+        expect(musicQueue.player.removeAllListeners).toBeCalledTimes(1)
+        expect(musicQueue.connection.destroy).toBeCalledTimes(1)
+        expect(musicQueue.player.stop).toBeCalledTimes(1)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
     })
 
     test("não deveria desconectar quando tiver um áudio rodando", async () => {
-        const removeAllListeners = jest.fn()
-        const destroy = jest.fn()
-        const stop = jest.fn()
         const message = mockMessage("stop")
-        const serverQueue = {
-            player: { removeAllListeners, stop },
-            connection: { destroy }
-        }
-        setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
+        const musicQueue = mockMusicQueue()
         setSharedVariable(AUDIO_QUEUE_NAME, {})
 
         await run(null, message)
 
         expect(message.channel.send).toBeCalledTimes(1)
-        expect(removeAllListeners).toBeCalledTimes(1)
-        expect(destroy).toBeCalledTimes(0)
-        expect(stop).toBeCalledTimes(1)
+        expect(musicQueue.player.removeAllListeners).toBeCalledTimes(1)
+        expect(musicQueue.connection.destroy).toBeCalledTimes(0)
+        expect(musicQueue.player.stop).toBeCalledTimes(1)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
     })
 })
