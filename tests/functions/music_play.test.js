@@ -124,11 +124,11 @@ describe("play", () => {
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
     })
 
-    test("não deveria tocar uma música quando tiver um áudio tocando", () => {
+    test("não deveria tocar uma música quando tiver um áudio tocando", async () => {
         const message = mockMessage("play", "musica")
         setSharedVariable(AUDIO_QUEUE_NAME, {})
 
-        run(null, message)
+        await run(null, message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Tem um áudio tocando man, calma ae")

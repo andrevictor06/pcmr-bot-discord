@@ -59,28 +59,23 @@ const commands = {
 }
 
 async function play(bot, message) {
-    try {
-        Utils.checkVoiceChannelPreConditions(message)
+    Utils.checkVoiceChannelPreConditions(message)
 
-        const args = message.content.split(" ")
-        if (args.length == 1) throw new ExpectedError("Cadê a música man?")
+    const args = message.content.split(" ")
+    if (args.length == 1) throw new ExpectedError("Cadê a música man?")
 
-        const firstTime = !sharedVariableExists(MUSIC_QUEUE_NAME)
-        if (firstTime) {
-            createServerQueue(bot, message, message.member.voice.channel)
-        }
+    const firstTime = !sharedVariableExists(MUSIC_QUEUE_NAME)
+    if (firstTime) {
+        createServerQueue(bot, message, message.member.voice.channel)
+    }
 
-        const url = await getURL(bot, args)
-        if (!url) throw new ExpectedError("Achei nada man")
+    const url = await getURL(bot, args)
+    if (!url) throw new ExpectedError("Achei nada man")
 
-        const isIdle = playerIsIdle()
-        await addToQueue(url, message, !firstTime && !isIdle)
-        if (firstTime || isIdle) {
-            return next(bot)
-        }
-    } catch (error) {
-        Utils.logError(bot, error, __filename)
-        message.channel.send(Utils.getMessageError(error))
+    const isIdle = playerIsIdle()
+    await addToQueue(url, message, !firstTime && !isIdle)
+    if (firstTime || isIdle) {
+        return next(bot)
     }
 }
 
@@ -262,16 +257,12 @@ function currentSong(bot, message) {
 
 async function nextSong(bot, message) {
     const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
-    try {
-        if (serverQueue.songs.length > 0) {
-            const songWithInfo = await loadSongInfo(serverQueue.songs[0])
-            message.channel.send(`Próxima música: ${songWithInfo.video_details.url}`)
-        } else {
-            message.channel.send("Fila tá vazia man")
-        }
-    } catch (error) {
-        Utils.logError(error)
-        message.channel.send(Utils.getMessageError(error))
+
+    if (serverQueue.songs.length > 0) {
+        const songWithInfo = await loadSongInfo(serverQueue.songs[0])
+        message.channel.send(`Próxima música: ${songWithInfo.video_details.url}`)
+    } else {
+        message.channel.send("Fila tá vazia man")
     }
 }
 
@@ -291,10 +282,15 @@ function stopPlayer() {
     serverQueue.player.stop(true)
 }
 
-function run(bot, msg) {
-    if (!Utils.startWithCommand(msg, "play") && !sharedVariableExists(MUSIC_QUEUE_NAME)) return msg.channel.send("Nem tô na sala man")
+async function run(bot, msg) {
+    try {
+        if (!Utils.startWithCommand(msg, "play") && !sharedVariableExists(MUSIC_QUEUE_NAME)) return msg.channel.send("Nem tô na sala man")
 
-    return Utils.executeCommand(bot, msg, commands)
+        return await Utils.executeCommand(bot, msg, commands)
+    } catch (error) {
+        Utils.logError(error)
+        msg.channel.send(Utils.getMessageError(error))
+    }
 }
 
 function canHandle(bot, msg) {
