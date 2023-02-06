@@ -83,7 +83,8 @@ function mockMusicQueue() {
         },
         connection: {
             destroy: jest.fn()
-        }
+        },
+        songs: []
     }
     setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
     return serverQueue
@@ -242,6 +243,29 @@ describe("skip", () => {
         expect(message.channel.send).toHaveBeenCalledWith("Nem tô na sala man")
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
     })
+
+    test("não deveria executar não existir mais músicas na fila", async () => {
+        const message = mockMessage("skip")
+        mockMusicQueue()
+
+        await run(null, message)
+
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(message.channel.send).toHaveBeenCalledWith("Fila tá vazia man")
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+
+    test("não deveria executar quando um áudio estiver tocando", async () => {
+        const message = mockMessage("skip")
+        mockMusicQueue()
+        setSharedVariable(AUDIO_QUEUE_NAME, {})
+
+        await run(null, message)
+
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(message.channel.send).toHaveBeenCalledWith("Tem um áudio tocando man, calma ae")
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
 })
 
 describe("next", () => {
@@ -253,6 +277,52 @@ describe("next", () => {
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Nem tô na sala man")
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
+    })
+
+    test("não deveria dar erro quando a fila estiver vazia", async () => {
+        const message = mockMessage("next")
+        mockMusicQueue()
+
+        await run(null, message)
+
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(message.channel.send).toHaveBeenCalledWith("Fila tá vazia man")
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+
+    test("deveria retornar o link da próxima música com sucesso", async () => {
+        const urls = ["url1", "url2"]
+        const message = mockMessage("next")
+        const musicQueue = mockMusicQueue()
+        musicQueue.songs = musicQueue.songs.concat(urls)
+        playdl.video_basic_info.mockImplementation(async url => {
+            if (!urls.includes(url)) return null
+            return {
+                video_details: { url }
+            }
+        })
+
+        await run(null, message)
+
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(message.channel.send).toHaveBeenCalledWith(`Próxima música: ${urls[0]}`)
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+
+    test("não deveria parar de funcionar ocorrer algum erro", async () => {
+        const urls = ["url1", "url2"]
+        const message = mockMessage("next")
+        const musicQueue = mockMusicQueue()
+        musicQueue.songs = musicQueue.songs.concat(urls)
+        playdl.video_basic_info.mockImplementation(async _ => {
+            throw new Error()
+        })
+
+        await run(null, message)
+
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(message.channel.send).toHaveBeenCalledWith("Unexpected error: Error")
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
 })
 
