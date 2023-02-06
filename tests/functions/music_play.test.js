@@ -61,17 +61,23 @@ function mockBasicInfo(url, title) {
     const basicInfo = {
         video_details: { url, title }
     }
-    playdl.video_basic_info.mockImplementation(async () => basicInfo)
+    playdl.video_basic_info.mockImplementation(async (urlParam) => {
+        if (urlParam != url) throw new Error()
+        return basicInfo
+    })
     return basicInfo
 }
 
-function mockPlaylistInfo(videos) {
+function mockPlaylistInfo(url, videos) {
     const playlistInfo = {
         all_videos: async () => {
             return videos
         }
     }
-    playdl.playlist_info.mockImplementation(async () => playlistInfo)
+    playdl.playlist_info.mockImplementation(async (urlParam) => {
+        if (urlParam != url) throw new Error()
+        return playlistInfo
+    })
     return playlistInfo
 }
 
@@ -159,14 +165,9 @@ describe("play", () => {
         const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
         const message = mockMessage("play", url)
         const musicQueue = mockMusicQueue()
+        mockBasicInfo(url, "titulo")
         musicQueue.player.state.status = AudioPlayerStatus.Playing
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
-        playdl.video_basic_info.mockImplementation(async (urlParam) => {
-            if (url != urlParam) throw new Error()
-            return {
-                video_details: { url, title: "titulo" }
-            }
-        })
 
         await run(null, message)
 
@@ -181,11 +182,9 @@ describe("play", () => {
         const player = mockAudioPlayer()
         const message = mockMessage("play", "queen")
         mockVoiceConnection()
+        mockBasicInfo(url, "queen")
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
         playdl.search.mockImplementation(async () => ([{ url }, { url: "random text" }]))
-        playdl.video_basic_info.mockImplementation(async (url) => ({
-            video_details: { url, title: "titulo" }
-        }))
 
         await run(null, message)
 
@@ -203,7 +202,7 @@ describe("play", () => {
         const message = mockMessage("play", url)
         mockVoiceConnection()
         mockBasicInfo(url, "titulo")
-        mockPlaylistInfo(videos)
+        mockPlaylistInfo(url, videos)
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
 
         await run(null, message)
@@ -212,6 +211,23 @@ describe("play", () => {
         expect(message.channel.send).toBeCalledTimes(2)
         expect(player.on).toBeCalledTimes(2)
         expect(getSharedVariable(MUSIC_QUEUE_NAME).songs.length).toEqual(videos.length - 1)
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+
+    test("deveria adicionar todas as músicas de uma playlist quando tiver uma música tocando", async () => {
+        const url = "https://www.youtube.com/watch?v=u9Dg-g7t2l4&list=PLX8S4ptxX3CHezw1JDnwAH7CZLFGpj0z-"
+        const videos = [{ url }, { url }, { url }]
+        const message = mockMessage("play", url)
+        const musicQueue = mockMusicQueue()
+        musicQueue.player.state.status = AudioPlayerStatus.Playing
+        mockPlaylistInfo(url, videos)
+        playdl.stream.mockImplementation(async () => ({ stream: {} }))
+
+        await run(null, message)
+
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(musicQueue.player.play).toBeCalledTimes(0)
+        expect(getSharedVariable(MUSIC_QUEUE_NAME).songs.length).toEqual(videos.length)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
 })
