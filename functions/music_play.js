@@ -1,10 +1,9 @@
 const { joinVoiceChannel, AudioPlayerStatus, createAudioResource, createAudioPlayer } = require('@discordjs/voice')
 const Utils = require("../utils/Utils")
-const audioPlay = require('./audio_play')
 const { ExpectedError } = require('../utils/expected_error')
 const playdl = require('play-dl');
+const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, sharedVariableExists, setSharedVariable, getSharedVariable, deleteSharedVariable } = require("../utils/shared_variables")
 
-let serverQueue = null
 let timeoutId = null
 let inactivityIntervalId = null
 
@@ -60,28 +59,23 @@ const commands = {
 }
 
 async function play(bot, message) {
-    try {
-        Utils.checkVoiceChannelPreConditions(message)
+    Utils.checkVoiceChannelPreConditions(message)
 
-        const args = message.content.split(" ")
-        if (args.length == 1) throw new ExpectedError("Cadê a música man?")
+    const args = message.content.split(" ")
+    if (args.length == 1) throw new ExpectedError("Cadê a música man?")
 
-        const firstTime = !serverQueue
-        if (firstTime) {
-            createServerQueue(bot, message, message.member.voice.channel)
-        }
+    const firstTime = !sharedVariableExists(MUSIC_QUEUE_NAME)
+    if (firstTime) {
+        createServerQueue(bot, message, message.member.voice.channel)
+    }
 
-        const url = await getURL(bot, args)
-        if (!url) throw new ExpectedError("Achei nada man")
+    const url = await getURL(bot, args)
+    if (!url) throw new ExpectedError("Achei nada man")
 
-        const isIdle = playerIsIdle()
-        await addToQueue(url, message, !firstTime && !isIdle)
-        if (firstTime || isIdle) {
-            next(bot)
-        }
-    } catch (error) {
-        Utils.logError(bot, error, __filename)
-        message.channel.send(Utils.getMessageError(error))
+    const isIdle = playerIsIdle()
+    await addToQueue(url, message, !firstTime && !isIdle)
+    if (firstTime || isIdle) {
+        return next(bot)
     }
 }
 
@@ -110,6 +104,7 @@ async function getURL(bot, args) {
 }
 
 async function addToQueue(songURL, message, showAddedMessage = false) {
+    const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
     if (Array.isArray(songURL)) {
         serverQueue.songs = serverQueue.songs.concat(songURL)
         message.channel.send(`Adicionei ${songURL.length} músicas na fila!`)
@@ -123,8 +118,8 @@ async function addToQueue(songURL, message, showAddedMessage = false) {
 }
 
 function createServerQueue(bot, message, voiceChannel) {
-    if (audioPlay.getServerQueue()) throw new ExpectedError("Tem um áudio tocando man, calma ae")
-    serverQueue = {
+    if (sharedVariableExists(AUDIO_QUEUE_NAME)) throw new ExpectedError("Tem um áudio tocando man, calma ae")
+    const serverQueue = {
         player: createAudioPlayer(),
         textChannel: message.channel,
         voiceChannel: voiceChannel,
@@ -139,12 +134,12 @@ function createServerQueue(bot, message, voiceChannel) {
     }
     serverQueue.connection.subscribe(serverQueue.player)
 
-    serverQueue.player
-        .on(AudioPlayerStatus.Idle, () => next(bot))
-        .on("error", error => {
-            Utils.logError(bot, error, __filename)
-            serverQueue.textChannel.send(Utils.getMessageError(error))
-        })
+    serverQueue.player.on(AudioPlayerStatus.Idle, () => next(bot))
+    serverQueue.player.on("error", error => {
+        Utils.logError(bot, error, __filename)
+        serverQueue.textChannel.send(Utils.getMessageError(error))
+    })
+    setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
 
     inactivityIntervalId = setInterval(() => {
         if (!serverQueue) {
@@ -158,6 +153,7 @@ function createServerQueue(bot, message, voiceChannel) {
 }
 
 async function playSong(bot, song) {
+    const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
     try {
         if (!song) {
             serverQueue.currentSong = null
@@ -175,7 +171,7 @@ async function playSong(bot, song) {
     } catch (error) {
         Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(Utils.getMessageError(error))
-        next(bot)
+        return next(bot)
     }
 }
 
@@ -198,18 +194,19 @@ function delayedStop(bot, message) {
 }
 
 function playerIsIdle() {
-    return serverQueue.player.state.status == AudioPlayerStatus.Idle && timeoutId
+    return getSharedVariable(MUSIC_QUEUE_NAME).player.state.status == AudioPlayerStatus.Idle && timeoutId
 }
 
 function stop(bot, message) {
     try {
+        const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
         if (serverQueue) {
             clearInactivityInterval()
             clearDelayedStopTimeout()
             serverQueue.player.removeAllListeners()
             stopPlayer()
             const textChannel = message && message.channel ? message.channel : serverQueue.textChannel
-            if (audioPlay.getServerQueue()) {
+            if (sharedVariableExists(AUDIO_QUEUE_NAME)) {
                 textChannel.send("Parei as músicas aqui man")
             } else {
                 serverQueue.connection.destroy()
@@ -217,7 +214,7 @@ function stop(bot, message) {
             }
         }
 
-        serverQueue = null
+        deleteSharedVariable(MUSIC_QUEUE_NAME)
     } catch (error) {
         Utils.logError(error)
         if (message) {
@@ -227,9 +224,9 @@ function stop(bot, message) {
 }
 
 function skip(bot, message) {
-    if (audioPlay.getServerQueue()) return message.channel.send("Tem um áudio tocando man, calma ae")
+    if (sharedVariableExists(AUDIO_QUEUE_NAME)) return message.channel.send("Tem um áudio tocando man, calma ae")
 
-    if (serverQueue.songs.length > 0) {
+    if (getSharedVariable(MUSIC_QUEUE_NAME).songs.length > 0) {
         stopPlayer()
     } else {
         message.channel.send("Fila tá vazia man")
@@ -237,10 +234,11 @@ function skip(bot, message) {
 }
 
 function next(bot) {
-    playSong(bot, serverQueue.songs.shift())
+    return playSong(bot, getSharedVariable(MUSIC_QUEUE_NAME).songs.shift())
 }
 
 function queue(bot, message) {
+    const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
     if (serverQueue.songs.length > 0) {
         message.channel.send(`Tem **${serverQueue.songs.length}** música(s) na fila!`)
     } else {
@@ -249,6 +247,7 @@ function queue(bot, message) {
 }
 
 function currentSong(bot, message) {
+    const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
     if (serverQueue.currentSong) {
         message.channel.send(`Tá tocando isso aqui: ${serverQueue.currentSong.video_details.url}`)
     } else {
@@ -257,16 +256,13 @@ function currentSong(bot, message) {
 }
 
 async function nextSong(bot, message) {
-    try {
-        if (serverQueue.songs.length > 0) {
-            const songWithInfo = await loadSongInfo(serverQueue.songs[0])
-            message.channel.send(`Próxima música: ${songWithInfo.video_details.url}`)
-        } else {
-            message.channel.send("Fila tá vazia man")
-        }
-    } catch (error) {
-        Utils.logError(error)
-        message.channel.send(Utils.getMessageError(error))
+    const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
+
+    if (serverQueue.songs.length > 0) {
+        const songWithInfo = await loadSongInfo(serverQueue.songs[0])
+        message.channel.send(`Próxima música: ${songWithInfo.video_details.url}`)
+    } else {
+        message.channel.send("Fila tá vazia man")
     }
 }
 
@@ -280,15 +276,21 @@ async function loadSongInfo(possibleSongInfo) {
 }
 
 function stopPlayer() {
+    const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
     if (!serverQueue) throw new ExpectedError("Opa, tem nada tocando man")
 
     serverQueue.player.stop(true)
 }
 
-function run(bot, msg) {
-    if (!Utils.startWithCommand(msg, "play") && !serverQueue) return msg.channel.send("Nem tô na sala man")
+async function run(bot, msg) {
+    try {
+        if (!Utils.startWithCommand(msg, "play") && !sharedVariableExists(MUSIC_QUEUE_NAME)) return msg.channel.send("Nem tô na sala man")
 
-    Utils.executeCommand(bot, msg, commands)
+        return await Utils.executeCommand(bot, msg, commands)
+    } catch (error) {
+        Utils.logError(error)
+        msg.channel.send(Utils.getMessageError(error))
+    }
 }
 
 function canHandle(bot, msg) {
@@ -301,10 +303,6 @@ function helpComand(bot, msg) {
         .filter(value => value != null)
 }
 
-function getServerQueue() {
-    return serverQueue
-}
-
 module.exports = {
-    run, canHandle, helpComand, getServerQueue
+    run, canHandle, helpComand
 }
