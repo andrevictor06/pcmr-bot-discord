@@ -84,7 +84,8 @@ function mockMusicQueue() {
         connection: {
             destroy: jest.fn()
         },
-        songs: []
+        songs: [],
+        currentSong: null
     }
     setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
     return serverQueue
@@ -335,5 +336,35 @@ describe("current", () => {
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Nem tô na sala man")
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
+    })
+
+    test("não deveria dar erro quando a fila estiver vazia", async () => {
+        const message = mockMessage("current")
+        mockMusicQueue()
+
+        await run(null, message)
+
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(message.channel.send).toHaveBeenCalledWith("Tem nada tocando man")
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+
+    test("deveria retornar o link música que está tocando com sucesso", async () => {
+        const urls = ["url1", "url2", "url3"]
+        const message = mockMessage("current")
+        const musicQueue = mockMusicQueue()
+        const currentSong = urls.shift()
+        musicQueue.currentSong = {
+            video_details: {
+                url: currentSong
+            }
+        }
+        musicQueue.songs = musicQueue.songs.concat(urls)
+
+        await run(null, message)
+
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(message.channel.send).toHaveBeenCalledWith(`Tá tocando isso aqui: ${currentSong}`)
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
 })
