@@ -11,7 +11,7 @@ jest.useFakeTimers()
 
 beforeEach(() => {
     clearSharedVariables()
-    jest.clearAllMocks()
+    jest.resetAllMocks()
 })
 
 function mockMessage(command, ...params) {
@@ -79,7 +79,11 @@ function mockMusicQueue() {
     const serverQueue = {
         player: {
             removeAllListeners: jest.fn(),
-            stop: jest.fn()
+            play: jest.fn(),
+            stop: jest.fn(),
+            state: {
+                status: AudioPlayerStatus.Idle
+            }
         },
         connection: {
             destroy: jest.fn()
@@ -148,6 +152,27 @@ describe("play", () => {
         expect(player.play).toBeCalledTimes(1)
         expect(message.channel.send).toBeCalledTimes(1)
         expect(player.on).toBeCalledTimes(2)
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+
+    test("deveria adicionar música na fila quando tiver uma música tocando", async () => {
+        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const message = mockMessage("play", url)
+        const musicQueue = mockMusicQueue()
+        musicQueue.player.state.status = AudioPlayerStatus.Playing
+        playdl.stream.mockImplementation(async () => ({ stream: {} }))
+        playdl.video_basic_info.mockImplementation(async (urlParam) => {
+            if (url != urlParam) throw new Error()
+            return {
+                video_details: { url, title: "titulo" }
+            }
+        })
+
+        await run(null, message)
+
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(musicQueue.player.play).toBeCalledTimes(0)
+        expect(musicQueue.songs.length).toEqual(1)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
 
