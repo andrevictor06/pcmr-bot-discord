@@ -232,6 +232,19 @@ describe("stop", () => {
         expect(musicQueue.player.stop).toBeCalledTimes(1)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
     })
+
+    test("não deveria parar de funcionar quando ocorrer algum erro", async () => {
+        const message = mockMessage("stop")
+        const musicQueue = mockMusicQueue()
+        musicQueue.player.removeAllListeners.mockImplementation(() => { throw new Error() })
+        setSharedVariable(AUDIO_QUEUE_NAME, {})
+
+        await run(null, message)
+
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(message.channel.send).toHaveBeenCalledWith("Unexpected error: Error")
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
 })
 
 describe("skip", () => {
@@ -265,6 +278,30 @@ describe("skip", () => {
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Tem um áudio tocando man, calma ae")
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+
+    test("não deveria parar de funcionar quando ocorrer algum erro", async () => {
+        const message = mockMessage("skip")
+        const musicQueue = mockMusicQueue()
+        musicQueue.songs.push("url")
+        musicQueue.player.stop.mockImplementation(() => { throw new Error() })
+
+        await run(null, message)
+
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(message.channel.send).toHaveBeenCalledWith("Unexpected error: Error")
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+
+    test("deveria parar o player quando existirem músicas na fila", async () => {
+        const message = mockMessage("skip")
+        const musicQueue = mockMusicQueue()
+        musicQueue.songs.push("url")
+
+        await run(null, message)
+
+        expect(musicQueue.player.stop).toBeCalledTimes(1)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
 })
@@ -365,6 +402,18 @@ describe("current", () => {
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith(`Tá tocando isso aqui: ${currentSong}`)
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+
+    test("não deveria parar de funcionar quando ocorrer algum erro", async () => {
+        const message = mockMessage("current")
+        const musicQueue = mockMusicQueue()
+        musicQueue.currentSong = {}
+
+        await run(null, message)
+
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(message.channel.send).toHaveBeenCalledWith("Unexpected error: Cannot read properties of undefined (reading 'url')")
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
 })
