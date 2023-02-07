@@ -1,4 +1,3 @@
-const { expect, test } = require("@jest/globals")
 const { run } = require("../../functions/music_play")
 const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable } = require("../../utils/shared_variables")
 const { joinVoiceChannel, createAudioPlayer, AudioPlayerStatus } = require("@discordjs/voice")
@@ -9,7 +8,7 @@ jest.mock('@discordjs/voice')
 jest.mock('play-dl')
 jest.useFakeTimers()
 
-beforeEach(() => {
+afterEach(() => {
     clearSharedVariables()
     jest.resetAllMocks()
 })
