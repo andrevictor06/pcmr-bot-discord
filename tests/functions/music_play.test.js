@@ -213,6 +213,24 @@ describe("play", () => {
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
 
+    test("não deveria dar erro quando o link com id de playlist estiver quebrado", async () => {
+        const url = "https://www.youtube.com/watch?v=u9Dg-g7t2l4&list=PLX8S4ptxX3CHezw1JDnwAH7CZLFGpj0z-"
+        const player = mockAudioPlayer()
+        const message = mockMessage("play", url)
+        mockVoiceConnection()
+        mockBasicInfo(url, "titulo")
+        playdl.playlist_info.mockImplementation(() => { throw new Error() })
+        playdl.stream.mockImplementation(async () => ({ stream: {} }))
+
+        await run(null, message)
+
+        expect(player.play).toBeCalledTimes(1)
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(player.on).toBeCalledTimes(2)
+        expect(getSharedVariable(MUSIC_QUEUE_NAME).songs.length).toEqual(0)
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+
     test("deveria adicionar todas as músicas de uma playlist quando tiver uma música tocando", async () => {
         const url = "https://www.youtube.com/watch?v=u9Dg-g7t2l4&list=PLX8S4ptxX3CHezw1JDnwAH7CZLFGpj0z-"
         const videos = [{ url }, { url }, { url }]
@@ -233,16 +251,12 @@ describe("play", () => {
 
 describe("stop", () => {
     test("não deveria executar se o comando play não estiver rodando", async () => {
-        const send = jest.fn()
-        const message = {
-            content: Utils.command("stop"),
-            channel: { send }
-        }
+        const message = mockMessage("stop")
 
         await run(null, message)
 
-        expect(send).toBeCalledTimes(1)
-        expect(send).toHaveBeenCalledWith("Nem tô na sala man")
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(message.channel.send).toHaveBeenCalledWith("Nem tô na sala man")
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
     })
 
