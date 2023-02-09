@@ -3,7 +3,7 @@ const Utils = require("../utils/Utils")
 const fs = require('fs')
 const path = require("path")
 const { ExpectedError } = require('../utils/expected_error')
-const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, setSharedVariable, getSharedVariable, deleteSharedVariable } = require("../utils/shared_variables")
+const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, setSharedVariable, getSharedVariable, deleteSharedVariable, sharedVariableExists } = require("../utils/shared_variables")
 
 let hasListener = false
 
@@ -30,7 +30,6 @@ function stop() {
 async function play(bot, msg, audio) {
     Utils.checkVoiceChannelPreConditions(msg)
     const musicQueue = getSharedVariable(MUSIC_QUEUE_NAME)
-    const serverQueue = getSharedVariable(AUDIO_QUEUE_NAME)
 
     if (musicQueue) {
         const currentVoiceChannel = msg.member.voice.channel
@@ -41,9 +40,10 @@ async function play(bot, msg, audio) {
             musicQueue.player.pause(true)
         }
     }
-    if (!serverQueue) {
+    if (!sharedVariableExists(AUDIO_QUEUE_NAME)) {
         createServerQueue(bot, msg)
     }
+    const serverQueue = getSharedVariable(AUDIO_QUEUE_NAME)
     if (serverQueue && serverQueue.player.state.status != AudioPlayerStatus.Idle) {
         serverQueue.player.off(AudioPlayerStatus.Idle, stop)
         serverQueue.player.stop(true)
