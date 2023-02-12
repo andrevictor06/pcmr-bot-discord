@@ -2,7 +2,6 @@ const fs = require('fs');
 require('dotenv/config');
 const Utils = require("./utils/Utils")
 const { Client, Intents } = require("discord.js");
-
 const bot = new Client({
     intents: [
         Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_BANS,
@@ -43,12 +42,15 @@ bot.login(process.env.TOKEN_DISCORD);
 
 bot.on('ready', () => {
     try {
-        if (process.env.ENVIRONMENT === "PRD" && process.env.ID_CHANNEL_LOG_BOT) {
-            bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then(channel => {
-                channel.send({ content: "Bot iniciado em: " + new Date().toLocaleString("pt-BR") })
-            })            
+        if (process.env.ENVIRONMENT === "PRD"){
+            if(process.env.ID_CHANNEL_LOG_BOT) {
+                bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then(channel => {
+                    channel.send({ content: "Bot iniciado em: " + new Date().toLocaleString("pt-BR") })
+                })            
+            }
+            
+            Utils.setPresenceBotDefault(bot)
         }
         console.log(`Logged in as ${bot.user.tag}!`);
-
     } catch (error) { }
 });

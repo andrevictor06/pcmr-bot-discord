@@ -2,7 +2,7 @@ const { joinVoiceChannel, AudioPlayerStatus, createAudioResource, createAudioPla
 const Utils = require("../utils/Utils")
 const { ExpectedError } = require('../utils/expected_error')
 const playdl = require('play-dl');
-const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, sharedVariableExists, setSharedVariable, getSharedVariable, deleteSharedVariable } = require("../utils/shared_variables")
+const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, sharedVariableExists, setSharedVariable, getSharedVariable, deleteSharedVariable } = require("../utils/shared_variables");
 
 let timeoutId = null
 let inactivityIntervalId = null
@@ -168,6 +168,9 @@ async function playSong(bot, song) {
         serverQueue.player.play(resource)
         serverQueue.currentSong = songWithInfo
         serverQueue.textChannel.send(`Tocando: **${songWithInfo.video_details.title}**`)
+
+        Utils.setPresenceBot(bot, {activities: [{ name: `**${songWithInfo.video_details.title}**`, url: songWithInfo.video_details.url,
+        details: `**${songWithInfo.video_details.title}**`, type: 1}]})
     } catch (error) {
         Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(Utils.getMessageError(error))
@@ -204,7 +207,7 @@ function stop(bot, message) {
             clearInactivityInterval()
             clearDelayedStopTimeout()
             serverQueue.player.removeAllListeners()
-            stopPlayer()
+            stopPlayer(bot)
             const textChannel = message && message.channel ? message.channel : serverQueue.textChannel
             if (sharedVariableExists(AUDIO_QUEUE_NAME)) {
                 textChannel.send("Parei as músicas aqui man")
@@ -227,7 +230,7 @@ function skip(bot, message) {
     if (sharedVariableExists(AUDIO_QUEUE_NAME)) return message.channel.send("Tem um áudio tocando man, calma ae")
 
     if (getSharedVariable(MUSIC_QUEUE_NAME).songs.length > 0) {
-        stopPlayer()
+        stopPlayer(bot)
     } else {
         message.channel.send("Fila tá vazia man")
     }
@@ -275,11 +278,13 @@ async function loadSongInfo(possibleSongInfo) {
     return possibleSongInfo
 }
 
-function stopPlayer() {
+function stopPlayer(bot) {
     const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
     if (!serverQueue) throw new ExpectedError("Opa, tem nada tocando man")
 
     serverQueue.player.stop(true)
+    
+    Utils.setPresenceBotDefault(bot)
 }
 
 async function run(bot, msg) {

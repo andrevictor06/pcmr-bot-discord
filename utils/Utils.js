@@ -124,6 +124,17 @@ function chunkArray(arr, len) {
     return chunks;
 }
 
+function setPresenceBot(bot, presence){
+    bot.user.setPresence(presence);
+    console.log(bot.user.presence);
+}
+
+
+function setPresenceBotDefault(bot){
+    bot.user.setActivity(process.env.CARACTER_DEFAULT_FUNCTION + "help")
+}
+
+
 module.exports = {
     getRandomPlacaMae,
     getRandomProcessador,
@@ -135,5 +146,7 @@ module.exports = {
     getMessageError,
     logError,
     checkVoiceChannelPreConditions,
-    chunkArray
+    chunkArray,
+    setPresenceBot,
+    setPresenceBotDefault
 }
