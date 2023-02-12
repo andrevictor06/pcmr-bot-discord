@@ -169,8 +169,7 @@ async function playSong(bot, song) {
         serverQueue.currentSong = songWithInfo
         serverQueue.textChannel.send(`Tocando: **${songWithInfo.video_details.title}**`)
 
-        Utils.setPresenceBot(bot, {activities: [{ name: `**${songWithInfo.video_details.title}**`, url: songWithInfo.video_details.url,
-        details: `**${songWithInfo.video_details.title}**`, type: 1}]})
+        Utils.setPresenceBot(bot, {activities: [{ name: `${songWithInfo.video_details.title}`, url: songWithInfo.video_details.url, type: 1}]})
     } catch (error) {
         Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(Utils.getMessageError(error))

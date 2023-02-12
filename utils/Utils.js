@@ -126,14 +126,11 @@ function chunkArray(arr, len) {
 
 function setPresenceBot(bot, presence){
     bot.user.setPresence(presence);
-    console.log(bot.user.presence);
 }
-
 
 function setPresenceBotDefault(bot){
     bot.user.setActivity(process.env.CARACTER_DEFAULT_FUNCTION + "help", { type: "LISTENING"})
 }
-
 
 module.exports = {
     getRandomPlacaMae,
