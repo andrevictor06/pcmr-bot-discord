@@ -131,7 +131,7 @@ function setPresenceBot(bot, presence){
 
 
 function setPresenceBotDefault(bot){
-    bot.user.setActivity(process.env.CARACTER_DEFAULT_FUNCTION + "help")
+    bot.user.setActivity(process.env.CARACTER_DEFAULT_FUNCTION + "help", { type: "LISTENING"})
 }
 
 
