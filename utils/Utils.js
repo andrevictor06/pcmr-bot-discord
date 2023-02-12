@@ -125,7 +125,7 @@ function chunkArray(arr, len) {
 }
 
 function setPresenceBot(bot, presence){
-    bot.user.setPresence(presence);
+    bot.user.setActivity(presence.name, { url: presence.url, type: presence.type})
 }
 
 function setPresenceBotDefault(bot){
