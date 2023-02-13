@@ -5,8 +5,6 @@ const path = require("path")
 const { ExpectedError } = require('../utils/expected_error')
 const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, setSharedVariable, getSharedVariable, deleteSharedVariable, sharedVariableExists } = require("../utils/shared_variables")
 
-// TODO: ta_pegando_fogo_bixo.mp3
-
 function stop() {
     const serverQueue = getSharedVariable(AUDIO_QUEUE_NAME)
     if (!serverQueue) throw new ExpectedError("Já parei man")
