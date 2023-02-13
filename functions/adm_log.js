@@ -1,6 +1,7 @@
 const Utils = require("../utils/Utils")
 const fs = require('fs')
 const path = require("path")
+const { setSharedVariable, sharedVariableExists } = require("../utils/shared_variables")
 
 function canHandle(bot, msg) {
     return msg.channel.id == process.env.ID_CHANNEL_LOG_BOT && msg.content.startsWith(Utils.command("adm_log"))
@@ -56,25 +57,28 @@ function run(bot, msg){
                 }, 3000)
             })
             
-            bot.on('interactionCreate', async (event) => {
-                try {
-                    const customId = event.customId
-                    if (customId.startsWith(process.env.ENVIRONMENT + "adm_log")) {
-                        let log = customId.split(process.env.ENVIRONMENT + "adm_log")[1]
-                        event.reply({
-                            content: `Ta na mão, corno`,
-                            files: [path.resolve(logPath, log)],
+            if( ! sharedVariableExists("Iniciou_Adm_Log_Event") ){
+                bot.on('interactionCreate', async (event) => {
+                    try {
+                        setSharedVariable("Iniciou_Adm_Log_Event", true)
+                        const customId = event.customId
+                        if (customId.startsWith(process.env.ENVIRONMENT + "adm_log")) {
+                            let log = customId.split(process.env.ENVIRONMENT + "adm_log")[1]
+                            event.reply({
+                                content: `Ta na mão, corno`,
+                                files: [path.resolve(logPath, log)],
+                                components: []
+                            })
+                        }
+                    } catch (error) {
+                        Utils.logError(bot, error, __filename)
+                        event.update({
+                            content: Utils.getMessageError(error),
                             components: []
                         })
                     }
-                } catch (error) {
-                    Utils.logError(bot, error, __filename)
-                    event.update({
-                        content: Utils.getMessageError(error),
-                        components: []
-                    })
-                }
-            })
+                })
+            }
         }
     }
 }
