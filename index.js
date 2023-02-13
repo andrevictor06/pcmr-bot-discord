@@ -17,14 +17,16 @@ function listenMessages() {
             functions.push(fn)
         })
     bot.on("messageCreate", msg => {
-        functions.forEach((fn) => {
-            try {
-                if (fn.canHandle(bot, msg))
-                    fn.run(bot, msg)   
-            } catch (error) {
-                Utils.logError(bot, error, __filename)
-            }
-        });
+        if( msg.content && msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION)){
+            functions.forEach((fn) => {
+                try {
+                    if (fn.canHandle(bot, msg))
+                        fn.run(bot, msg)
+                } catch (error) {
+                    Utils.logError(bot, error, __filename)
+                }
+            });
+        }
     });
 }
 
