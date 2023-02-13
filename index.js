@@ -16,7 +16,7 @@ function listenMessages() {
             const fn = require("./functions/" + fnFile);
             functions.push(fn)
         })
-    bot.on("message", msg => {
+    bot.on("messageCreate", msg => {
         functions.forEach((fn) => {
             try {
                 if (fn.canHandle(bot, msg))
