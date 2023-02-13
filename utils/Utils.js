@@ -91,7 +91,7 @@ function getMessageError(error) {
 }
 
 async function logError(bot, error, filename) {
-    console.error(error)
+    console.error(error);
     if (!(error instanceof ExpectedError) && process.env.ENVIRONMENT === "PRD") {
         const channel = await bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
         const errorContent = error.stack ? error.stack : error

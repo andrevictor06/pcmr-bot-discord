@@ -218,7 +218,7 @@ function stop(bot, message) {
 
         deleteSharedVariable(MUSIC_QUEUE_NAME)
     } catch (error) {
-        Utils.logError(error)
+        Utils.logError(bot, error, __filename)
         if (message) {
             message.channel.send(Utils.getMessageError(error))
         }
@@ -292,7 +292,7 @@ async function run(bot, msg) {
 
         return await Utils.executeCommand(bot, msg, commands)
     } catch (error) {
-        Utils.logError(error)
+        Utils.logError(bot, error, __filename)
         msg.channel.send(Utils.getMessageError(error))
     }
 }

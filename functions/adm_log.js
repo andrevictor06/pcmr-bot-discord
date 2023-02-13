@@ -16,6 +16,8 @@ function helpComand(bot, msg) {
 
 
 function run(bot, msg){
+    createThreads(msg.channel, msg)
+
     const logPath = path.resolve(process.env.PATH_LOG)
     
     const path_logs = fs.readdirSync(logPath)
@@ -46,10 +48,12 @@ function run(bot, msg){
                     })
                 })
 
-                msg.reply({
-                    content: "Tem esses logs, corno",
-                    components:logs
-                })
+                setTimeout(() => {
+                    sendMessageThread(msg.channel, {
+                        content: "Tem esses logs, corno",
+                        components:logs
+                    })
+                }, 3000)
             })
             
             bot.on('interactionCreate', async (event) => {
@@ -57,7 +61,7 @@ function run(bot, msg){
                     const customId = event.customId
                     if (customId.startsWith(process.env.ENVIRONMENT + "adm_log")) {
                         let log = customId.split(process.env.ENVIRONMENT + "adm_log")[1]
-                        event.update({
+                        event.reply({
                             content: `Ta na mão, corno`,
                             files: [path.resolve(logPath, log)],
                             components: []
@@ -74,6 +78,25 @@ function run(bot, msg){
         }
     }
 }
+
+async function createThreads(channel, message) {
+    const cache = channel.threads.cache.find(x => x.name === 'adm_logs')
+    if (cache)
+        await cache.delete()
+
+    return await channel.threads.create({
+        name: 'adm_logs',
+        autoArchiveDuration: 60,
+        reason: 'Logs do sistema',
+    })
+}
+
+async function sendMessageThread(channel, message) {
+    const thread = channel.threads.cache.find(x => x.name === 'adm_logs')
+    if (thread)
+        thread.send(message)
+}
+
 module.exports = {
     run, canHandle, helpComand
 }
