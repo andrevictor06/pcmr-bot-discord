@@ -5,8 +5,6 @@ const path = require("path")
 const { ExpectedError } = require('../utils/expected_error')
 const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, setSharedVariable, getSharedVariable, deleteSharedVariable, sharedVariableExists } = require("../utils/shared_variables")
 
-let hasListener = false
-
 // TODO: ta_pegando_fogo_bixo.mp3
 
 function stop() {
@@ -49,10 +47,11 @@ async function play(bot, msg, audio) {
         serverQueue.player.stop(true)
         serverQueue.player.on(AudioPlayerStatus.Idle, stop)
     }
-
-    const audioPath = path.resolve("audio", audio)
-    const resource = createAudioResource(fs.createReadStream(audioPath, { highWaterMark: 1024 * 1024 }))
-    serverQueue.player.play(resource)
+    if( serverQueue){
+        const audioPath = path.resolve("audio", audio)
+        const resource = createAudioResource(fs.createReadStream(audioPath, { highWaterMark: 1024 * 1024 }))
+        serverQueue.player.play(resource)
+    }
 }
 
 function createServerQueue(bot, msg) {
@@ -81,7 +80,7 @@ function createServerQueue(bot, msg) {
             Utils.logError(bot, error, __filename)
             msg.channel.send(Utils.getMessageError(error))
         })
-    setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
+    setSharedVariable(AUDIO_QUEUE_NAME, serverQueue)
 }
 
 function run(bot, msg) {
@@ -102,10 +101,10 @@ function run(bot, msg) {
 
     msg.reply({ "components": buttons })
 
-    if (!hasListener) {
-        hasListener = true
+    if( ! sharedVariableExists("Iniciou_Audio_Play_Event") ){
         bot.on('interactionCreate', async (event) => {
             try {
+                setSharedVariable("Iniciou_Audio_Play_Event", true)
                 const customId = event.customId
                 if (customId.startsWith(process.env.ENVIRONMENT + "btn_audio_")) {
                     let audio = customId.split(process.env.ENVIRONMENT + "btn_audio_")[1]
