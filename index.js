@@ -2,31 +2,29 @@ const fs = require('fs');
 require('dotenv/config');
 const Utils = require("./utils/Utils")
 const { Client, Intents } = require("discord.js");
+const SharedVariables = require('./utils/shared_variables');
 const bot = new Client({
     intents: [
         Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_BANS,
         Intents.FLAGS.GUILD_PRESENCES, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_SCHEDULED_EVENTS, Intents.FLAGS.DIRECT_MESSAGES, Intents.FLAGS.GUILD_WEBHOOKS
     ]
 })
-const functions = []
+bot.functions = [];
 
 function listenMessages() {
-    fs.readdirSync("./functions")
-        .forEach(fnFile => {
-            const fn = require("./functions/" + fnFile);
-            functions.push(fn)
-        })
+    fs.readdirSync("./functions").forEach(fnFile => {
+        bot.functions.push(require("./functions/" + fnFile))
+    })
+
     bot.on("messageCreate", msg => {
-        if( msg.content && msg.content.startsWith(process.env.CARACTER_DEFAULT_FUNCTION)){
-            functions.forEach((fn) => {
-                try {
-                    if (fn.canHandle(bot, msg))
-                        fn.run(bot, msg)
-                } catch (error) {
-                    Utils.logError(bot, error, __filename)
-                }
-            });
-        }
+        bot.functions.forEach((fn) => {
+            try {
+                if (fn.canHandle(bot, msg))
+                    fn.run(bot, msg)
+            } catch (error) {
+                Utils.logError(bot, error, __filename)
+            }
+        });
     });
 }
 
@@ -56,3 +54,22 @@ bot.on('ready', () => {
         console.log(`Logged in as ${bot.user.tag}!`);
     } catch (error) { }
 });
+
+bot.addInteractionCreate = function (customId, func){
+    if(  ! SharedVariables.sharedVariableExists(customId)){
+        bot.on('interactionCreate', async (event) => {
+            try {
+                SharedVariables.setSharedVariable(customId, func)
+                if (event.customId && event.customId === customId) {
+                    func(event)
+                }
+            } catch (error) {
+                Utils.logError(bot, error, __filename)
+                event.update({
+                    content: Utils.getMessageError(error),
+                    components: []
+                })
+            }   
+        })
+    }
+}

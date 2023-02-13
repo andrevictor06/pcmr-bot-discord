@@ -81,9 +81,58 @@ function createServerQueue(bot, msg) {
     setSharedVariable(AUDIO_QUEUE_NAME, serverQueue)
 }
 
-function run(bot, msg) {
+async function eventPlayAudio(event){
+    try {
+        let audio = event.customId.split(process.env.ENVIRONMENT + "btn_audio_")[1]
+        await play(event.client, event, audio)
+        
+        event.client.addInteractionCreate(process.env.ENVIRONMENT + "btn_stop_audio", eventStopAudio)
+        event.update({
+            content: `Playing ${getAudioName(audio)}`,
+            components: [
+                {
+                    type: 1,
+                    components: [
+                        {
+                            type: 2,
+                            label: "Para ae, na moral!",
+                            style: 1,
+                            custom_id: process.env.ENVIRONMENT + "btn_stop_audio",
+                        }
+                    ]
+                }
+            ]
+        })
+    } catch (error) {
+        Utils.logError(event.client, error, __filename)
+        event.update({
+            content: Utils.getMessageError(error),
+            components: []
+        })
+    } 
+}
+
+async function eventStopAudio(event){
+    try {
+        stop()
+        event.update({
+            content: `Parei man`,
+            components: []
+        })
+    } catch (error) {
+        Utils.logError(event.client, error, __filename)
+        event.update({
+            content: Utils.getMessageError(error),
+            components: []
+        })
+    } 
+}
+
+function run(bot, msg) {     
     const audios = fs.readdirSync("./audio")
     const buttons = audios.map(audio => {
+        
+        bot.addInteractionCreate(process.env.ENVIRONMENT + "btn_audio_" + audio, eventPlayAudio)
         return {
             type: 1,
             components: [
@@ -96,51 +145,7 @@ function run(bot, msg) {
             ]
         }
     })
-
     msg.reply({ "components": buttons })
-
-    if( ! sharedVariableExists("Iniciou_Audio_Play_Event") ){
-        bot.on('interactionCreate', async (event) => {
-            try {
-                setSharedVariable("Iniciou_Audio_Play_Event", true)
-                const customId = event.customId
-                if (customId.startsWith(process.env.ENVIRONMENT + "btn_audio_")) {
-                    let audio = customId.split(process.env.ENVIRONMENT + "btn_audio_")[1]
-                    await play(bot, event, audio)
-                    event.update({
-                        content: `Playing ${getAudioName(audio)}`,
-                        components: [
-                            {
-                                type: 1,
-                                components: [
-                                    {
-                                        type: 2,
-                                        label: "Para ae, na moral!",
-                                        style: 1,
-                                        custom_id: process.env.ENVIRONMENT + "btn_stop_audio",
-                                    }
-                                ]
-                            }
-                        ]
-                    })
-                }
-
-                if (customId === process.env.ENVIRONMENT + "btn_stop_audio") {
-                    stop()
-                    event.update({
-                        content: `Parei man`,
-                        components: []
-                    })
-                }
-            } catch (error) {
-                Utils.logError(bot, error, __filename)
-                event.update({
-                    content: Utils.getMessageError(error),
-                    components: []
-                })
-            }
-        })
-    }
 }
 
 function getAudioName(audio) {
