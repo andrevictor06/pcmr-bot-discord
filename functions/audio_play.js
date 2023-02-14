@@ -130,22 +130,24 @@ async function eventStopAudio(event){
 
 function run(bot, msg) {     
     const audios = fs.readdirSync("./audio")
-    const buttons = audios.map(audio => {
-        
-        bot.addInteractionCreate(process.env.ENVIRONMENT + "btn_audio_" + audio, eventPlayAudio)
-        return {
-            type: 1,
-            components: [
-                {
-                    type: 2,
-                    label: getAudioName(audio),
-                    style: 1,
-                    custom_id: process.env.ENVIRONMENT + "btn_audio_" + audio,
-                }
-            ]
-        }
+
+    Utils.chunkArray(audios, 5).forEach( list =>{
+        const buttons = list.map(audio => {
+            bot.addInteractionCreate(process.env.ENVIRONMENT + "btn_audio_" + audio, eventPlayAudio)
+            return {
+                type: 1,
+                components: [
+                    {
+                        type: 2,
+                        label: getAudioName(audio),
+                        style: 1,
+                        custom_id: process.env.ENVIRONMENT + "btn_audio_" + audio,
+                    }
+                ]
+            }
+        })
+        msg.reply({ "components": buttons })
     })
-    msg.reply({ "components": buttons })
 }
 
 function getAudioName(audio) {
