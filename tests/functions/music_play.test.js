@@ -1,104 +1,13 @@
 const { run } = require("../../functions/music_play")
 const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable } = require("../../utils/shared_variables")
-const { joinVoiceChannel, createAudioPlayer, AudioPlayerStatus } = require("@discordjs/voice")
-const Utils = require("../../utils/Utils")
+const { AudioPlayerStatus } = require("@discordjs/voice")
+const { mockAudioPlayer, mockBasicInfo, mockMessage, mockPlaylistInfo, mockVoiceConnection, mockQueueObject } = require("../utils_test")
 const playdl = require('play-dl')
-
-jest.mock('@discordjs/voice')
-jest.mock('play-dl')
-jest.useFakeTimers()
 
 afterEach(() => {
     clearSharedVariables()
     jest.resetAllMocks()
 })
-
-function mockMessage(command, ...params) {
-    const has = jest.fn(() => true)
-    return {
-        content: Utils.command(command) + (params && params.length > 0 ? " " + params.join(" ") : ""),
-        client: {
-            user: {}
-        },
-        channel: {
-            send: jest.fn()
-        },
-        member: {
-            voice: {
-                channel: {
-                    permissionsFor: jest.fn(() => {
-                        return { has }
-                    }),
-                    guild: {
-                        id: "id",
-                        voiceAdapterCreator: {}
-                    },
-                    members: [{}]
-                }
-            }
-        }
-    }
-}
-
-function mockVoiceConnection() {
-    const connection = { subscribe: jest.fn() }
-    joinVoiceChannel.mockImplementation(() => connection)
-    return connection
-}
-
-function mockAudioPlayer(state = AudioPlayerStatus.Idle) {
-    const player = {
-        on: jest.fn(),
-        state,
-        play: jest.fn()
-    }
-    createAudioPlayer.mockImplementation(() => player)
-    return player
-}
-
-function mockBasicInfo(url, title) {
-    const basicInfo = {
-        video_details: { url, title }
-    }
-    playdl.video_basic_info.mockImplementation(async (urlParam) => {
-        if (urlParam != url) throw new Error()
-        return basicInfo
-    })
-    return basicInfo
-}
-
-function mockPlaylistInfo(url, videos) {
-    const playlistInfo = {
-        all_videos: async () => {
-            return videos
-        }
-    }
-    playdl.playlist_info.mockImplementation(async (urlParam) => {
-        if (urlParam != url) throw new Error()
-        return playlistInfo
-    })
-    return playlistInfo
-}
-
-function mockMusicQueue() {
-    const serverQueue = {
-        player: {
-            removeAllListeners: jest.fn(),
-            play: jest.fn(),
-            stop: jest.fn(),
-            state: {
-                status: AudioPlayerStatus.Idle
-            }
-        },
-        connection: {
-            destroy: jest.fn()
-        },
-        songs: [],
-        currentSong: null
-    }
-    setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
-    return serverQueue
-}
 
 describe("play", () => {
     test("não deveria iniciar a música quando o usuário não estiver em um canal de voz", async () => {
@@ -163,7 +72,7 @@ describe("play", () => {
     test("deveria adicionar música na fila quando tiver uma música tocando", async () => {
         const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
         const message = mockMessage("play", url)
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject()
         mockBasicInfo(url, "titulo")
         musicQueue.player.state.status = AudioPlayerStatus.Playing
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
@@ -235,7 +144,7 @@ describe("play", () => {
         const url = "https://www.youtube.com/watch?v=u9Dg-g7t2l4&list=PLX8S4ptxX3CHezw1JDnwAH7CZLFGpj0z-"
         const videos = [{ url }, { url }, { url }]
         const message = mockMessage("play", url)
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject()
         musicQueue.player.state.status = AudioPlayerStatus.Playing
         mockPlaylistInfo(url, videos)
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
@@ -262,7 +171,7 @@ describe("stop", () => {
 
     test("deveria parar com sucesso", async () => {
         const message = mockMessage("stop")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject()
 
         await run(null, message)
 
@@ -275,7 +184,7 @@ describe("stop", () => {
 
     test("não deveria desconectar quando tiver um áudio rodando", async () => {
         const message = mockMessage("stop")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject()
         setSharedVariable(AUDIO_QUEUE_NAME, {})
 
         await run(null, message)
@@ -289,7 +198,7 @@ describe("stop", () => {
 
     test("não deveria parar de funcionar quando ocorrer algum erro", async () => {
         const message = mockMessage("stop")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject()
         musicQueue.player.removeAllListeners.mockImplementation(() => { throw new Error() })
         setSharedVariable(AUDIO_QUEUE_NAME, {})
 
@@ -314,7 +223,7 @@ describe("skip", () => {
 
     test("não deveria executar não existir mais músicas na fila", async () => {
         const message = mockMessage("skip")
-        mockMusicQueue()
+        mockQueueObject()
 
         await run(null, message)
 
@@ -325,7 +234,7 @@ describe("skip", () => {
 
     test("não deveria executar quando um áudio estiver tocando", async () => {
         const message = mockMessage("skip")
-        mockMusicQueue()
+        mockQueueObject()
         setSharedVariable(AUDIO_QUEUE_NAME, {})
 
         await run(null, message)
@@ -337,7 +246,7 @@ describe("skip", () => {
 
     test("não deveria parar de funcionar quando ocorrer algum erro", async () => {
         const message = mockMessage("skip")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject()
         musicQueue.songs.push("url")
         musicQueue.player.stop.mockImplementation(() => { throw new Error() })
 
@@ -350,7 +259,7 @@ describe("skip", () => {
 
     test("deveria parar o player quando existirem músicas na fila", async () => {
         const message = mockMessage("skip")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject()
         musicQueue.songs.push("url")
 
         await run(null, message)
@@ -373,7 +282,7 @@ describe("next", () => {
 
     test("não deveria dar erro quando a fila estiver vazia", async () => {
         const message = mockMessage("next")
-        mockMusicQueue()
+        mockQueueObject()
 
         await run(null, message)
 
@@ -385,7 +294,7 @@ describe("next", () => {
     test("deveria retornar o link da próxima música com sucesso", async () => {
         const urls = ["url1", "url2"]
         const message = mockMessage("next")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject()
         musicQueue.songs = musicQueue.songs.concat(urls)
         playdl.video_basic_info.mockImplementation(async url => {
             if (!urls.includes(url)) return null
@@ -404,7 +313,7 @@ describe("next", () => {
     test("não deveria parar de funcionar ocorrer algum erro", async () => {
         const urls = ["url1", "url2"]
         const message = mockMessage("next")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject()
         musicQueue.songs = musicQueue.songs.concat(urls)
         playdl.video_basic_info.mockImplementation(async _ => {
             throw new Error()
@@ -431,7 +340,7 @@ describe("current", () => {
 
     test("não deveria dar erro quando a fila estiver vazia", async () => {
         const message = mockMessage("current")
-        mockMusicQueue()
+        mockQueueObject()
 
         await run(null, message)
 
@@ -443,7 +352,7 @@ describe("current", () => {
     test("deveria retornar o link música que está tocando com sucesso", async () => {
         const urls = ["url1", "url2", "url3"]
         const message = mockMessage("current")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject()
         const currentSong = urls.shift()
         musicQueue.currentSong = {
             video_details: {
@@ -461,7 +370,7 @@ describe("current", () => {
 
     test("não deveria parar de funcionar quando ocorrer algum erro", async () => {
         const message = mockMessage("current")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject()
         musicQueue.currentSong = {}
 
         await run(null, message)
