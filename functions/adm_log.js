@@ -1,6 +1,7 @@
 const Utils = require("../utils/Utils")
 const fs = require('fs')
 const path = require("path")
+const { setSharedVariable, sharedVariableExists } = require("../utils/shared_variables")
 
 function canHandle(bot, msg) {
     return msg.channel.id == process.env.ID_CHANNEL_LOG_BOT && msg.content.startsWith(Utils.command("adm_log"))
@@ -13,9 +14,28 @@ function helpComand(bot, msg) {
         inline: false
     }
 }
-
+function downloadLog(event){
+    try {
+        const customId = event.customId
+        const logPath = path.resolve(process.env.PATH_LOG)
+        let log = customId.split(process.env.ENVIRONMENT + "adm_log")[1]
+        event.reply({
+            content: `Ta na mão, corno`,
+            files: [path.resolve(logPath, log)],
+            components: []
+        })
+    } catch (error) {
+        Utils.logError(bot, error, __filename)
+        event.update({
+            content: Utils.getMessageError(error),
+            components: []
+        })
+    }
+}
 
 function run(bot, msg){
+    createThreads(msg.channel, msg)
+
     const logPath = path.resolve(process.env.PATH_LOG)
     
     const path_logs = fs.readdirSync(logPath)
@@ -33,6 +53,7 @@ function run(bot, msg){
             Utils.chunkArray(path_logs, 5).forEach( list =>{
                 const logs = []
                 list.forEach((log)=>{
+                    bot.addInteractionCreate(process.env.ENVIRONMENT + "adm_log" + log, downloadLog)
                     logs.push({
                         type: 1,
                         components: [
@@ -46,34 +67,35 @@ function run(bot, msg){
                     })
                 })
 
-                msg.reply({
-                    content: "Tem esses logs, corno",
-                    components:logs
-                })
-            })
-            
-            bot.on('interactionCreate', async (event) => {
-                try {
-                    const customId = event.customId
-                    if (customId.startsWith(process.env.ENVIRONMENT + "adm_log")) {
-                        let log = customId.split(process.env.ENVIRONMENT + "adm_log")[1]
-                        event.update({
-                            content: `Ta na mão, corno`,
-                            files: [path.resolve(logPath, log)],
-                            components: []
-                        })
-                    }
-                } catch (error) {
-                    Utils.logError(bot, error, __filename)
-                    event.update({
-                        content: Utils.getMessageError(error),
-                        components: []
+                setTimeout(() => {
+                    sendMessageThread(msg.channel, {
+                        content: "Tem esses logs, corno",
+                        components:logs
                     })
-                }
+                }, 3000)
             })
         }
     }
 }
+
+async function createThreads(channel, message) {
+    const cache = channel.threads.cache.find(x => x.name === 'adm_logs')
+    if (cache)
+        await cache.delete()
+
+    return await channel.threads.create({
+        name: 'adm_logs',
+        autoArchiveDuration: 60,
+        reason: 'Logs do sistema',
+    })
+}
+
+async function sendMessageThread(channel, message) {
+    const thread = channel.threads.cache.find(x => x.name === 'adm_logs')
+    if (thread)
+        thread.send(message)
+}
+
 module.exports = {
     run, canHandle, helpComand
 }
