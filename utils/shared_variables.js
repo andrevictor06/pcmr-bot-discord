@@ -1,6 +1,8 @@
 const sharedVariables = new Map()
 const AUDIO_QUEUE_NAME = "audio_queue"
 const MUSIC_QUEUE_NAME = "music_queue"
+const MUSIC_TIMEOUT_ID = "music_timeout_id"
+const MUSIC_INTERVAL_ID = "music_interval_id"
 
 function setSharedVariable(name, value) {
     sharedVariables.set(name, value)
@@ -29,5 +31,7 @@ module.exports = {
     deleteSharedVariable,
     clearSharedVariables,
     AUDIO_QUEUE_NAME,
-    MUSIC_QUEUE_NAME
+    MUSIC_QUEUE_NAME,
+    MUSIC_TIMEOUT_ID,
+    MUSIC_INTERVAL_ID
 }

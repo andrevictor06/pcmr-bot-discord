@@ -2,10 +2,7 @@ const { joinVoiceChannel, AudioPlayerStatus, createAudioResource, createAudioPla
 const Utils = require("../utils/Utils")
 const { ExpectedError } = require('../utils/expected_error')
 const playdl = require('play-dl');
-const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, sharedVariableExists, setSharedVariable, getSharedVariable, deleteSharedVariable } = require("../utils/shared_variables");
-
-let timeoutId = null
-let inactivityIntervalId = null
+const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, MUSIC_TIMEOUT_ID, sharedVariableExists, setSharedVariable, getSharedVariable, deleteSharedVariable, MUSIC_INTERVAL_ID } = require("../utils/shared_variables");
 
 const commands = {
     play: {
@@ -70,7 +67,10 @@ async function play(bot, message) {
     }
 
     const url = await getURL(bot, args)
-    if (!url) throw new ExpectedError("Achei nada man")
+    if (!url) {
+        if (firstTime) delayedStop(bot, message)
+        throw new ExpectedError("Achei nada man")
+    }
 
     const isIdle = playerIsIdle()
     await addToQueue(url, message, !firstTime && !isIdle)
@@ -141,7 +141,7 @@ function createServerQueue(bot, message, voiceChannel) {
     })
     setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
 
-    inactivityIntervalId = setInterval(() => {
+    const inactivityIntervalId = setInterval(() => {
         if (!sharedVariableExists(MUSIC_QUEUE_NAME)) {
             clearInactivityInterval()
         }
@@ -151,12 +151,14 @@ function createServerQueue(bot, message, voiceChannel) {
             delayedStop(bot)
         }
     }, 60000)
+    setSharedVariable(MUSIC_INTERVAL_ID, inactivityIntervalId)
 }
 
 async function playSong(bot, song) {
     const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
     try {
         if (!song) {
+            //TODO: testar cenário
             serverQueue.currentSong = null
             return delayedStop(bot)
         }
@@ -172,6 +174,7 @@ async function playSong(bot, song) {
 
         Utils.setPresenceBot(bot, { name: songWithInfo.video_details.title, url: songWithInfo.video_details.url, type: 1 })
     } catch (error) {
+        //TODO: testar cenário
         Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(Utils.getMessageError(error))
         return next(bot)
@@ -179,25 +182,28 @@ async function playSong(bot, song) {
 }
 
 function clearDelayedStopTimeout() {
+    const timeoutId = getSharedVariable(MUSIC_TIMEOUT_ID)
     if (timeoutId) {
         clearTimeout(timeoutId)
-        timeoutId = null
+        deleteSharedVariable(MUSIC_TIMEOUT_ID)
     }
 }
 
 function clearInactivityInterval() {
+    const inactivityIntervalId = getSharedVariable(MUSIC_INTERVAL_ID)
     if (inactivityIntervalId) {
         clearInterval(inactivityIntervalId);
-        inactivityIntervalId = null
+        deleteSharedVariable(MUSIC_INTERVAL_ID)
     }
 }
 
 function delayedStop(bot, message) {
-    timeoutId = setTimeout(() => stop(bot, message), 60000)
+    const timeoutId = setTimeout(() => stop(bot, message), 60000)
+    setSharedVariable(MUSIC_TIMEOUT_ID, timeoutId)
 }
 
 function playerIsIdle() {
-    return getSharedVariable(MUSIC_QUEUE_NAME).player.state.status == AudioPlayerStatus.Idle && timeoutId
+    return getSharedVariable(MUSIC_QUEUE_NAME).player.state.status == AudioPlayerStatus.Idle && sharedVariableExists(MUSIC_TIMEOUT_ID)
 }
 
 function stop(bot, message) {
