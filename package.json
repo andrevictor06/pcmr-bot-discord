@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "node .",
+    "dev": "node index.js",
     "test": "jest --detectOpenHandles --setupFiles ./tests/index.js"
   },
   "repository": {
