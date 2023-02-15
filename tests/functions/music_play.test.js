@@ -1,6 +1,6 @@
 const { run } = require("../../functions/music_play")
 const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable, MUSIC_TIMEOUT_ID } = require("../../utils/shared_variables")
-const { AudioPlayerStatus } = require("@discordjs/voice")
+const { AudioPlayerStatus, joinVoiceChannel } = require("@discordjs/voice")
 const { mockAudioPlayer, mockBasicInfo, mockMessage, mockPlaylistInfo, mockVoiceConnection, mockQueueObject, mockBot } = require("../utils_test")
 const playdl = require('play-dl')
 const { ExpectedError } = require("../../utils/expected_error")
@@ -81,6 +81,7 @@ describe("play", () => {
         await run(bot, message)
 
         expect(connection.subscribe).toBeCalledTimes(1)
+        expect(joinVoiceChannel).toBeCalledTimes(1)
         expect(player.play).toBeCalledTimes(1)
         expect(message.channel.send).toBeCalledTimes(1)
         expect(player.on).toBeCalledTimes(2)
@@ -118,6 +119,7 @@ describe("play", () => {
 
         await run(mockBot(), message)
 
+        expect(joinVoiceChannel).toBeCalledTimes(1)
         expect(connection.subscribe).toBeCalledTimes(1)
         expect(player.play).toBeCalledTimes(1)
         expect(playdl.stream).toBeCalledWith(url, { quality: 1 })
