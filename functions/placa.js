@@ -1,17 +1,20 @@
 const Utils = require("../utils/Utils")
 
 function run(bot, msg) {
-    let user = "<@!320933526554017793>"
+    let user = process.env.ID_MEMBER_JUNIO
+    const userMention = Utils.getMentions(msg)
+    if (userMention) {
+        user = userMention
+    }   
     let message = ""
     try {
         const item = Utils.getRandomPlacaMae()
-        message = user + ", " + item
+        message = {content: user, files:[item]}
     } catch (ex) {
-        console.log(ex, " ex")
         message = user + ", " + "Erro ao selecionar a Placa mãe!"
     }
-    msg.delete();
-    return msg.channel.send(message)
+    msg.channel.send(message)
+    msg.delete()
 }
 
 function canHandle(bot, msg) {

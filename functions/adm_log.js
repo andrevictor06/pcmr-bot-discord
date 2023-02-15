@@ -1,7 +1,6 @@
 const Utils = require("../utils/Utils")
 const fs = require('fs')
 const path = require("path")
-const { setSharedVariable, sharedVariableExists } = require("../utils/shared_variables")
 
 function canHandle(bot, msg) {
     return msg.channel.id == process.env.ID_CHANNEL_LOG_BOT && msg.content.startsWith(Utils.command("adm_log"))
@@ -15,22 +14,14 @@ function helpComand(bot, msg) {
     }
 }
 function downloadLog(event){
-    try {
-        const customId = event.customId
-        const logPath = path.resolve(process.env.PATH_LOG)
-        let log = customId.split(process.env.ENVIRONMENT + "adm_log")[1]
-        event.reply({
-            content: `Ta na mão, corno`,
-            files: [path.resolve(logPath, log)],
-            components: []
-        })
-    } catch (error) {
-        Utils.logError(bot, error, __filename)
-        event.update({
-            content: Utils.getMessageError(error),
-            components: []
-        })
-    }
+    const customId = event.customId
+    const logPath = path.resolve(process.env.PATH_LOG)
+    let log = customId.split(process.env.ENVIRONMENT + "adm_log")[1]
+    event.reply({
+        content: `Ta na mão, corno`,
+        files: [path.resolve(logPath, log)],
+        components: []
+    })
 }
 
 function run(bot, msg){
