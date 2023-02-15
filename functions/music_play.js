@@ -288,14 +288,9 @@ function stopPlayer(bot) {
 }
 
 async function run(bot, msg) {
-    try {
-        if (!Utils.startWithCommand(msg, "play") && !sharedVariableExists(MUSIC_QUEUE_NAME)) return msg.channel.send("Nem tô na sala man")
+    if (!Utils.startWithCommand(msg, "play") && !sharedVariableExists(MUSIC_QUEUE_NAME)) return msg.channel.send("Nem tô na sala man")
 
-        return await Utils.executeCommand(bot, msg, commands)
-    } catch (error) {
-        Utils.logError(bot, error, __filename)
-        msg.channel.send(Utils.getMessageError(error))
-    }
+    return await Utils.executeCommand(bot, msg, commands)
 }
 
 function canHandle(bot, msg) {

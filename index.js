@@ -17,12 +17,13 @@ function listenMessages() {
     })
 
     bot.on("messageCreate", msg => {
-        bot.functions.forEach((fn) => {
+        bot.functions.forEach(async (fn) => {
             try {
                 if (fn.canHandle(bot, msg))
-                    fn.run(bot, msg)
+                    await fn.run(bot, msg)
             } catch (error) {
                 Utils.logError(bot, error, __filename)
+                msg.channel.send(Utils.getMessageError(error))
             }
         });
     });
