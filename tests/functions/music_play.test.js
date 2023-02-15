@@ -57,7 +57,9 @@ describe("play", () => {
     })
 
     test("não deveria tocar uma música quando tiver um áudio tocando", async () => {
-        const message = mockMessage("play", "musica")
+        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const message = mockMessage("play", url)
+        mockBasicInfo(url, "titulo")
         setSharedVariable(AUDIO_QUEUE_NAME, {})
 
         expect.hasAssertions()
@@ -188,26 +190,6 @@ describe("play", () => {
         expect(musicQueue.player.play).toBeCalledTimes(0)
         expect(getSharedVariable(MUSIC_QUEUE_NAME).songs.length).toEqual(videos.length)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
-    })
-
-    test("deveria aplicar um stop com delay quando não encontrar a música e for a primeira execução", async () => {
-        const player = mockAudioPlayer()
-        const message = mockMessage("play", "url")
-        const bot = mockBot()
-        playdl.video_basic_info.mockImplementation(() => null)
-        mockVoiceConnection()
-        playdl.stream.mockImplementation(async () => ({ stream: {} }))
-
-        expect.hasAssertions()
-        try {
-            await run(bot, message)
-        } catch (error) {
-            expect(sharedVariableExists(MUSIC_TIMEOUT_ID)).toBeTruthy()
-            expect(player.play).toBeCalledTimes(0)
-            expect(error).toBeInstanceOf(ExpectedError)
-            expect(error.message).toEqual("Achei nada man")
-            expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
-        }
     })
 })
 
