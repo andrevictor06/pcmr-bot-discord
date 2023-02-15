@@ -1,16 +1,15 @@
 const Utils = require("../utils/Utils")
 
 function run(bot, msg) {
-    let message = ""
-    try {
-        const item = Utils.getRandomProcessador()
-        message = "<@!320933526554017793>, " + item
-    } catch (ex) {
-        console.log(ex, " ex")
-        message = "<@!320933526554017793>, Erro ao selecionar o Processador!"
-    }
-    msg.delete();
-    msg.channel.send(message)
+    let user = process.env.ID_MEMBER_JUNIO
+    const userMention = Utils.getMentions(msg)
+    if (userMention) {
+        user = userMention
+    }   
+    const item = Utils.getRandomProcessador()
+    msg.channel.send({content: user, files:[item]})
+    msg.delete()
+    
 }
 
 function canHandle(bot, msg) {
@@ -20,7 +19,7 @@ function canHandle(bot, msg) {
 function helpComand(bot, msg){
     return {
         name: Utils.command("processador") + " [@mention]",
-        value: "Envia uma mensagem saudável para o membro, mostrando o que pode acontecer com o processador",
+        value: "Envia uma mensagem saudável para o membro, mostrando o que pode acontecer com o processador do seu PC Master Race",
         inline: false
     }
 }

@@ -17,7 +17,7 @@ function run(bot, msg) {
         color: 0x0099ff,
         author: {
             name: process.env.APP_NAME,
-            icon_url: 'https://cdn.discordapp.com/avatars/823658438252560415/558bb7d5c70a215a7f50da83c959bc35.webp'
+            icon_url: process.env.APP_ICON,
         },
         description: 'Lista dos comandos disponíveis neste servidor Discord',
         fields: fields,

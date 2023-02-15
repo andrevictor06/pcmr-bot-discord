@@ -132,6 +132,28 @@ function setPresenceBotDefault(bot) {
     bot.user.setActivity(process.env.CARACTER_DEFAULT_FUNCTION + "help", { type: "LISTENING" })
 }
 
+function getMentions(mensagem){
+    
+    if( mensagem && mensagem.mentions){
+        const mentions = []
+        if(mensagem.mentions.everyone){
+            mentions.push("@everyone")
+        }
+        if(mensagem.mentions.users.size){
+            mensagem.mentions.users.forEach(element => {
+               mentions.push(`<@!${element.id}>`) 
+            });
+        }
+        if(mensagem.mentions.roles.size){
+            mensagem.mentions.roles.forEach(element => {
+               mentions.push(`<@&${element.id}>`) 
+            });
+        }
+
+        return mentions.join(" ")
+    }
+}
+
 module.exports = {
     getRandomPlacaMae,
     getRandomProcessador,
@@ -145,5 +167,6 @@ module.exports = {
     checkVoiceChannelPreConditions,
     chunkArray,
     setPresenceBot,
-    setPresenceBotDefault
+    setPresenceBotDefault,
+    getMentions
 }
