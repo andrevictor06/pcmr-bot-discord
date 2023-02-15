@@ -17,6 +17,7 @@ describe("play", () => {
         const message = mockMessage("play")
         delete message.member.voice.channel
 
+        expect.hasAssertions()
         try {
             await run(mockBot(), message)
         } catch (error) {
@@ -30,6 +31,7 @@ describe("play", () => {
         const message = mockMessage("play")
         message.member.voice.channel.permissionsFor().has.mockImplementation(() => false)
 
+        expect.hasAssertions()
         try {
             await run(mockBot(), message)
         } catch (error) {
@@ -56,6 +58,7 @@ describe("play", () => {
         const message = mockMessage("play", "musica")
         setSharedVariable(AUDIO_QUEUE_NAME, {})
 
+        expect.hasAssertions()
         try {
             await run(mockBot(), message)
         } catch (error) {
