@@ -1,111 +1,22 @@
 const { run } = require("../../functions/music_play")
 const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable } = require("../../utils/shared_variables")
-const { joinVoiceChannel, createAudioPlayer, AudioPlayerStatus } = require("@discordjs/voice")
-const Utils = require("../../utils/Utils")
+const { AudioPlayerStatus } = require("@discordjs/voice")
+const { mockAudioPlayer, mockBasicInfo, mockMessage, mockPlaylistInfo, mockVoiceConnection, mockQueueObject, mockBot } = require("../utils_test")
 const playdl = require('play-dl')
-
-jest.mock('@discordjs/voice')
-jest.mock('play-dl')
-jest.useFakeTimers()
 
 afterEach(() => {
     clearSharedVariables()
     jest.resetAllMocks()
 })
 
-function mockMessage(command, ...params) {
-    const has = jest.fn(() => true)
-    return {
-        content: Utils.command(command) + (params && params.length > 0 ? " " + params.join(" ") : ""),
-        client: {
-            user: {}
-        },
-        channel: {
-            send: jest.fn()
-        },
-        member: {
-            voice: {
-                channel: {
-                    permissionsFor: jest.fn(() => {
-                        return { has }
-                    }),
-                    guild: {
-                        id: "id",
-                        voiceAdapterCreator: {}
-                    },
-                    members: [{}]
-                }
-            }
-        }
-    }
-}
-
-function mockVoiceConnection() {
-    const connection = { subscribe: jest.fn() }
-    joinVoiceChannel.mockImplementation(() => connection)
-    return connection
-}
-
-function mockAudioPlayer(state = AudioPlayerStatus.Idle) {
-    const player = {
-        on: jest.fn(),
-        state,
-        play: jest.fn()
-    }
-    createAudioPlayer.mockImplementation(() => player)
-    return player
-}
-
-function mockBasicInfo(url, title) {
-    const basicInfo = {
-        video_details: { url, title }
-    }
-    playdl.video_basic_info.mockImplementation(async (urlParam) => {
-        if (urlParam != url) throw new Error()
-        return basicInfo
-    })
-    return basicInfo
-}
-
-function mockPlaylistInfo(url, videos) {
-    const playlistInfo = {
-        all_videos: async () => {
-            return videos
-        }
-    }
-    playdl.playlist_info.mockImplementation(async (urlParam) => {
-        if (urlParam != url) throw new Error()
-        return playlistInfo
-    })
-    return playlistInfo
-}
-
-function mockMusicQueue() {
-    const serverQueue = {
-        player: {
-            removeAllListeners: jest.fn(),
-            play: jest.fn(),
-            stop: jest.fn(),
-            state: {
-                status: AudioPlayerStatus.Idle
-            }
-        },
-        connection: {
-            destroy: jest.fn()
-        },
-        songs: [],
-        currentSong: null
-    }
-    setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
-    return serverQueue
-}
+//TODO: Cenários de teste para setInterval e setTimeout
 
 describe("play", () => {
     test("não deveria iniciar a música quando o usuário não estiver em um canal de voz", async () => {
         const message = mockMessage("play")
         delete message.member.voice.channel
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Cadê o canal de voz?")
@@ -116,7 +27,7 @@ describe("play", () => {
         const message = mockMessage("play")
         message.member.voice.channel.permissionsFor().has.mockImplementation(() => false)
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Tô sem permissão, fala com o corno do adm!")
@@ -126,7 +37,7 @@ describe("play", () => {
     test("não deveria iniciar a música quando o usuário não informar a música", async () => {
         const message = mockMessage("play")
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Cadê a música man?")
@@ -137,7 +48,7 @@ describe("play", () => {
         const message = mockMessage("play", "musica")
         setSharedVariable(AUDIO_QUEUE_NAME, {})
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Tem um áudio tocando man, calma ae")
@@ -148,27 +59,33 @@ describe("play", () => {
         const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
         const player = mockAudioPlayer()
         const message = mockMessage("play", url)
+        const bot = mockBot()
+        const musicTitle = "titulo"
         mockVoiceConnection()
-        mockBasicInfo(url, "titulo")
+        mockBasicInfo(url, musicTitle)
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
 
-        await run(null, message)
+        await run(bot, message)
 
         expect(player.play).toBeCalledTimes(1)
         expect(message.channel.send).toBeCalledTimes(1)
         expect(player.on).toBeCalledTimes(2)
+        expect(player.on).toHaveBeenNthCalledWith(1, AudioPlayerStatus.Idle, expect.any(Function))
+        expect(player.on).toHaveBeenNthCalledWith(2, "error", expect.any(Function))
+        expect(bot.user.setActivity).toBeCalledTimes(1)
+        expect(bot.user.setActivity).toBeCalledWith(musicTitle, expect.objectContaining({ url, type: 1 }))
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
 
     test("deveria adicionar música na fila quando tiver uma música tocando", async () => {
         const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
         const message = mockMessage("play", url)
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         mockBasicInfo(url, "titulo")
         musicQueue.player.state.status = AudioPlayerStatus.Playing
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(musicQueue.player.play).toBeCalledTimes(0)
@@ -185,12 +102,14 @@ describe("play", () => {
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
         playdl.search.mockImplementation(async () => ([{ url }, { url: "random text" }]))
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(player.play).toBeCalledTimes(1)
         expect(playdl.stream).toBeCalledWith(url, { quality: 1 })
         expect(message.channel.send).toBeCalledTimes(1)
         expect(player.on).toBeCalledTimes(2)
+        expect(player.on).toHaveBeenNthCalledWith(1, AudioPlayerStatus.Idle, expect.any(Function))
+        expect(player.on).toHaveBeenNthCalledWith(2, "error", expect.any(Function))
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
 
@@ -204,11 +123,13 @@ describe("play", () => {
         mockPlaylistInfo(url, videos)
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(player.play).toBeCalledTimes(1)
         expect(message.channel.send).toBeCalledTimes(2)
         expect(player.on).toBeCalledTimes(2)
+        expect(player.on).toHaveBeenNthCalledWith(1, AudioPlayerStatus.Idle, expect.any(Function))
+        expect(player.on).toHaveBeenNthCalledWith(2, "error", expect.any(Function))
         expect(getSharedVariable(MUSIC_QUEUE_NAME).songs.length).toEqual(videos.length - 1)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
@@ -222,11 +143,13 @@ describe("play", () => {
         playdl.playlist_info.mockImplementation(() => { throw new Error() })
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(player.play).toBeCalledTimes(1)
         expect(message.channel.send).toBeCalledTimes(1)
         expect(player.on).toBeCalledTimes(2)
+        expect(player.on).toHaveBeenNthCalledWith(1, AudioPlayerStatus.Idle, expect.any(Function))
+        expect(player.on).toHaveBeenNthCalledWith(2, "error", expect.any(Function))
         expect(getSharedVariable(MUSIC_QUEUE_NAME).songs.length).toEqual(0)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
@@ -235,12 +158,12 @@ describe("play", () => {
         const url = "https://www.youtube.com/watch?v=u9Dg-g7t2l4&list=PLX8S4ptxX3CHezw1JDnwAH7CZLFGpj0z-"
         const videos = [{ url }, { url }, { url }]
         const message = mockMessage("play", url)
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         musicQueue.player.state.status = AudioPlayerStatus.Playing
         mockPlaylistInfo(url, videos)
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(musicQueue.player.play).toBeCalledTimes(0)
@@ -253,7 +176,7 @@ describe("stop", () => {
     test("não deveria executar se o comando play não estiver rodando", async () => {
         const message = mockMessage("stop")
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Nem tô na sala man")
@@ -262,23 +185,26 @@ describe("stop", () => {
 
     test("deveria parar com sucesso", async () => {
         const message = mockMessage("stop")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
+        const bot = mockBot()
 
-        await run(null, message)
+        await run(bot, message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(musicQueue.player.removeAllListeners).toBeCalledTimes(1)
         expect(musicQueue.connection.destroy).toBeCalledTimes(1)
         expect(musicQueue.player.stop).toBeCalledTimes(1)
+        expect(bot.user.setActivity).toBeCalledTimes(1)
+        expect(bot.user.setActivity).toBeCalledWith(process.env.CARACTER_DEFAULT_FUNCTION + "help", expect.objectContaining({ type: "LISTENING" }))
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
     })
 
     test("não deveria desconectar quando tiver um áudio rodando", async () => {
         const message = mockMessage("stop")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         setSharedVariable(AUDIO_QUEUE_NAME, {})
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(musicQueue.player.removeAllListeners).toBeCalledTimes(1)
@@ -289,11 +215,11 @@ describe("stop", () => {
 
     test("não deveria parar de funcionar quando ocorrer algum erro", async () => {
         const message = mockMessage("stop")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         musicQueue.player.removeAllListeners.mockImplementation(() => { throw new Error() })
         setSharedVariable(AUDIO_QUEUE_NAME, {})
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Unexpected error: Error")
@@ -305,7 +231,7 @@ describe("skip", () => {
     test("não deveria executar se o comando play não estiver rodando", async () => {
         const message = mockMessage("skip")
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Nem tô na sala man")
@@ -314,9 +240,9 @@ describe("skip", () => {
 
     test("não deveria executar não existir mais músicas na fila", async () => {
         const message = mockMessage("skip")
-        mockMusicQueue()
+        mockQueueObject(MUSIC_QUEUE_NAME)
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Fila tá vazia man")
@@ -325,10 +251,10 @@ describe("skip", () => {
 
     test("não deveria executar quando um áudio estiver tocando", async () => {
         const message = mockMessage("skip")
-        mockMusicQueue()
+        mockQueueObject(MUSIC_QUEUE_NAME)
         setSharedVariable(AUDIO_QUEUE_NAME, {})
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Tem um áudio tocando man, calma ae")
@@ -337,11 +263,11 @@ describe("skip", () => {
 
     test("não deveria parar de funcionar quando ocorrer algum erro", async () => {
         const message = mockMessage("skip")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         musicQueue.songs.push("url")
         musicQueue.player.stop.mockImplementation(() => { throw new Error() })
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Unexpected error: Error")
@@ -350,10 +276,10 @@ describe("skip", () => {
 
     test("deveria parar o player quando existirem músicas na fila", async () => {
         const message = mockMessage("skip")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         musicQueue.songs.push("url")
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(musicQueue.player.stop).toBeCalledTimes(1)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
@@ -364,7 +290,7 @@ describe("next", () => {
     test("não deveria executar se o comando play não estiver rodando", async () => {
         const message = mockMessage("next")
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Nem tô na sala man")
@@ -373,9 +299,9 @@ describe("next", () => {
 
     test("não deveria dar erro quando a fila estiver vazia", async () => {
         const message = mockMessage("next")
-        mockMusicQueue()
+        mockQueueObject(MUSIC_QUEUE_NAME)
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Fila tá vazia man")
@@ -385,16 +311,16 @@ describe("next", () => {
     test("deveria retornar o link da próxima música com sucesso", async () => {
         const urls = ["url1", "url2"]
         const message = mockMessage("next")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         musicQueue.songs = musicQueue.songs.concat(urls)
         playdl.video_basic_info.mockImplementation(async url => {
-            if (!urls.includes(url)) return null
+            if (!urls.includes(url)) return mockBot()
             return {
                 video_details: { url }
             }
         })
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith(`Próxima música: ${urls[0]}`)
@@ -404,13 +330,13 @@ describe("next", () => {
     test("não deveria parar de funcionar ocorrer algum erro", async () => {
         const urls = ["url1", "url2"]
         const message = mockMessage("next")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         musicQueue.songs = musicQueue.songs.concat(urls)
         playdl.video_basic_info.mockImplementation(async _ => {
             throw new Error()
         })
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Unexpected error: Error")
@@ -422,7 +348,7 @@ describe("current", () => {
     test("não deveria executar se o comando play não estiver rodando", async () => {
         const message = mockMessage("current")
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Nem tô na sala man")
@@ -431,9 +357,9 @@ describe("current", () => {
 
     test("não deveria dar erro quando a fila estiver vazia", async () => {
         const message = mockMessage("current")
-        mockMusicQueue()
+        mockQueueObject(MUSIC_QUEUE_NAME)
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Tem nada tocando man")
@@ -443,7 +369,7 @@ describe("current", () => {
     test("deveria retornar o link música que está tocando com sucesso", async () => {
         const urls = ["url1", "url2", "url3"]
         const message = mockMessage("current")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         const currentSong = urls.shift()
         musicQueue.currentSong = {
             video_details: {
@@ -452,7 +378,7 @@ describe("current", () => {
         }
         musicQueue.songs = musicQueue.songs.concat(urls)
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith(`Tá tocando isso aqui: ${currentSong}`)
@@ -461,10 +387,10 @@ describe("current", () => {
 
     test("não deveria parar de funcionar quando ocorrer algum erro", async () => {
         const message = mockMessage("current")
-        const musicQueue = mockMusicQueue()
+        const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         musicQueue.currentSong = {}
 
-        await run(null, message)
+        await run(mockBot(), message)
 
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith("Unexpected error: Cannot read properties of undefined (reading 'url')")

@@ -142,10 +142,11 @@ function createServerQueue(bot, message, voiceChannel) {
     setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
 
     inactivityIntervalId = setInterval(() => {
-        if (!serverQueue) {
+        if (!sharedVariableExists(MUSIC_QUEUE_NAME)) {
             clearInactivityInterval()
         }
 
+        const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
         if (!serverQueue.voiceChannel.members || serverQueue.voiceChannel.members.size == 0) {
             delayedStop(bot)
         }
@@ -169,7 +170,7 @@ async function playSong(bot, song) {
         serverQueue.currentSong = songWithInfo
         serverQueue.textChannel.send(`Tocando: **${songWithInfo.video_details.title}**`)
 
-        Utils.setPresenceBot(bot, { name: `${songWithInfo.video_details.title}`, url: songWithInfo.video_details.url, type: 1})
+        Utils.setPresenceBot(bot, { name: songWithInfo.video_details.title, url: songWithInfo.video_details.url, type: 1 })
     } catch (error) {
         Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(Utils.getMessageError(error))
@@ -282,7 +283,7 @@ function stopPlayer(bot) {
     if (!serverQueue) throw new ExpectedError("Opa, tem nada tocando man")
 
     serverQueue.player.stop(true)
-    
+
     Utils.setPresenceBotDefault(bot)
 }
 

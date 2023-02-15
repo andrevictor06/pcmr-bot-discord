@@ -45,7 +45,7 @@ async function play(bot, msg, audio) {
         serverQueue.player.stop(true)
         serverQueue.player.on(AudioPlayerStatus.Idle, stop)
     }
-    if( serverQueue){
+    if (serverQueue) {
         const audioPath = path.resolve("audio", audio)
         const resource = createAudioResource(fs.createReadStream(audioPath, { highWaterMark: 1024 * 1024 }))
         serverQueue.player.play(resource)
@@ -81,57 +81,41 @@ function createServerQueue(bot, msg) {
     setSharedVariable(AUDIO_QUEUE_NAME, serverQueue)
 }
 
-async function eventPlayAudio(event){
-    try {
-        let audio = event.customId.split(process.env.ENVIRONMENT + "btn_audio_")[1]
-        await play(event.client, event, audio)
-        
-        event.client.addInteractionCreate(process.env.ENVIRONMENT + "btn_stop_audio", eventStopAudio)
-        event.update({
-            content: `Playing ${getAudioName(audio)}`,
-            components: [
-                {
-                    type: 1,
-                    components: [
-                        {
-                            type: 2,
-                            label: "Para ae, na moral!",
-                            style: 1,
-                            custom_id: process.env.ENVIRONMENT + "btn_stop_audio",
-                        }
-                    ]
-                }
-            ]
-        })
-    } catch (error) {
-        Utils.logError(event.client, error, __filename)
-        event.update({
-            content: Utils.getMessageError(error),
-            components: []
-        })
-    } 
+async function eventPlayAudio(event) {
+    let audio = event.customId.split(process.env.ENVIRONMENT + "btn_audio_")[1]
+    await play(event.client, event, audio)
+
+    event.client.addInteractionCreate(process.env.ENVIRONMENT + "btn_stop_audio", eventStopAudio)
+    event.update({
+        content: `Playing ${getAudioName(audio)}`,
+        components: [
+            {
+                type: 1,
+                components: [
+                    {
+                        type: 2,
+                        label: "Para ae, na moral!",
+                        style: 1,
+                        custom_id: process.env.ENVIRONMENT + "btn_stop_audio",
+                    }
+                ]
+            }
+        ]
+    })
 }
 
-async function eventStopAudio(event){
-    try {
-        stop()
-        event.update({
-            content: `Parei man`,
-            components: []
-        })
-    } catch (error) {
-        Utils.logError(event.client, error, __filename)
-        event.update({
-            content: Utils.getMessageError(error),
-            components: []
-        })
-    } 
+async function eventStopAudio(event) {
+    stop()
+    event.update({
+        content: `Parei man`,
+        components: []
+    })
 }
 
-function run(bot, msg) {     
+async function run(bot, msg) {
     const audios = fs.readdirSync("./audio")
 
-    Utils.chunkArray(audios, 5).forEach( list =>{
+    Utils.chunkArray(audios, 5).forEach(list => {
         const buttons = list.map(audio => {
             bot.addInteractionCreate(process.env.ENVIRONMENT + "btn_audio_" + audio, eventPlayAudio)
             return {
