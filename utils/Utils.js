@@ -124,12 +124,12 @@ function chunkArray(arr, len) {
     return chunks;
 }
 
-function setPresenceBot(bot, presence){
-    bot.user.setActivity(presence.name, { url: presence.url, type: presence.type})
+function setPresenceBot(bot, presence) {
+    bot.user.setActivity(presence.name, { url: presence.url, type: presence.type })
 }
 
-function setPresenceBotDefault(bot){
-    bot.user.setActivity(process.env.CARACTER_DEFAULT_FUNCTION + "help", { type: "LISTENING"})
+function setPresenceBotDefault(bot) {
+    bot.user.setActivity(process.env.CARACTER_DEFAULT_FUNCTION + "help", { type: "LISTENING" })
 }
 
 module.exports = {

@@ -42,26 +42,26 @@ bot.login(process.env.TOKEN_DISCORD);
 
 bot.on('ready', () => {
     try {
-        if (process.env.ENVIRONMENT === "PRD"){
-            if(process.env.ID_CHANNEL_LOG_BOT) {
+        if (process.env.ENVIRONMENT === "PRD") {
+            if (process.env.ID_CHANNEL_LOG_BOT) {
                 bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then(channel => {
                     channel.send({ content: "Bot iniciado em: " + new Date().toLocaleString("pt-BR") })
-                })            
+                })
             }
-            
+
             Utils.setPresenceBotDefault(bot)
         }
         console.log(`Logged in as ${bot.user.tag}!`);
     } catch (error) { }
 });
 
-bot.addInteractionCreate = function (customId, func){
-    if(  ! SharedVariables.sharedVariableExists(customId)){
+bot.addInteractionCreate = function (customId, func) {
+    if (!SharedVariables.sharedVariableExists(customId)) {
         bot.on('interactionCreate', async (event) => {
             try {
                 SharedVariables.setSharedVariable(customId, func)
                 if (event.customId && event.customId === customId) {
-                    func(event)
+                    await func(event)
                 }
             } catch (error) {
                 Utils.logError(bot, error, __filename)
@@ -69,7 +69,7 @@ bot.addInteractionCreate = function (customId, func){
                     content: Utils.getMessageError(error),
                     components: []
                 })
-            }   
+            }
         })
     }
 }

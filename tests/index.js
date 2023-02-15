@@ -1,5 +1,5 @@
 const path = require("path")
-const envPath = path.resolve("tests", ".env-test")
+const envPath = path.resolve("tests", ".env.test")
 require('dotenv').config({ path: envPath })
 
 jest.mock('@discordjs/voice')

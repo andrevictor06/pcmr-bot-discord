@@ -71,7 +71,7 @@ function mockPlaylistInfo(url, videos) {
     return playlistInfo
 }
 
-function mockQueueObject() {
+function mockQueueObject(queueName) {
     const serverQueue = {
         player: {
             removeAllListeners: jest.fn(),
@@ -87,12 +87,20 @@ function mockQueueObject() {
         songs: [],
         currentSong: null
     }
-    setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
+    setSharedVariable(queueName, serverQueue)
     return serverQueue
 }
 
 function mockBot() {
     const listeners = new Map()
+    const on = jest.fn((eventName, fn) => {
+        if (!listeners.has(eventName)) {
+            listeners.set(eventName, [])
+        }
+        const functions = listeners.get(eventName)
+        functions.push(fn)
+
+    })
     return {
         on: jest.fn((eventName, fn) => {
             if (!listeners.has(eventName)) {
@@ -105,7 +113,11 @@ function mockBot() {
         listeners: jest.fn(eventName => {
             if (!listeners.has(eventName)) return []
             return listeners.get(eventName)
-        })
+        }),
+        user: {
+            setActivity: jest.fn()
+        },
+        addInteractionCreate: on
     }
 }
 
