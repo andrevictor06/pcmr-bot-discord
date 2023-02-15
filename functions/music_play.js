@@ -61,15 +61,12 @@ async function play(bot, message) {
     const args = message.content.split(" ")
     if (args.length == 1) throw new ExpectedError("Cadê a música man?")
 
+    const url = await getURL(bot, args)
+    if (!url) throw new ExpectedError("Achei nada man")
+
     const firstTime = !sharedVariableExists(MUSIC_QUEUE_NAME)
     if (firstTime) {
         createServerQueue(bot, message, message.member.voice.channel)
-    }
-
-    const url = await getURL(bot, args)
-    if (!url) {
-        if (firstTime) delayedStop(bot, message)
-        throw new ExpectedError("Achei nada man")
     }
 
     const isIdle = playerIsIdle()
