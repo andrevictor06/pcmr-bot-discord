@@ -1,5 +1,5 @@
 const { run } = require("../../functions/music_play")
-const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable } = require("../../utils/shared_variables")
+const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable, MUSIC_TIMEOUT_ID } = require("../../utils/shared_variables")
 const { AudioPlayerStatus } = require("@discordjs/voice")
 const { mockAudioPlayer, mockBasicInfo, mockMessage, mockPlaylistInfo, mockVoiceConnection, mockQueueObject, mockBot } = require("../utils_test")
 const playdl = require('play-dl')
@@ -74,12 +74,13 @@ describe("play", () => {
         const message = mockMessage("play", url)
         const bot = mockBot()
         const musicTitle = "titulo"
-        mockVoiceConnection()
+        const connection = mockVoiceConnection()
         mockBasicInfo(url, musicTitle)
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
 
         await run(bot, message)
 
+        expect(connection.subscribe).toBeCalledTimes(1)
         expect(player.play).toBeCalledTimes(1)
         expect(message.channel.send).toBeCalledTimes(1)
         expect(player.on).toBeCalledTimes(2)
@@ -110,13 +111,14 @@ describe("play", () => {
         const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
         const player = mockAudioPlayer()
         const message = mockMessage("play", "queen")
-        mockVoiceConnection()
+        const connection = mockVoiceConnection()
         mockBasicInfo(url, "queen")
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
         playdl.search.mockImplementation(async () => ([{ url }, { url: "random text" }]))
 
         await run(mockBot(), message)
 
+        expect(connection.subscribe).toBeCalledTimes(1)
         expect(player.play).toBeCalledTimes(1)
         expect(playdl.stream).toBeCalledWith(url, { quality: 1 })
         expect(message.channel.send).toBeCalledTimes(1)
@@ -153,7 +155,7 @@ describe("play", () => {
         const message = mockMessage("play", url)
         mockVoiceConnection()
         mockBasicInfo(url, "titulo")
-        playdl.playlist_info.mockImplementation(() => { throw new Error() })
+        playdl.playlist_info.mockImplementation(() => { throw new Error("Erro fake ao buscar info da playlist") })
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
 
         await run(mockBot(), message)
@@ -182,6 +184,26 @@ describe("play", () => {
         expect(musicQueue.player.play).toBeCalledTimes(0)
         expect(getSharedVariable(MUSIC_QUEUE_NAME).songs.length).toEqual(videos.length)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+
+    test("deveria aplicar um stop com delay quando não encontrar a música e for a primeira execução", async () => {
+        const player = mockAudioPlayer()
+        const message = mockMessage("play", "url")
+        const bot = mockBot()
+        playdl.video_basic_info.mockImplementation(() => null)
+        mockVoiceConnection()
+        playdl.stream.mockImplementation(async () => ({ stream: {} }))
+
+        expect.hasAssertions()
+        try {
+            await run(bot, message)
+        } catch (error) {
+            expect(sharedVariableExists(MUSIC_TIMEOUT_ID)).toBeTruthy()
+            expect(player.play).toBeCalledTimes(0)
+            expect(error).toBeInstanceOf(ExpectedError)
+            expect(error.message).toEqual("Achei nada man")
+            expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+        }
     })
 })
 
