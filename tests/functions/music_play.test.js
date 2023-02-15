@@ -1,5 +1,6 @@
 const { run } = require("../../functions/music_play")
-const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable, MUSIC_TIMEOUT_ID } = require("../../utils/shared_variables")
+const sharedVariables = require("../../utils/shared_variables")
+const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID } = sharedVariables
 const { AudioPlayerStatus, joinVoiceChannel } = require("@discordjs/voice")
 const { mockAudioPlayer, mockBasicInfo, mockMessage, mockPlaylistInfo, mockVoiceConnection, mockQueueObject, mockBot } = require("../utils_test")
 const playdl = require('play-dl')
@@ -8,6 +9,7 @@ const { ExpectedError } = require("../../utils/expected_error")
 afterEach(() => {
     clearSharedVariables()
     jest.resetAllMocks()
+    jest.restoreAllMocks()
 })
 
 //TODO: Cenários de teste para setInterval e setTimeout
@@ -234,6 +236,22 @@ describe("stop", () => {
         expect(bot.user.setActivity).toBeCalledTimes(1)
         expect(bot.user.setActivity).toBeCalledWith(process.env.CARACTER_DEFAULT_FUNCTION + "help", expect.objectContaining({ type: "LISTENING" }))
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
+    })
+
+    test("deveria limpar o interval e o timeout quando existirem", async () => {
+        const message = mockMessage("stop")
+        const timeoutId = "timeout"
+        const intervalId = "interval"
+        mockQueueObject(MUSIC_QUEUE_NAME)
+        const bot = mockBot()
+        setSharedVariable(MUSIC_TIMEOUT_ID, timeoutId)
+        setSharedVariable(MUSIC_INTERVAL_ID, intervalId)
+
+        await run(bot, message)
+
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
+        expect(sharedVariableExists(MUSIC_TIMEOUT_ID)).toBeFalsy()
+        expect(sharedVariableExists(MUSIC_INTERVAL_ID)).toBeFalsy()
     })
 
     test("não deveria desconectar quando tiver um áudio rodando", async () => {
