@@ -142,12 +142,12 @@ function parseArgs(message) {
         args: {}
     }
     for (let i = 0; i < pieces.length; i++) {
-        const str = pieces[i];
+        const str = pieces[i]
         if (str.startsWith("--")) {
             const argName = str.replace("--", "")
             const argValue = []
             for (let j = i + 1; j < pieces.length; j++) {
-                const el = pieces[j];
+                const el = pieces[j]
                 if (el.startsWith("--")) {
                     break
                 } else {
