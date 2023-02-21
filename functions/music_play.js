@@ -58,10 +58,10 @@ const commands = {
 async function play(bot, message) {
     Utils.checkVoiceChannelPreConditions(message)
 
-    const args = message.content.split(" ")
-    if (args.length == 1) throw new ExpectedError("Cadê a música man?")
+    const parsedArgs = Utils.parseArgs(message)
+    if (parsedArgs.mainArg == null || parsedArgs.mainArg == "") throw new ExpectedError("Cadê a música man?")
 
-    const url = await getURL(bot, args)
+    const url = await getURL(bot, parsedArgs)
     if (!url) throw new ExpectedError("Achei nada man")
 
     const firstTime = !sharedVariableExists(MUSIC_QUEUE_NAME)
@@ -70,18 +70,18 @@ async function play(bot, message) {
     }
 
     const isIdle = playerIsIdle()
-    await addToQueue(url, message, !firstTime && !isIdle)
+    await addToQueue(url, message, parsedArgs, !firstTime && !isIdle)
     if (firstTime || isIdle) {
         return next(bot)
     }
 }
 
 async function getURL(bot, args) {
-    if (Utils.isValidHttpUrl(args[1])) {
-        const url = new URL(args[1])
+    if (Utils.isValidHttpUrl(args.mainArg)) {
+        const url = new URL(args.mainArg)
         if (url.searchParams.has("list")) {
             try {
-                const playlistInfo = await playdl.playlist_info(args[1], { incomplete: true })
+                const playlistInfo = await playdl.playlist_info(args.mainArg, { incomplete: true })
                 const videos = await playlistInfo.all_videos()
                 return videos.filter(v => v.url != null).map(v => v.url)
             } catch (error) {
@@ -89,27 +89,32 @@ async function getURL(bot, args) {
             }
         }
 
-        return args[1]
+        return args.mainArg
     }
 
-    const search = args.slice(1).join(" ")
-    const result = await playdl.search(search, { source: { youtube: 'video' }, limit: 1 })
+    const result = await playdl.search(args.mainArg, { source: { youtube: 'video' }, limit: 1 })
     if (result && result.length > 0) {
         return result[0].url
     }
     return null
 }
 
-async function addToQueue(songURL, message, showAddedMessage = false) {
+async function addToQueue(songURL, message, parsedArgs, showAddedMessage = false) {
     const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
     if (Array.isArray(songURL)) {
         serverQueue.songs = serverQueue.songs.concat(songURL)
         message.channel.send(`Adicionei ${songURL.length} músicas na fila!`)
     } else {
         const basicInfo = await loadSongInfo(songURL)
-        serverQueue.songs.push(basicInfo)
-        if (showAddedMessage) {
+        const times = parsedArgs.args.times != null && parsedArgs.args.times > 0 ? parsedArgs.args.times : 1
+        for (let i = 0; i < times; i++) {
+            serverQueue.songs.push(basicInfo)
+        }
+        if (showAddedMessage && times == 1) {
             message.channel.send(`**${basicInfo.video_details.title}** foi adicionada na fila!`)
+        }
+        if (times > 1) {
+            message.channel.send(`**${basicInfo.video_details.title}** foi adicionada ${times} vezes na fila!`)
         }
     }
 }

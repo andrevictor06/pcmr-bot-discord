@@ -129,7 +129,29 @@ function setPresenceBot(bot, presence) {
 }
 
 function setPresenceBotDefault(bot) {
-    bot.user.setActivity(process.env.CARACTER_DEFAULT_FUNCTION + "help", { type: "LISTENING" })
+    bot.user.setActivity(command("help"), { type: "LISTENING" })
+}
+
+function parseArgs(message) {
+    if (!message || message.content == null || message.content == "") throw new ExpectedError("Mensagem inválida")
+    const pieces = message.content.split(" ")
+    const command = pieces.shift()
+    const parsedArgs = {
+        command,
+        mainArg: "",
+        args: {}
+    }
+    for (let i = 0; i < pieces.length; i++) {
+        const str = pieces[i];
+        if (str.startsWith("--")) {
+            const argName = str.replace("--", "")
+            parsedArgs.args[argName] = pieces[i + 1]
+            pieces[i] = ""
+            pieces[i + 1] = ""
+        }
+    }
+    parsedArgs.mainArg = pieces.filter(el => el != "").join(" ").trim()
+    return parsedArgs
 }
 
 module.exports = {
@@ -145,5 +167,6 @@ module.exports = {
     checkVoiceChannelPreConditions,
     chunkArray,
     setPresenceBot,
-    setPresenceBotDefault
+    setPresenceBotDefault,
+    parseArgs
 }
