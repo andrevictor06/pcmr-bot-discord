@@ -145,30 +145,39 @@ function parseArgs(message) {
         const str = pieces[i];
         if (str.startsWith("--")) {
             const argName = str.replace("--", "")
-            parsedArgs.args[argName] = pieces[i + 1]
+            const argValue = []
+            for (let j = i + 1; j < pieces.length; j++) {
+                const el = pieces[j];
+                if (el.startsWith("--")) {
+                    break
+                } else {
+                    argValue.push(el)
+                    pieces[j] = ""
+                }
+            }
+            parsedArgs.args[argName] = argValue.join(" ")
             pieces[i] = ""
-            pieces[i + 1] = ""
         }
     }
     parsedArgs.mainArg = pieces.filter(el => el != "").join(" ").trim()
     return parsedArgs
 }
 
-function getMentions(mensagem){
-    
-    if( mensagem && mensagem.mentions){
+function getMentions(mensagem) {
+
+    if (mensagem && mensagem.mentions) {
         const mentions = []
-        if(mensagem.mentions.everyone){
+        if (mensagem.mentions.everyone) {
             mentions.push("@everyone")
         }
-        if(mensagem.mentions.users.size){
+        if (mensagem.mentions.users.size) {
             mensagem.mentions.users.forEach(element => {
-               mentions.push(`<@!${element.id}>`) 
+                mentions.push(`<@!${element.id}>`)
             });
         }
-        if(mensagem.mentions.roles.size){
+        if (mensagem.mentions.roles.size) {
             mensagem.mentions.roles.forEach(element => {
-               mentions.push(`<@&${element.id}>`) 
+                mentions.push(`<@&${element.id}>`)
             });
         }
 
