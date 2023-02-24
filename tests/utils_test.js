@@ -38,10 +38,20 @@ function mockVoiceConnection() {
 }
 
 function mockAudioPlayer(state = AudioPlayerStatus.Idle) {
+    const listeners = new Map()
+    const on = jest.fn((eventName, fn) => {
+        if (!listeners.has(eventName)) {
+            listeners.set(eventName, [])
+        }
+        const functions = listeners.get(eventName)
+        functions.push(fn)
+
+    })
     const player = {
-        on: jest.fn(),
+        on,
         state,
-        play: jest.fn()
+        play: jest.fn(),
+        listeners
     }
     createAudioPlayer.mockImplementation(() => player)
     return player
@@ -85,7 +95,10 @@ function mockQueueObject(queueName) {
             destroy: jest.fn()
         },
         songs: [],
-        currentSong: null
+        currentSong: null,
+        textChannel: {
+            send: jest.fn()
+        }
     }
     setSharedVariable(queueName, serverQueue)
     return serverQueue
@@ -102,14 +115,7 @@ function mockBot() {
 
     })
     return {
-        on: jest.fn((eventName, fn) => {
-            if (!listeners.has(eventName)) {
-                listeners.set(eventName, [])
-            }
-            const functions = listeners.get(eventName)
-            functions.push(fn)
-
-        }),
+        on,
         listeners: jest.fn(eventName => {
             if (!listeners.has(eventName)) return []
             return listeners.get(eventName)
