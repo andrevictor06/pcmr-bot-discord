@@ -2,16 +2,20 @@ const { run } = require("../../functions/music_play")
 const sharedVariables = require("../../utils/shared_variables")
 const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID } = sharedVariables
 const { AudioPlayerStatus, joinVoiceChannel } = require("@discordjs/voice")
-const { mockAudioPlayer, mockBasicInfo, mockMessage, mockPlaylistInfo, mockVoiceConnection, mockQueueObject, mockBot } = require("../utils_test")
+const { mockAudioPlayer, mockBasicInfo, mockMessage, mockPlaylistInfo, mockVoiceConnection, mockQueueObject, mockBot, mockPlaydlStream } = require("../utils_test")
 const playdl = require('play-dl')
 const { ExpectedError } = require("../../utils/expected_error")
 const utils = require("../../utils/Utils")
+const path = require("path")
+
+beforeEach(() => {
+    jest.spyOn(global, 'setTimeout')
+})
 
 afterEach(() => {
     clearSharedVariables()
     jest.resetAllMocks()
     jest.restoreAllMocks()
-    jest.spyOn(global, 'setTimeout')
 })
 
 //TODO: Cenários de teste para setInterval e setTimeout
@@ -278,8 +282,46 @@ describe("play", () => {
             expect(error).toBeInstanceOf(Error)
             expect(error.message).toContain("Fake error")
             expect(sharedVariableExists(MUSIC_TIMEOUT_ID)).toBeTruthy()
-            expect(setTimeout).toHaveBeenCalledTimes(1)
+            expect(setTimeout).toBeCalledTimes(1)
         }
+    })
+
+    test('deveria aplicar um delayedStop quando não tiver mais músicas para tocar', async () => {
+        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const message = mockMessage("play", url)
+        const bot = mockBot()
+        const player = mockAudioPlayer()
+        mockVoiceConnection()
+        mockBasicInfo(url, "titulo")
+        mockPlaydlStream()
+
+        await run(bot, message)
+        const idleFn = player.listeners.get(AudioPlayerStatus.Idle)[0]
+        idleFn()
+
+        const musicQueue = getSharedVariable(MUSIC_QUEUE_NAME)
+        expect(musicQueue.currentSong).toBeNull()
+        expect(sharedVariableExists(MUSIC_TIMEOUT_ID)).toBeTruthy()
+        expect(setTimeout).toBeCalledTimes(1)
+    })
+
+    test('não deveria parar de executar se ocorrer um erro ao tentar tocar uma música', async () => {
+        jest.spyOn(utils, 'logError')
+        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const message = mockMessage("play", url)
+        const bot = mockBot()
+        mockAudioPlayer()
+        mockVoiceConnection()
+        mockBasicInfo(url, "titulo")
+
+        await run(bot, message)
+
+        const musicQueue = getSharedVariable(MUSIC_QUEUE_NAME)
+        expect(musicQueue.currentSong).toBeNull()
+        expect(sharedVariableExists(MUSIC_TIMEOUT_ID)).toBeTruthy()
+        expect(setTimeout).toBeCalledTimes(1)
+        expect(utils.logError).toBeCalledTimes(1)
+        expect(utils.logError).toHaveBeenNthCalledWith(1, bot, expect.any(Error), path.resolve("functions", "music_play.js"))
     })
 })
 

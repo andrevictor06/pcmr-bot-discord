@@ -165,7 +165,6 @@ async function playSong(bot, song) {
     const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
     try {
         if (!song) {
-            //TODO: testar cenário
             serverQueue.currentSong = null
             return delayedStop(bot)
         }
@@ -181,7 +180,6 @@ async function playSong(bot, song) {
 
         Utils.setPresenceBot(bot, { name: songWithInfo.video_details.title, url: songWithInfo.video_details.url, type: 1 })
     } catch (error) {
-        //TODO: testar cenário
         Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(Utils.getMessageError(error))
         return next(bot)
