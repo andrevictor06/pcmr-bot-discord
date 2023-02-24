@@ -11,6 +11,7 @@ afterEach(() => {
     clearSharedVariables()
     jest.resetAllMocks()
     jest.restoreAllMocks()
+    jest.spyOn(global, 'setTimeout')
 })
 
 //TODO: Cenários de teste para setInterval e setTimeout
@@ -259,6 +260,26 @@ describe("play", () => {
         expect(player.on).toHaveBeenNthCalledWith(2, "error", expect.any(Function))
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
         expect(getSharedVariable(MUSIC_QUEUE_NAME).songs).toHaveLength(0)
+    })
+
+    test("deveria aplicar um delay com stop", async () => {
+        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const message = mockMessage("play", url)
+        mockAudioPlayer()
+        mockVoiceConnection()
+        playdl.video_basic_info.mockImplementation(() => {
+            throw new Error("Fake error")
+        })
+
+        expect.hasAssertions()
+        try {
+            await run(mockBot(), message)
+        } catch (error) {
+            expect(error).toBeInstanceOf(Error)
+            expect(error.message).toContain("Fake error")
+            expect(sharedVariableExists(MUSIC_TIMEOUT_ID)).toBeTruthy()
+            expect(setTimeout).toHaveBeenCalledTimes(1)
+        }
     })
 })
 

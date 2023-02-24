@@ -70,7 +70,12 @@ async function play(bot, message) {
     }
 
     const isIdle = playerIsIdle()
-    await addToQueue(url, message, parsedArgs, !firstTime && !isIdle)
+    try {
+        await addToQueue(url, message, parsedArgs, !firstTime && !isIdle)
+    } catch (error) {
+        if (firstTime) delayedStop(bot, message)
+        throw error
+    }
     if (firstTime || isIdle) {
         return next(bot)
     }
