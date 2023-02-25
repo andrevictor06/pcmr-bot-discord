@@ -550,7 +550,6 @@ describe("queue", () => {
         const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         musicQueue.songs = musicQueue.songs.concat(urls)
 
-
         await run(mockBot(), message)
 
         const cache = message.channel.threads.cache[0]
@@ -575,7 +574,6 @@ describe("queue", () => {
         })
         const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         musicQueue.songs = musicQueue.songs.concat(urls)
-
 
         await run(mockBot(), message)
 
