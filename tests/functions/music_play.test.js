@@ -381,6 +381,19 @@ describe("stop", () => {
         expect(musicQueue.player.stop).toBeCalledTimes(1)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
     })
+
+    test("deveria deletar o tópico de músicas na fila quando existir", async () => {
+        const message = mockMessage("stop")
+        message.channel.threads.create({
+            name: "músicas_na_fila"
+        })
+        mockQueueObject(MUSIC_QUEUE_NAME)
+
+        await run(mockBot(), message)
+
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
+        expect(message.channel.threads.cache).toHaveLength(0)
+    })
 })
 
 describe("skip", () => {
@@ -552,9 +565,10 @@ describe("queue", () => {
 
         await run(mockBot(), message)
 
-        const cache = message.channel.threads.cache[0]
-        expect(cache.delete).toBeCalledTimes(0)
-        expect(cache.send).toBeCalledTimes(3)
+        expect(message.channel.threads.cache).toHaveLength(1)
+        const thread = message.channel.threads.cache[0]
+        expect(thread.delete).toBeCalledTimes(0)
+        expect(thread.send).toBeCalledTimes(3)
         expect(musicQueue.songs).toEqual(urls.map(url => ({ video_details: { url, title: "titulo" } })))
         expect(playdl.video_basic_info).toBeCalledTimes(urls.length)
     })
@@ -577,9 +591,9 @@ describe("queue", () => {
 
         await run(mockBot(), message)
 
-        const cache = message.channel.threads.cache[0]
-        expect(cache.delete).toBeCalledTimes(1)
-        expect(cache.send).toBeCalledTimes(2)
+        expect(message.channel.threads.cache).toHaveLength(1)
+        const thread = message.channel.threads.cache[0]
+        expect(thread.send).toBeCalledTimes(2)
         expect(musicQueue.songs).toEqual([song1, song2, song3])
     })
 })
