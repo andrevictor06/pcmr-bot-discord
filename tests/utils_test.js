@@ -16,8 +16,11 @@ function mockMessage(command, ...params) {
             threads: {
                 create: jest.fn(thread => {
                     thread.send = jest.fn()
-                    thread.delete = jest.fn()
                     cache.push(thread)
+                    const index = cache.length - 1
+                    thread.delete = jest.fn(() => {
+                        cache.splice(index, 1)
+                    })
                 }),
                 cache
             }

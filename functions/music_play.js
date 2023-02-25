@@ -227,6 +227,7 @@ function stop(bot, message) {
                 serverQueue.connection.destroy()
                 textChannel.send("Falou man")
             }
+            deleteThread(message)
         }
 
         deleteSharedVariable(MUSIC_QUEUE_NAME)
@@ -320,10 +321,14 @@ function stopPlayer(bot) {
     Utils.setPresenceBotDefault(bot)
 }
 
-async function createThread(message) {
+async function deleteThread(message) {
     const cache = message.channel.threads.cache.find(x => x.name === musicQueueThreadName)
     if (cache)
         await cache.delete()
+}
+
+async function createThread(message) {
+    await deleteThread(message)
 
     return await message.channel.threads.create({
         name: musicQueueThreadName,
