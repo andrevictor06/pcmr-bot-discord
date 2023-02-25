@@ -321,9 +321,11 @@ function stopPlayer(bot) {
 }
 
 async function deleteThread(message) {
-    const cache = message.channel.threads.cache.find(x => x.name === musicQueueThreadName)
-    if (cache)
-        await cache.delete()
+    if (message && message.channel) {
+        const cache = message.channel.threads.cache.find(x => x.name === musicQueueThreadName)
+        if (cache)
+            await cache.delete()
+    }
 }
 
 async function createThread(message) {
