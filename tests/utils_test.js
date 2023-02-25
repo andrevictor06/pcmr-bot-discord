@@ -44,7 +44,10 @@ function mockMessage(command, ...params) {
 }
 
 function mockVoiceConnection() {
-    const connection = { subscribe: jest.fn() }
+    const connection = {
+        subscribe: jest.fn(),
+        destroy: jest.fn()
+    }
     joinVoiceChannel.mockImplementation(() => connection)
     return connection
 }
@@ -63,7 +66,9 @@ function mockAudioPlayer(state = AudioPlayerStatus.Idle) {
         on,
         state,
         play: jest.fn(),
-        listeners
+        listeners,
+        removeAllListeners: jest.fn(),
+        stop: jest.fn()
     }
     createAudioPlayer.mockImplementation(() => player)
     return player

@@ -394,6 +394,28 @@ describe("stop", () => {
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
         expect(message.channel.threads.cache).toHaveLength(0)
     })
+
+    test('deveria executar o delayedStop com sucesso', async () => {
+        jest.spyOn(utils, 'logError')
+        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const message = mockMessage("play", url)
+        const bot = mockBot()
+        const player = mockAudioPlayer()
+        mockVoiceConnection()
+        mockBasicInfo(url, "titulo")
+        mockPlaydlStream()
+
+        await run(bot, message)
+        const [idleFn] = player.listeners.get(AudioPlayerStatus.Idle)
+        idleFn()
+        const [timeoutFunction] = setTimeout.mock.lastCall
+        timeoutFunction()
+
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
+        expect(sharedVariableExists(MUSIC_TIMEOUT_ID)).toBeFalsy()
+        expect(setTimeout).toBeCalledTimes(1)
+        expect(utils.logError).toBeCalledTimes(0)
+    })
 })
 
 describe("skip", () => {

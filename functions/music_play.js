@@ -261,15 +261,14 @@ async function queue(bot, message) {
     await sendMessageThread(message.channel, { content: `Tem **${serverQueue.songs.length}** música(s) na fila!` })
     await loadAllSongsInfo()
     Utils.chunkArray(serverQueue.songs, 5).forEach(async (chunk, chunckIndex) => {
-        const components = chunk
-            .map((song, index) => {
-                return {
-                    type: 2,
-                    label: `[${index + (chunckIndex * 5) + 1}] ${song.video_details.title}`.slice(0, 80),
-                    url: song.video_details.url,
-                    style: 5
-                }
-            })
+        const components = chunk.map((song, index) => {
+            return {
+                type: 2,
+                label: `[${index + (chunckIndex * 5) + 1}] ${song.video_details.title}`.slice(0, 80),
+                url: song.video_details.url,
+                style: 5
+            }
+        })
         sendMessageThread(message.channel, {
             content: "---",
             components: [
@@ -322,9 +321,11 @@ function stopPlayer(bot) {
 }
 
 async function deleteThread(message) {
-    const cache = message.channel.threads.cache.find(x => x.name === musicQueueThreadName)
-    if (cache)
-        await cache.delete()
+    if (message && message.channel) {
+        const cache = message.channel.threads.cache.find(x => x.name === musicQueueThreadName)
+        if (cache)
+            await cache.delete()
+    }
 }
 
 async function createThread(message) {
