@@ -266,7 +266,7 @@ describe("play", () => {
         expect(getSharedVariable(MUSIC_QUEUE_NAME).songs).toHaveLength(0)
     })
 
-    test("deveria aplicar um delay com stop", async () => {
+    test("deveria aplicar um delayedStop quando ocorrer algum erro ao tentar adicionar a música na fila", async () => {
         const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
         const message = mockMessage("play", url)
         mockAudioPlayer()
@@ -510,5 +510,76 @@ describe("current", () => {
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith(`Tá tocando isso aqui: ${currentSong}`)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+})
+
+describe("queue", () => {
+    test("não deveria executar se o comando play não estiver rodando", async () => {
+        const message = mockMessage("queue")
+
+        await run(mockBot(), message)
+
+        expect(message.channel.send).toBeCalledTimes(1)
+        expect(message.channel.send).toHaveBeenCalledWith("Nem tô na sala man")
+        expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
+    })
+
+    test("deveria informar quando a fila estiver vazia", async () => {
+        const message = mockMessage("queue")
+        mockQueueObject(MUSIC_QUEUE_NAME)
+
+        expect.hasAssertions()
+        try {
+            await run(mockBot(), message)
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+            expect(error.message).toEqual("Fila tá vazia man")
+        }
+    })
+
+    test("deveria retornar a fila de músicas com sucesso", async () => {
+        const urls = []
+        for (let i = 0; i < 10; i++) {
+            urls.push(`url${i}`)
+        }
+        playdl.video_basic_info.mockImplementation(url => {
+            if (urls.includes(url)) return { video_details: { url, title: "titulo" } }
+            return null
+        })
+        const message = mockMessage("queue")
+        const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
+        musicQueue.songs = musicQueue.songs.concat(urls)
+
+        await run(mockBot(), message)
+
+        const cache = message.channel.threads.cache[0]
+        expect(cache.delete).toBeCalledTimes(0)
+        expect(cache.send).toBeCalledTimes(3)
+        expect(musicQueue.songs).toEqual(urls.map(url => ({ video_details: { url, title: "titulo" } })))
+        expect(playdl.video_basic_info).toBeCalledTimes(urls.length)
+    })
+
+    test("deveria retornar a fila de músicas com sucesso deletando o tópico anterior", async () => {
+        const song1 = {
+            video_details: { url: "url1", title: "titulo1" }
+        }
+        const song2 = mockBasicInfo("url2", "titulo2")
+        const song3 = {
+            video_details: { url: "url3", title: "titulo3" }
+        }
+        const urls = [song1, song2.video_details.url, song3]
+        const message = mockMessage("queue")
+        message.channel.threads.create({
+            name: "músicas_na_fila"
+        })
+        const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
+        musicQueue.songs = musicQueue.songs.concat(urls)
+
+        await run(mockBot(), message)
+
+        const cache = message.channel.threads.cache[0]
+        expect(cache.delete).toBeCalledTimes(1)
+        expect(cache.send).toBeCalledTimes(2)
+        expect(musicQueue.songs).toEqual([song1, song2, song3])
     })
 })

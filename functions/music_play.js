@@ -2,8 +2,9 @@ const { joinVoiceChannel, AudioPlayerStatus, createAudioResource, createAudioPla
 const Utils = require("../utils/Utils")
 const { ExpectedError } = require('../utils/expected_error')
 const playdl = require('play-dl');
-const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, MUSIC_TIMEOUT_ID, sharedVariableExists, setSharedVariable, getSharedVariable, deleteSharedVariable, MUSIC_INTERVAL_ID } = require("../utils/shared_variables");
+const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, MUSIC_TIMEOUT_ID, sharedVariableExists, setSharedVariable, getSharedVariable, deleteSharedVariable, MUSIC_INTERVAL_ID } = require("../utils/shared_variables")
 
+const musicQueueThreadName = "músicas_na_fila"
 const commands = {
     play: {
         fn: play,
@@ -251,13 +252,34 @@ function next(bot) {
     return playSong(bot, getSharedVariable(MUSIC_QUEUE_NAME).songs.shift())
 }
 
-function queue(bot, message) {
+async function queue(bot, message) {
     const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
-    if (serverQueue.songs.length > 0) {
-        message.channel.send(`Tem **${serverQueue.songs.length}** música(s) na fila!`)
-    } else {
-        message.channel.send("Fila tá vazia man")
-    }
+    if (!serverQueue.songs || serverQueue.songs.length == 0) throw new ExpectedError("Fila tá vazia man")
+
+    await createThread(message)
+    await sendMessageThread(message.channel, { content: `Tem **${serverQueue.songs.length}** música(s) na fila!` })
+    await loadAllSongsInfo()
+    Utils.chunkArray(serverQueue.songs, 5).forEach(async (chunk, chunckIndex) => {
+        const components = chunk
+            .map((song, index) => {
+                return {
+                    type: 2,
+                    label: `[${index + (chunckIndex * 5) + 1}] ${song.video_details.title}`.slice(0, 80),
+                    url: song.video_details.url,
+                    style: 5
+                }
+            })
+        sendMessageThread(message.channel, {
+            content: "---",
+            components: [
+                {
+                    type: 1,
+                    components
+                }
+            ]
+        })
+    })
+
 }
 
 function currentSong(bot, message) {
@@ -296,6 +318,38 @@ function stopPlayer(bot) {
     serverQueue.player.stop(true)
 
     Utils.setPresenceBotDefault(bot)
+}
+
+async function createThread(message) {
+    const cache = message.channel.threads.cache.find(x => x.name === musicQueueThreadName)
+    if (cache)
+        await cache.delete()
+
+    return await message.channel.threads.create({
+        name: musicQueueThreadName,
+        autoArchiveDuration: 60,
+        reason: 'Fila de músicas',
+    })
+}
+
+async function sendMessageThread(channel, message) {
+    const thread = channel.threads.cache.find(x => x.name === musicQueueThreadName)
+    if (thread)
+        thread.send(message)
+}
+
+async function loadAllSongsInfo() {
+    const serverQueue = getSharedVariable(MUSIC_QUEUE_NAME)
+    const promises = []
+    for (let i = 0; i < serverQueue.songs.length; i++) {
+        promises.push(
+            new Promise(async resolve => {
+                serverQueue.songs[i] = await loadSongInfo(serverQueue.songs[i])
+                resolve(true)
+            })
+        )
+    }
+    await Promise.all(promises)
 }
 
 async function run(bot, msg) {

@@ -5,13 +5,22 @@ const playdl = require('play-dl')
 
 function mockMessage(command, ...params) {
     const has = jest.fn(() => true)
+    const cache = []
     return {
         content: Utils.command(command) + (params && params.length > 0 ? " " + params.join(" ") : ""),
         client: {
             user: {}
         },
         channel: {
-            send: jest.fn()
+            send: jest.fn(),
+            threads: {
+                create: jest.fn(thread => {
+                    thread.send = jest.fn()
+                    thread.delete = jest.fn()
+                    cache.push(thread)
+                }),
+                cache
+            }
         },
         member: {
             voice: {
