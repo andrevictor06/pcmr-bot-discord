@@ -1,4 +1,4 @@
-const { joinVoiceChannel, AudioPlayerStatus, createAudioResource, createAudioPlayer } = require('@discordjs/voice')
+const { joinVoiceChannel, AudioPlayerStatus, createAudioResource, createAudioPlayer, VoiceConnectionStatus } = require('@discordjs/voice')
 const Utils = require("../utils/Utils")
 const { ExpectedError } = require('../utils/expected_error')
 const playdl = require('play-dl');
@@ -146,6 +146,12 @@ function createServerQueue(bot, message, voiceChannel) {
     serverQueue.player.on("error", error => {
         Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(Utils.getMessageError(error))
+    })
+    serverQueue.connection.on('stateChange', (oldState, newState) => {
+        console.log('connection stateChange ', oldState.status, newState.status)
+        if (oldState.status === VoiceConnectionStatus.Ready && newState.status === VoiceConnectionStatus.Connecting) {
+            serverQueue.connection.configureNetworking()
+        }
     })
     setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
 

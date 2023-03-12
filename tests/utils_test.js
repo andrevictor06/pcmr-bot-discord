@@ -46,7 +46,8 @@ function mockMessage(command, ...params) {
 function mockVoiceConnection() {
     const connection = {
         subscribe: jest.fn(),
-        destroy: jest.fn()
+        destroy: jest.fn(),
+        on: jest.fn()
     }
     joinVoiceChannel.mockImplementation(() => connection)
     return connection
