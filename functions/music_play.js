@@ -147,10 +147,10 @@ function createServerQueue(bot, message, voiceChannel) {
         Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(Utils.getMessageError(error))
     })
-    serverQueue.connection.on('stateChange', (oldState, newState)=>{
-        console.log('connection stateChange ', oldState.status,  newState.status);
+    serverQueue.connection.on('stateChange', (oldState, newState) => {
+        console.log('connection stateChange ', oldState.status, newState.status)
         if (oldState.status === VoiceConnectionStatus.Ready && newState.status === VoiceConnectionStatus.Connecting) {
-            serverQueue.connection.configureNetworking();
+            serverQueue.connection.configureNetworking()
         }
     })
     setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
