@@ -162,7 +162,6 @@ function fakeYtUrl(withPlaylistParam = false) {
     if (withPlaylistParam) {
         url += `&list=${randomStr(20)}`
     }
-    console.log(url)
     return url
 }
 
