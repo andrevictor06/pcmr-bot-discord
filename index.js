@@ -3,6 +3,7 @@ require('dotenv/config');
 const Utils = require("./utils/Utils")
 const { Client, Intents } = require("discord.js");
 const SharedVariables = require('./utils/shared_variables');
+const { runAudioPlay } = require('./functions/audio_play');
 const bot = new Client({
     intents: [
         Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_BANS,
@@ -55,6 +56,19 @@ bot.on('ready', () => {
         console.log(`Logged in as ${bot.user.tag}!`);
     } catch (error) { }
 });
+
+if(process.env.HABILITA_VOICE_STATE_UPDATE_LISTENER){
+    bot.on('voiceStateUpdate', (oldState, newState) => {
+        try {
+            
+            if( newState.id !== process.env.ID_MEMBER_PCMR_BOT){
+                if(newState.channelId){
+                    runAudioPlay(bot, newState.channelId, `corno-audio.mp3`)
+                }    
+            }
+        } catch (error) { }
+    });    
+}
 
 bot.addInteractionCreate = function (customId, func) {
     if (!SharedVariables.sharedVariableExists(customId)) {
