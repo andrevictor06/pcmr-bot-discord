@@ -323,6 +323,21 @@ describe("play", () => {
         expect(utils.logError).toBeCalledTimes(1)
         expect(utils.logError).toHaveBeenNthCalledWith(1, bot, expect.any(Error), path.resolve("functions", "music_play.js"))
     })
+
+    test('deveria dar erro quando a url não for do youtube', async () => {
+        const url = "https://www.google.com/watch?v=kijpcUv-b8M"
+        const message = mockMessage("play", url)
+        const bot = mockBot()
+
+        expect.hasAssertions()
+        try {
+            await run(bot, message)
+        } catch (error) {
+            expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
+            expect(error).toBeInstanceOf(ExpectedError)
+            expect(error.message).toEqual("Essa url não é do youtube não man")
+        }
+    })
 })
 
 describe("stop", () => {
