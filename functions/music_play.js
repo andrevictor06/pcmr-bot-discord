@@ -149,7 +149,6 @@ function createServerQueue(bot, message, voiceChannel) {
         serverQueue.textChannel.send(Utils.getMessageError(error))
     })
     serverQueue.connection.on('stateChange', (oldState, newState) => {
-        console.log('connection stateChange ', oldState.status, newState.status)
         if (oldState.status === VoiceConnectionStatus.Ready && newState.status === VoiceConnectionStatus.Connecting) {
             serverQueue.connection.configureNetworking()
         }

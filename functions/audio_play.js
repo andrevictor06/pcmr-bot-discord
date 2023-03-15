@@ -150,6 +150,12 @@ function helpComand(bot, msg) {
     }
 }
 
+function runAudioPlay(bot, channelId, audio){
+    bot.channels.fetch(channelId).then(channel => {
+        play(bot, {member:{ voice: {channel: channel}} }, audio)
+    })
+}
+
 module.exports = {
-    run, canHandle, helpComand
+    run, canHandle, helpComand, runAudioPlay
 }
