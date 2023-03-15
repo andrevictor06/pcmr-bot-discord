@@ -61,9 +61,9 @@ if(process.env.HABILITA_VOICE_STATE_UPDATE_LISTENER){
     bot.on('voiceStateUpdate', (oldState, newState) => {
         try {
             
-            if( newState.id !== process.env.ID_MEMBER_PCMR_BOT){
+            if( newState.id !== process.env.ID_MEMBER_PCMR_BOT && newState.channelId === process.env.ID_VOICE_CHANNEL_GAME_PLAY){
                 if(newState.channelId){
-                    runAudioPlay(bot, newState.channelId, `corno-audio.mp3`)
+                    runAudioPlay(bot, newState.channelId, `olha-o-macaco.mp3`)
                 }    
             }
         } catch (error) { }
