@@ -325,7 +325,7 @@ describe("play", () => {
     })
 
     test('deveria dar erro quando a url não for do youtube', async () => {
-        const url = "https://www.google.com/watch?v=kijpcUv-b8M"
+        const url = fakeYtUrl().replace("youtube", "google")
         const message = mockMessage("play", url)
         const bot = mockBot()
 
