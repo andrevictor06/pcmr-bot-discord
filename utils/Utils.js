@@ -191,7 +191,7 @@ function getRandomFromArray(array){
     if( ! array || array.length == 0)
         return null
 
-    return array[between(0, array.length-1)]
+    return array[between(0, array.length)]
 }
 
 module.exports = {
