@@ -54,20 +54,22 @@ bot.on('ready', () => {
             Utils.setPresenceBotDefault(bot)
         }
         console.log(`Logged in as ${bot.user.tag}!`);
-    } catch (error) { Utils.logError(bot, error, __filename)}
+    } catch (error) { Utils.logError(bot, error, __filename) }
 });
 
-if(process.env.HABILITA_VOICE_STATE_UPDATE_LISTENER){
+if (process.env.HABILITA_VOICE_STATE_UPDATE_LISTENER) {
     bot.on('voiceStateUpdate', (oldState, newState) => {
         try {
-            
-            if( newState.id !== process.env.ID_MEMBER_PCMR_BOT && newState.channelId === process.env.ID_VOICE_CHANNEL_GAME_PLAY){
-                if(newState.channelId){
-                    runAudioPlay(bot, newState.channelId, `olha-o-macaco.mp3`)
-                }    
+            console.log('aqui')
+            if (newState.channelId && newState.id !== process.env.ID_MEMBER_PCMR_BOT && newState.channelId === process.env.ID_VOICE_CHANNEL_GAME_PLAY) {
+                console.log('aqui 2')
+                const musicQueue = SharedVariables.getSharedVariable(SharedVariables.MUSIC_QUEUE_NAME)
+                if (musicQueue && musicQueue.voiceChannel.id !== process.env.ID_VOICE_CHANNEL_GAME_PLAY) return
+
+                runAudioPlay(bot, newState.channelId, `olha-o-macaco.mp3`)
             }
-        } catch (error) { Utils.logError(bot, error, __filename)}
-    });    
+        } catch (error) { Utils.logError(bot, error, __filename) }
+    });
 }
 
 bot.addInteractionCreate = function (customId, func) {

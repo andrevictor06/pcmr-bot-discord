@@ -131,7 +131,7 @@ function createServerQueue(bot, message, voiceChannel) {
     const serverQueue = {
         player: createAudioPlayer(),
         textChannel: message.channel,
-        voiceChannel: voiceChannel,
+        voiceChannel,
         connection: joinVoiceChannel({
             channelId: voiceChannel.id,
             guildId: voiceChannel.guild.id,

@@ -156,6 +156,29 @@ function mockPlaydlStream() {
     playdl.stream.mockImplementation(async () => ({ stream: {} }))
 }
 
+function fakeYtUrl(withPlaylistParam = false) {
+    const fakeIdVideo = randomStr(11)
+    let url = `https://www.youtube.com/watch?v=${fakeIdVideo}`
+    if (withPlaylistParam) {
+        url += `&list=${randomStr(20)}`
+    }
+    return url
+}
+
+function randomStr(size) {
+    const letters = 'abcdefghijklmnopqrstuvxwyz'
+    let randomStr = ''
+    while (randomStr.length < size) {
+        const randomIndex = Math.floor((Math.random() * size + 1))
+        let letter = letters[randomIndex]
+        if (Math.floor(Math.random() * 5) == 1) {
+            letter = letter.toUpperCase()
+        }
+        randomStr += letter
+    }
+    return randomStr
+}
+
 module.exports = {
     mockAudioPlayer,
     mockBasicInfo,
@@ -165,5 +188,6 @@ module.exports = {
     mockQueueObject,
     mockBot,
     mockEventInteraction,
-    mockPlaydlStream
+    mockPlaydlStream,
+    fakeYtUrl
 }

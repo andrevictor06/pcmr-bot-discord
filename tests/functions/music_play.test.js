@@ -2,7 +2,7 @@ const { run } = require("../../functions/music_play")
 const sharedVariables = require("../../utils/shared_variables")
 const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID } = sharedVariables
 const { AudioPlayerStatus, joinVoiceChannel } = require("@discordjs/voice")
-const { mockAudioPlayer, mockBasicInfo, mockMessage, mockPlaylistInfo, mockVoiceConnection, mockQueueObject, mockBot, mockPlaydlStream } = require("../utils_test")
+const { mockAudioPlayer, mockBasicInfo, mockMessage, mockPlaylistInfo, mockVoiceConnection, mockQueueObject, mockBot, mockPlaydlStream, fakeYtUrl } = require("../utils_test")
 const playdl = require('play-dl')
 const { ExpectedError } = require("../../utils/expected_error")
 const utils = require("../../utils/Utils")
@@ -63,7 +63,7 @@ describe("play", () => {
     })
 
     test("não deveria tocar uma música quando tiver um áudio tocando", async () => {
-        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const url = fakeYtUrl()
         const message = mockMessage("play", url)
         mockBasicInfo(url, "titulo")
         setSharedVariable(AUDIO_QUEUE_NAME, {})
@@ -79,7 +79,7 @@ describe("play", () => {
     })
 
     test("deveria tocar uma música com link de parâmetro", async () => {
-        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const url = fakeYtUrl()
         const player = mockAudioPlayer()
         const message = mockMessage("play", url)
         const bot = mockBot()
@@ -104,7 +104,7 @@ describe("play", () => {
     })
 
     test("deveria adicionar música na fila quando tiver uma música tocando", async () => {
-        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const url = fakeYtUrl()
         const message = mockMessage("play", url)
         const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         mockBasicInfo(url, "titulo")
@@ -120,7 +120,7 @@ describe("play", () => {
     })
 
     test("deveria tocar uma música com texto", async () => {
-        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const url = fakeYtUrl()
         const player = mockAudioPlayer()
         const search = "queen somebody to love"
         const message = mockMessage("play", search)
@@ -149,7 +149,7 @@ describe("play", () => {
     })
 
     test("deveria tocar uma música com link de playlist", async () => {
-        const url = "https://www.youtube.com/watch?v=u9Dg-g7t2l4&list=PLX8S4ptxX3CHezw1JDnwAH7CZLFGpj0z-"
+        const url = fakeYtUrl(true)
         const videos = [{ url }, { url }, { url }]
         const player = mockAudioPlayer()
         const message = mockMessage("play", url)
@@ -170,7 +170,7 @@ describe("play", () => {
     })
 
     test("não deveria dar erro quando o link com id de playlist estiver quebrado", async () => {
-        const url = "https://www.youtube.com/watch?v=u9Dg-g7t2l4&list=PLX8S4ptxX3CHezw1JDnwAH7CZLFGpj0z-"
+        const url = fakeYtUrl(true)
         const player = mockAudioPlayer()
         const message = mockMessage("play", url)
         mockVoiceConnection()
@@ -190,8 +190,8 @@ describe("play", () => {
     })
 
     test("deveria adicionar todas as músicas de uma playlist quando tiver uma música tocando", async () => {
-        const url = "https://www.youtube.com/watch?v=u9Dg-g7t2l4&list=PLX8S4ptxX3CHezw1JDnwAH7CZLFGpj0z-"
-        const videos = [{ url }, { url }, { url }]
+        const url = fakeYtUrl(true)
+        const videos = [{ url: fakeYtUrl() }, { url: fakeYtUrl() }, { url: fakeYtUrl() }]
         const message = mockMessage("play", url)
         const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         musicQueue.player.state.status = AudioPlayerStatus.Playing
@@ -207,7 +207,7 @@ describe("play", () => {
     })
 
     test("deveria repetir uma música quando for passado o parâmetro --times", async () => {
-        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const url = fakeYtUrl()
         const times = 5
         const player = mockAudioPlayer()
         const search = "queen somebody to love"
@@ -237,7 +237,7 @@ describe("play", () => {
     })
 
     test("deveria tocar somente uma vez quando o parâmetro --times for zero", async () => {
-        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const url = fakeYtUrl()
         const times = 0
         const player = mockAudioPlayer()
         const search = "queen somebody to love"
@@ -267,7 +267,7 @@ describe("play", () => {
     })
 
     test("deveria aplicar um delayedStop quando ocorrer algum erro ao tentar adicionar a música na fila", async () => {
-        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const url = fakeYtUrl()
         const message = mockMessage("play", url)
         mockAudioPlayer()
         mockVoiceConnection()
@@ -287,7 +287,7 @@ describe("play", () => {
     })
 
     test('deveria aplicar um delayedStop quando não tiver mais músicas para tocar', async () => {
-        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const url = fakeYtUrl()
         const message = mockMessage("play", url)
         const bot = mockBot()
         const player = mockAudioPlayer()
@@ -307,7 +307,7 @@ describe("play", () => {
 
     test('não deveria parar de executar se ocorrer um erro ao tentar tocar uma música', async () => {
         jest.spyOn(utils, 'logError')
-        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const url = fakeYtUrl()
         const message = mockMessage("play", url)
         const bot = mockBot()
         mockAudioPlayer()
@@ -412,7 +412,7 @@ describe("stop", () => {
 
     test('deveria executar o delayedStop com sucesso', async () => {
         jest.spyOn(utils, 'logError')
-        const url = "https://www.youtube.com/watch?v=kijpcUv-b8M"
+        const url = fakeYtUrl()
         const message = mockMessage("play", url)
         const bot = mockBot()
         const player = mockAudioPlayer()
@@ -502,7 +502,7 @@ describe("next", () => {
     })
 
     test("deveria retornar o link da próxima música com sucesso", async () => {
-        const urls = ["url1", "url2"]
+        const urls = [fakeYtUrl(), fakeYtUrl()]
         const message = mockMessage("next")
         const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         musicQueue.songs = musicQueue.songs.concat(urls)
@@ -544,7 +544,7 @@ describe("current", () => {
     })
 
     test("deveria retornar o link música que está tocando com sucesso", async () => {
-        const urls = ["url1", "url2", "url3"]
+        const urls = [fakeYtUrl(), fakeYtUrl(), fakeYtUrl()]
         const message = mockMessage("current")
         const musicQueue = mockQueueObject(MUSIC_QUEUE_NAME)
         const currentSong = urls.shift()
@@ -612,11 +612,11 @@ describe("queue", () => {
 
     test("deveria retornar a fila de músicas com sucesso deletando o tópico anterior", async () => {
         const song1 = {
-            video_details: { url: "url1", title: "titulo1" }
+            video_details: { url: fakeYtUrl(), title: "titulo1" }
         }
-        const song2 = mockBasicInfo("url2", "titulo2")
+        const song2 = mockBasicInfo(fakeYtUrl(), "titulo2")
         const song3 = {
-            video_details: { url: "url3", title: "titulo3" }
+            video_details: { url: fakeYtUrl(), title: "titulo3" }
         }
         const urls = [song1, song2.video_details.url, song3]
         const message = mockMessage("queue")
