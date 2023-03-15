@@ -68,7 +68,7 @@ if (process.env.HABILITA_VOICE_STATE_UPDATE_LISTENER) {
                 const musicQueue = SharedVariables.getSharedVariable(SharedVariables.MUSIC_QUEUE_NAME)
                 if (musicQueue && musicQueue.voiceChannel.id !== process.env.ID_VOICE_CHANNEL_GAME_PLAY) return
 
-                runAudioPlay(bot, newState.channelId, `olha-o-macaco.mp3`)
+                runAudioPlay(bot, newState.channelId, Utils.getRandomFromArray([`dilera-mamaco.mp3`, `sergio-malandro-mamaco.mp3`]))
             }
         } catch (error) { Utils.logError(bot, error, __filename) }
     });
