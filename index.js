@@ -63,7 +63,7 @@ if (process.env.HABILITA_VOICE_STATE_UPDATE_LISTENER) {
             if (
                 newState.channelId
                 && newState.id !== process.env.ID_MEMBER_PCMR_BOT && newState.channelId === process.env.ID_VOICE_CHANNEL_GAME_PLAY
-                && newState.channel.members.size > oldState.channel.members.size
+                && oldState.channel == null
             ) {
                 const musicQueue = SharedVariables.getSharedVariable(SharedVariables.MUSIC_QUEUE_NAME)
                 if (musicQueue && musicQueue.voiceChannel.id !== process.env.ID_VOICE_CHANNEL_GAME_PLAY) return
