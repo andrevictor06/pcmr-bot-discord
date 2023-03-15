@@ -104,9 +104,11 @@ function checkVoiceChannelPreConditions(message) {
     if (!voiceChannel)
         throw new ExpectedError("Cadê o canal de voz?")
 
-    const permissions = voiceChannel.permissionsFor(message.client.user)
-    if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-        throw new ExpectedError("Tô sem permissão, fala com o corno do adm!")
+    if(message.client){
+        const permissions = voiceChannel.permissionsFor(message.client.user)
+        if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
+            throw new ExpectedError("Tô sem permissão, fala com o corno do adm!")
+        }
     }
 }
 
