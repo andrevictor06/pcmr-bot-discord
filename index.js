@@ -54,7 +54,7 @@ bot.on('ready', () => {
             Utils.setPresenceBotDefault(bot)
         }
         console.log(`Logged in as ${bot.user.tag}!`);
-    } catch (error) { }
+    } catch (error) { Utils.logError(bot, error, __filename)}
 });
 
 if(process.env.HABILITA_VOICE_STATE_UPDATE_LISTENER){
@@ -66,7 +66,7 @@ if(process.env.HABILITA_VOICE_STATE_UPDATE_LISTENER){
                     runAudioPlay(bot, newState.channelId, `olha-o-macaco.mp3`)
                 }    
             }
-        } catch (error) { }
+        } catch (error) { Utils.logError(bot, error, __filename)}
     });    
 }
 
