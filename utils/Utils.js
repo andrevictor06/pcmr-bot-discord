@@ -187,6 +187,13 @@ function getMentions(mensagem) {
     }
 }
 
+function getRandomFromArray(array){
+    if( ! array || array.length == 0)
+        return null
+
+    return array[between(0, array.length-1)]
+}
+
 module.exports = {
     getRandomPlacaMae,
     getRandomProcessador,
@@ -202,5 +209,6 @@ module.exports = {
     setPresenceBot,
     setPresenceBotDefault,
     getMentions,
-    parseArgs
+    parseArgs,
+    getRandomFromArray
 }
