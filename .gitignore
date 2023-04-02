@@ -104,3 +104,5 @@ dist
 
 # Pastas
 .vscode/
+
+.localstorage/

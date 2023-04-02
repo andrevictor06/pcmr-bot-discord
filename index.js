@@ -4,6 +4,8 @@ const Utils = require("./utils/Utils")
 const { Client, Intents } = require("discord.js");
 const SharedVariables = require('./utils/shared_variables');
 const { runAudioPlay } = require('./functions/audio_play');
+const server = require('./server')
+
 const bot = new Client({
     intents: [
         Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_BANS,
@@ -14,7 +16,11 @@ bot.functions = [];
 
 function listenMessages() {
     fs.readdirSync("./functions").forEach(fnFile => {
-        bot.functions.push(require("./functions/" + fnFile))
+        const fn = require("./functions/" + fnFile)
+        if (fn.init) {
+            fn.init(bot)
+        }
+        bot.functions.push(fn)
     })
 
     bot.on("messageCreate", msg => {
@@ -40,7 +46,6 @@ function startJobs() {
 
 listenMessages()
 startJobs()
-bot.login(process.env.TOKEN_DISCORD);
 
 bot.on('ready', () => {
     try {
@@ -92,3 +97,6 @@ bot.addInteractionCreate = function (customId, func) {
         })
     }
 }
+
+server.init()
+bot.login(process.env.TOKEN_DISCORD);
