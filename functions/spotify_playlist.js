@@ -169,7 +169,7 @@ async function tryAddSongToSpotifyPlaylist(bot, song) {
             await addToPlaylist(track)
         }
     } catch (error) {
-        error = error && error.response.data ? error.response.data : error
+        error = error && error.response?.data ? error.response.data : error
         utils.logError(bot, error, __filename)
     }
 }
