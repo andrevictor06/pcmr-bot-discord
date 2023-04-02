@@ -167,6 +167,7 @@ async function tryAddSongToSpotifyPlaylist(bot, song) {
                 return
             }
             await addToPlaylist(track)
+            updateTracksCache(tracksCache.concat(track.id))
         }
     } catch (error) {
         error = error.response?.data ? error.response.data : error
@@ -188,6 +189,11 @@ function loadTracksCache() {
     if (tracksStr) {
         setSharedVariable(SPOTIFY_PLAYLIST_TRACKS, JSON.parse(tracksStr))
     }
+}
+
+function updateTracksCache(tracks) {
+    localStorage.setItem(SPOTIFY_PLAYLIST_TRACKS, JSON.stringify(tracks))
+    setSharedVariable(SPOTIFY_PLAYLIST_TRACKS, tracks)
 }
 
 function epochTimeInSecond() {
@@ -215,8 +221,7 @@ function spotifyLogin(bot, msg) {
 
 async function spotifyCache(bot, msg) {
     const tracks = await getAllTracksFromPlaylist(50)
-    localStorage.setItem(SPOTIFY_PLAYLIST_TRACKS, JSON.stringify(tracks))
-    loadTracksCache()
+    updateTracksCache(tracks)
     msg.reply(`Cache das ${tracks.length} músicas da playlist do spotify realizado!`)
 }
 
