@@ -65,7 +65,7 @@ function authenticate() {
         SPOTIFY_AUTH_URL,
         {
             grant_type: 'authorization_code',
-            redirect_uri: `${process.env.SPOTIFY_CALLBACK_URL}/spotify_login`,
+            redirect_uri: process.env.SPOTIFY_CALLBACK_URL,
             code: localStorage.getItem(SPOTIFY_LOGIN_CODE)
         },
         {
