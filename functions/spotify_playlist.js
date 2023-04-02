@@ -9,10 +9,20 @@ const localStorage = require('../utils/localstorage');
 
 const commands = {
     spotify_login: {
-        fn: spotifyLogin
+        fn: spotifyLogin,
+        help: {
+            name: utils.command("spotify_login"),
+            value: "Realiza login no spotify",
+            inline: false
+        }
     },
     spotify_cache: {
-        fn: spotifyCache
+        fn: spotifyCache,
+        help: {
+            name: utils.command("spotify_cache"),
+            value: "Realiza cache das músicas da playlist URSAL no spotify",
+            inline: false
+        }
     }
 }
 
@@ -219,11 +229,9 @@ function canHandle(bot, msg) {
 }
 
 function helpComand(bot, msg) {
-    return {
-        name: utils.command("spotify_login"),
-        value: "Realiza login no spotify",
-        inline: false
-    }
+    return Object.values(commands)
+        .map(value => value.help)
+        .filter(value => value != null)
 }
 
 module.exports = {
