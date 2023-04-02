@@ -1,5 +1,5 @@
 const express = require('express')
-const { getSharedVariable, setSharedVariable, deleteSharedVariable } = require('./utils/shared_variables')
+const { getSharedVariable, deleteSharedVariable } = require('./utils/shared_variables')
 const { SPOTIFY_LOGIN_STATE, SPOTIFY_LOGIN_CODE } = require('./utils/constants')
 const localstorage = require('./utils/localstorage')
 

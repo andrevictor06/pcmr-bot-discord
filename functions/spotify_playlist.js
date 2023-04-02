@@ -175,12 +175,12 @@ async function tryAddSongToSpotifyPlaylist(bot, song) {
 }
 
 async function init(bot) {
+    loadTracksCache()
     events.event(MUSIC_PLAY_SONG_EVENT)
         .subscribe({
             next: song => tryAddSongToSpotifyPlaylist(bot, song),
             error: () => utils.logError(bot, error, __filename)
         })
-    loadTracksCache()
 }
 
 function loadTracksCache() {
