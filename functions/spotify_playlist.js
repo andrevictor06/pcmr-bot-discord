@@ -149,16 +149,20 @@ async function addToPlaylist(track) {
 
 async function tryAddSongToSpotifyPlaylist(bot, song) {
     try {
-        console.log(song.video_details.music)
-        const info = song.video_details?.music[0]
-        if (!info) {
-            console.log('Música sem info')
+        console.log(song.video_details?.music)
+        let search = song.video_details?.title
+        const info = song.video_details?.music?.at(0)
+        if (info) {
+            search = `track:${info.song} artist:${info.artist}`
+        }
+        if (!search) {
+            console.log('Texto de pesquisa vazio!')
             return
         }
         const tracksCache = getSharedVariable(SPOTIFY_PLAYLIST_TRACKS)
         if (!tracksCache) throw new Error('Não foi realizado o cache das músicas')
 
-        const trackSearchResponse = await search(`track:${info.song} artist:${info.artist}`)
+        const trackSearchResponse = await search(search)
         console.log(trackSearchResponse.data)
         const track = trackSearchResponse.data?.tracks?.items?.at(0)
         if (track) {
