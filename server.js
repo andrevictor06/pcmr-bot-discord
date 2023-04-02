@@ -16,10 +16,6 @@ function init() {
         }
     })
 
-    app.get('/hello', (req, res) => {
-        res.send("Hello world")
-    })
-
     app.listen(process.env.SERVER_PORT, () => {
         console.log(`Server UP on port ${process.env.SERVER_PORT}`)
     })
