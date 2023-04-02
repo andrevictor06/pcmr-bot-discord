@@ -33,7 +33,7 @@ async function getAuthToken() {
         if (epochTimeInSecond() >= Number.parseInt(tokenExpirationEpoch ? tokenExpirationEpoch : 0)) {
             console.log('Atualizando token...')
             const response = await refreshAccessToken(refreshToken)
-            saveNewCredentials(response)
+            saveCredentials(response)
             return response.data.access_token
         }
         console.log('Retornando token do cache...')
@@ -41,12 +41,12 @@ async function getAuthToken() {
     } else {
         console.log('Autenticando...')
         const response = await authenticate()
-        saveNewCredentials(response)
+        saveCredentials(response)
         return response.data.access_token
     }
 }
 
-function saveNewCredentials(response) {
+function saveCredentials(response) {
     console.log(response.data)
     localStorage.setItem(SPOTIFY_TOKEN, response.data.access_token)
     localStorage.setItem(SPOTIFY_REFRESH_TOKEN, response.data.refresh_token)
@@ -123,7 +123,7 @@ async function getAllTracksFromPlaylist(limit, offset = 0, tracks = []) {
             }
         }
     )
-    if (response.data?.items && response.data.items.length > 0) {
+    if (response.data?.items?.length > 0) {
         return getAllTracksFromPlaylist(
             limit,
             limit + offset,
@@ -160,8 +160,8 @@ async function tryAddSongToSpotifyPlaylist(bot, song) {
 
         const trackSearchResponse = await search(`track:${info.song} artist:${info.artist}`)
         console.log(trackSearchResponse.data)
-        if (trackSearchResponse.data?.tracks?.items && trackSearchResponse.data.tracks.items[0]) {
-            const track = trackSearchResponse.data.tracks.items[0];
+        const track = trackSearchResponse.data?.tracks?.items?.at(0)
+        if (track) {
             if (tracksCache.includes(track.id)) {
                 console.log('Música já existe na playlist')
                 return
@@ -169,7 +169,7 @@ async function tryAddSongToSpotifyPlaylist(bot, song) {
             await addToPlaylist(track)
         }
     } catch (error) {
-        error = error && error.response.data ? error.response.data : error
+        error = error.response?.data ? error.response.data : error
         utils.logError(bot, error, __filename)
     }
 }
