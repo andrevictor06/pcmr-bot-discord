@@ -205,7 +205,7 @@ function spotifyLogin(bot, msg) {
         response_type: 'code',
         client_id: process.env.SPOTIFY_CLIENT_ID,
         scope,
-        redirect_uri: `${process.env.SPOTIFY_CALLBACK_URL}/spotify_login`,
+        redirect_uri: process.env.SPOTIFY_CALLBACK_URL,
         state
     })
     setSharedVariable(SPOTIFY_LOGIN_STATE, state)
