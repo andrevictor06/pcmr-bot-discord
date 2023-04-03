@@ -43,7 +43,9 @@ async function getAuthToken() {
 function saveCredentials(response) {
     console.log('Salvando tokens...')
     localStorage.setItem(SPOTIFY_TOKEN, response.data.access_token)
-    localStorage.setItem(SPOTIFY_REFRESH_TOKEN, response.data.refresh_token)
+    if (response.data.refresh_token) {
+        localStorage.setItem(SPOTIFY_REFRESH_TOKEN, response.data.refresh_token)
+    }
     localStorage.setItem(SPOTIFY_TOKEN_EXPIRATION, epochTimeInSecond() + response.data.expires_in)
 }
 
