@@ -202,6 +202,7 @@ async function reloadTracksCache() {
     saveTracksCache(tracks)
     setSharedVariable(SPOTIFY_PLAYLIST_TRACKS, tracks)
     console.log('Cache atualizado')
+    return tracks
 }
 
 function epochTimeInSecond() {
@@ -228,7 +229,7 @@ function spotifyLogin(bot, msg) {
 }
 
 async function spotifyCache(bot, msg) {
-    await reloadTracksCache()
+    const tracks = await reloadTracksCache()
     msg.reply(`Cache das ${tracks.length} músicas da playlist do spotify realizado!`)
 }
 
