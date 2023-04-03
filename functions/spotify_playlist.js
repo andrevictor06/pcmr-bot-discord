@@ -1,4 +1,4 @@
-const { MUSIC_PLAY_SONG_EVENT, SPOTIFY_LOGIN_STATE, SPOTIFY_LOGIN_CODE, SPOTIFY_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_REFRESH_TOKEN, SPOTIFY_AUTH_URL, SPOTIFY_BASE_URL, SPOTIFY_PLAYLIST_TRACKS } = require('../utils/constants')
+const { MUSIC_PLAY_SONG_EVENT, SPOTIFY_LOGIN_STATE, SPOTIFY_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_REFRESH_TOKEN, SPOTIFY_AUTH_URL, SPOTIFY_BASE_URL, SPOTIFY_PLAYLIST_TRACKS, SPOTIFY_LOGIN_CALLBACK_EVENT } = require('../utils/constants')
 const events = require('../utils/events');
 const { setSharedVariable, getSharedVariable } = require('../utils/shared_variables');
 const utils = require('../utils/Utils')
@@ -27,46 +27,39 @@ const commands = {
 }
 
 async function getAuthToken() {
-    const refreshToken = localStorage.getItem(SPOTIFY_REFRESH_TOKEN)
-    if (refreshToken) {
-        const tokenExpirationEpoch = localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)
-        if (epochTimeInSecond() >= Number.parseInt(tokenExpirationEpoch ? tokenExpirationEpoch : 0)) {
-            console.log('Atualizando token...')
-            const response = await refreshAccessToken(refreshToken)
-            saveCredentials(response)
-            return response.data.access_token
-        }
-        console.log('Retornando token do cache...')
-        return localStorage.getItem(SPOTIFY_TOKEN)
-    } else {
-        console.log('Autenticando...')
-        const response = await authenticate()
+    const tokenExpirationEpoch = localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)
+    if (!tokenExpirationEpoch) throw new Error('Não estou logado no spotify!')
+    if (epochTimeInSecond() >= Number.parseInt(tokenExpirationEpoch ? tokenExpirationEpoch : 0)) {
+        console.log('Atualizando token...')
+        const refreshToken = localStorage.getItem(SPOTIFY_REFRESH_TOKEN)
+        const response = await refreshAccessToken(refreshToken)
         saveCredentials(response)
         return response.data.access_token
     }
+    console.log('Retornando token do cache...')
+    return localStorage.getItem(SPOTIFY_TOKEN)
 }
 
 function saveCredentials(response) {
-    console.log(response.data)
+    console.log('Salvando tokens...')
     localStorage.setItem(SPOTIFY_TOKEN, response.data.access_token)
     localStorage.setItem(SPOTIFY_REFRESH_TOKEN, response.data.refresh_token)
     localStorage.setItem(SPOTIFY_TOKEN_EXPIRATION, epochTimeInSecond() + response.data.expires_in)
 }
 
 function deleteCredentials() {
-    localStorage.removeItem(SPOTIFY_LOGIN_CODE)
     localStorage.removeItem(SPOTIFY_TOKEN)
     localStorage.removeItem(SPOTIFY_REFRESH_TOKEN)
     localStorage.removeItem(SPOTIFY_TOKEN_EXPIRATION)
 }
 
-function authenticate() {
-    return axios.post(
+async function authenticate(code) {
+    const response = await axios.post(
         SPOTIFY_AUTH_URL,
         {
             grant_type: 'authorization_code',
             redirect_uri: process.env.SPOTIFY_CALLBACK_URL,
-            code: localStorage.getItem(SPOTIFY_LOGIN_CODE)
+            code
         },
         {
             headers: {
@@ -75,6 +68,7 @@ function authenticate() {
             }
         }
     )
+    saveCredentials(response)
 }
 
 function refreshAccessToken(refreshToken) {
@@ -172,6 +166,7 @@ async function tryAddSongToSpotifyPlaylist(bot, song) {
             }
             await addToPlaylist(track)
             updateTracksCache(tracksCache.concat(track.id))
+            console.log('Adicionei na playlist')
         }
     } catch (error) {
         error = error.response?.data ? error.response.data : error
@@ -184,6 +179,11 @@ async function init(bot) {
     events.event(MUSIC_PLAY_SONG_EVENT)
         .subscribe({
             next: song => tryAddSongToSpotifyPlaylist(bot, song),
+            error: () => utils.logError(bot, error, __filename)
+        })
+    events.event(SPOTIFY_LOGIN_CALLBACK_EVENT)
+        .subscribe({
+            next: authenticate,
             error: () => utils.logError(bot, error, __filename)
         })
 }
