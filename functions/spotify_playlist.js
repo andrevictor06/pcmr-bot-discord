@@ -1,4 +1,4 @@
-const { MUSIC_PLAY_SONG_EVENT, SPOTIFY_LOGIN_STATE, SPOTIFY_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_REFRESH_TOKEN, SPOTIFY_AUTH_URL, SPOTIFY_BASE_URL, SPOTIFY_PLAYLIST_TRACKS, SPOTIFY_LOGIN_CALLBACK_EVENT } = require('../utils/constants')
+const { MUSIC_PLAY_SONG_EVENT, SPOTIFY_LOGIN_STATE, SPOTIFY_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_REFRESH_TOKEN, SPOTIFY_AUTH_URL, SPOTIFY_BASE_URL, SPOTIFY_PLAYLIST_TRACKS } = require('../utils/constants')
 const events = require('../utils/events');
 const { setSharedVariable, getSharedVariable } = require('../utils/shared_variables');
 const utils = require('../utils/Utils')
@@ -103,7 +103,7 @@ async function search(q) {
     )
 }
 
-async function getAllTracksFromPlaylist(limit, offset = 0, tracks = []) {
+async function getAllTracksFromPlaylist(limit, offset = 0) {
     const response = await axios.get(
         `${SPOTIFY_BASE_URL}/playlists/${process.env.SPOTIFY_URSAL_PLAYLIST_ID}/tracks`,
         {
@@ -118,13 +118,15 @@ async function getAllTracksFromPlaylist(limit, offset = 0, tracks = []) {
         }
     )
     if (response.data?.items?.length > 0) {
-        return getAllTracksFromPlaylist(
+        const tracks = await getAllTracksFromPlaylist(
             limit,
-            limit + offset,
-            tracks.concat(response.data.items.map(i => i.track.id))
+            limit + offset
         )
+        return response.data.items
+            .map(i => i.track.id)
+            .concat(tracks)
     }
-    return tracks
+    return []
 }
 
 async function addToPlaylist(track) {
@@ -143,7 +145,6 @@ async function addToPlaylist(track) {
 
 async function tryAddSongToSpotifyPlaylist(bot, song) {
     try {
-        console.log(song.video_details?.music)
         let q = song.video_details?.title
         const info = song.video_details?.music?.at(0)
         if (info) {
@@ -153,11 +154,11 @@ async function tryAddSongToSpotifyPlaylist(bot, song) {
             console.log('Texto de pesquisa vazio!')
             return
         }
+        console.log('Consulta', q)
         const tracksCache = getSharedVariable(SPOTIFY_PLAYLIST_TRACKS)
         if (!tracksCache) throw new Error('Não foi realizado o cache das músicas')
 
         const trackSearchResponse = await search(q)
-        console.log(trackSearchResponse.data)
         const track = trackSearchResponse.data?.tracks?.items?.at(0)
         if (track) {
             if (tracksCache.includes(track.id)) {
@@ -165,8 +166,11 @@ async function tryAddSongToSpotifyPlaylist(bot, song) {
                 return
             }
             await addToPlaylist(track)
-            updateTracksCache(tracksCache.concat(track.id))
-            console.log('Adicionei na playlist')
+            tracksCache.push(track.id)
+            saveTracksCache(tracksCache)
+            console.log('Adicionei na playlist e atualizei o cache')
+        } else {
+            console.log('Música não encontrada no spotify')
         }
     } catch (error) {
         error = error.response?.data ? error.response.data : error
@@ -178,13 +182,7 @@ async function init(bot) {
     loadTracksCache()
     events.event(MUSIC_PLAY_SONG_EVENT)
         .subscribe({
-            next: song => tryAddSongToSpotifyPlaylist(bot, song),
-            error: () => utils.logError(bot, error, __filename)
-        })
-    events.event(SPOTIFY_LOGIN_CALLBACK_EVENT)
-        .subscribe({
-            next: authenticate,
-            error: () => utils.logError(bot, error, __filename)
+            next: song => tryAddSongToSpotifyPlaylist(bot, song)
         })
 }
 
@@ -195,9 +193,15 @@ function loadTracksCache() {
     }
 }
 
-function updateTracksCache(tracks) {
+function saveTracksCache(tracks) {
     localStorage.setItem(SPOTIFY_PLAYLIST_TRACKS, JSON.stringify(tracks))
+}
+
+async function reloadTracksCache() {
+    const tracks = await getAllTracksFromPlaylist(50)
+    saveTracksCache(tracks)
     setSharedVariable(SPOTIFY_PLAYLIST_TRACKS, tracks)
+    console.log('Cache atualizado')
 }
 
 function epochTimeInSecond() {
@@ -224,8 +228,7 @@ function spotifyLogin(bot, msg) {
 }
 
 async function spotifyCache(bot, msg) {
-    const tracks = await getAllTracksFromPlaylist(50)
-    updateTracksCache(tracks)
+    await reloadTracksCache()
     msg.reply(`Cache das ${tracks.length} músicas da playlist do spotify realizado!`)
 }
 
@@ -247,5 +250,6 @@ module.exports = {
     init,
     run,
     canHandle,
-    helpComand
+    helpComand,
+    authenticate
 }

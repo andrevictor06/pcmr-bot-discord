@@ -98,5 +98,5 @@ bot.addInteractionCreate = function (customId, func) {
     }
 }
 
-server.init()
+server.init(bot)
 bot.login(process.env.TOKEN_DISCORD);

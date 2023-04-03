@@ -1,17 +1,20 @@
 const express = require('express')
 const { getSharedVariable, deleteSharedVariable } = require('./utils/shared_variables')
-const { SPOTIFY_LOGIN_STATE, SPOTIFY_LOGIN_CALLBACK_EVENT } = require('./utils/constants')
-const events = require('./utils/events')
+const { SPOTIFY_LOGIN_STATE } = require('./utils/constants')
+const spotify = require('./functions/spotify_playlist')
+const utils = require('./utils/Utils')
 
-function init() {
+function init(bot) {
     const app = express()
 
-    app.get('/spotify_login', (req, res) => {
-        if (req.query.state === getSharedVariable(SPOTIFY_LOGIN_STATE)) {
+    app.get('/spotify_login', async (req, res) => {
+        try {
+            if (req.query.state !== getSharedVariable(SPOTIFY_LOGIN_STATE)) throw new Error('Código State inválido')
             deleteSharedVariable(SPOTIFY_LOGIN_STATE)
-            events.emit(SPOTIFY_LOGIN_CALLBACK_EVENT, req.query.code)
+            await spotify.authenticate(req.query.code)
             res.send('Logado!')
-        } else {
+        } catch (error) {
+            utils.logError(bot, error, __filename)
             res.send("Não logado")
         }
     })
