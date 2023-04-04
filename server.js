@@ -17,10 +17,10 @@ function initRoutes(app, bot) {
         fs.readdirSync("./routes").forEach((file) => {
             const route = require(path.join(__dirname, 'routes', file))
     
-            if (typeof route.init === 'function') {
+            if (route.init) {
                 route.init(bot)
             } else {
-                log.warn(`A rota ${file} não possui uma função 'init'.`)
+                console.log(`A rota ${file} não possui uma função 'init'.`)
             }
             
             const routePath = '/' + path.basename(file, path.extname(file))
