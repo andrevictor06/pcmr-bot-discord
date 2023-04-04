@@ -1,27 +1,19 @@
-const express = require('express')
-const { getSharedVariable, deleteSharedVariable } = require('./utils/shared_variables')
-const { SPOTIFY_LOGIN_STATE } = require('./utils/constants')
-const spotify = require('./functions/spotify_playlist')
-const utils = require('./utils/Utils')
+const express = require('express');
+const spotifyRoutes = require('./routes/spotify');
 
 function init(bot) {
-    const app = express()
+    const app = express();
 
-    app.get('/spotify_login', async (req, res) => {
-        try {
-            if (req.query.state !== getSharedVariable(SPOTIFY_LOGIN_STATE)) throw new Error('Código State inválido')
-            deleteSharedVariable(SPOTIFY_LOGIN_STATE)
-            await spotify.authenticate(req.query.code)
-            res.send('Logado!')
-        } catch (error) {
-            utils.logError(bot, error, __filename)
-            res.send("Não logado")
-        }
-    })
+    initRoutes(app, bot);
 
     app.listen(process.env.SERVER_PORT, () => {
-        console.log(`Server UP on port ${process.env.SERVER_PORT}`)
-    })
+        console.log(`Server UP on port ${process.env.SERVER_PORT}`);
+    });
+}
+
+function initRoutes(app, bot) {
+    spotifyRoutes.init(bot);
+    app.use('/spotify', spotifyRoutes.router);
 }
 
 module.exports = {
