@@ -8,7 +8,7 @@ function init(bot) {
         try {
             console.log(req, " req");
             const channel = await bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT)
-            channel.send({ content: ` ${ JSON.stringify(req.body)} ` })
+            channel.send({ content: ` ${ req.body  } ` })
 
             res.send('Requisição aceita')
         } catch (error) {
