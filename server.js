@@ -1,27 +1,34 @@
+const fs = require('fs')
+const path = require('path')
 const express = require('express')
-const { getSharedVariable, deleteSharedVariable } = require('./utils/shared_variables')
-const { SPOTIFY_LOGIN_STATE } = require('./utils/constants')
-const spotify = require('./functions/spotify_playlist')
-const utils = require('./utils/Utils')
+const bodyParser = require('body-parser')   
 
 function init(bot) {
     const app = express()
-
-    app.get('/spotify_login', async (req, res) => {
-        try {
-            if (req.query.state !== getSharedVariable(SPOTIFY_LOGIN_STATE)) throw new Error('Código State inválido')
-            deleteSharedVariable(SPOTIFY_LOGIN_STATE)
-            await spotify.authenticate(req.query.code)
-            res.send('Logado!')
-        } catch (error) {
-            utils.logError(bot, error, __filename)
-            res.send("Não logado")
-        }
-    })
+    app.use( bodyParser.json())
+    
+    initRoutes(app, bot)
 
     app.listen(process.env.SERVER_PORT, () => {
         console.log(`Server UP on port ${process.env.SERVER_PORT}`)
     })
+}
+
+function initRoutes(app, bot) {
+    try {
+        fs.readdirSync("./routes").forEach((file) => {
+            const route = require(path.join(__dirname, 'routes', file))
+    
+            if (route.init) {
+                route.init(bot)
+            } else {
+                console.log(`A rota ${file} não possui uma função 'init'.`)
+            }
+            
+            const routePath = '/' + path.basename(file, path.extname(file))
+            app.use(routePath, route.router)
+        })
+    } catch (error) { Utils.logError(bot, error, __filename) }
 }
 
 module.exports = {
