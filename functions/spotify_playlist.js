@@ -29,7 +29,7 @@ const commands = {
 async function getAuthToken() {
     const tokenExpirationEpoch = localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)
     if (!tokenExpirationEpoch) throw new Error('Não estou logado no spotify!')
-    if (epochTimeInSecond() >= Number.parseInt(tokenExpirationEpoch ? tokenExpirationEpoch : 0)) {
+    if (epochTimeInSecond() >= Number.parseInt(tokenExpirationEpoch)) {
         console.log('Atualizando token...')
         const refreshToken = localStorage.getItem(SPOTIFY_REFRESH_TOKEN)
         const response = await refreshAccessToken(refreshToken)
