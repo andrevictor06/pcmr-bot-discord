@@ -21,15 +21,18 @@ function init(bot) {
 
                     title: 'Abrirão um PR pra Atualizar o Bot!!!!',
                     url: payload.pull_request.html_url,
-                    description: payload.pull_request.title,
+                    description: `${payload.pull_request.title} \n ${payload.pull_request.body}`,
+
+                    fields: [
+                        {
+                            name: "Files changed", value: `${payload.pull_request.html_url}/files`,
+                        }
+                    ],
                     timestamp: new Date(payload.pull_request.created_at).toISOString()    
                 }   
                 
                 channel.send({ embeds: [exampleEmbed] }) 
             }
-
-            
-            //msg.reply({ embeds: [exampleEmbed] })
             res.send('Requisição aceita')
         } catch (error) {
             utils.logError(bot, error, __filename)
