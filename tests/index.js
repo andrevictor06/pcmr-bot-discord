@@ -4,4 +4,5 @@ require('dotenv').config({ path: envPath })
 
 jest.mock('@discordjs/voice')
 jest.mock('play-dl')
+jest.mock('../utils/localstorage')
 jest.useFakeTimers()

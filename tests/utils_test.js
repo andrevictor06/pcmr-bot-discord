@@ -141,7 +141,10 @@ function mockBot() {
         user: {
             setActivity: jest.fn()
         },
-        addInteractionCreate: on
+        addInteractionCreate: on,
+        users: {
+            cache: new Map()
+        }
     }
 }
 
