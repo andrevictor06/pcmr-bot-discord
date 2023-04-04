@@ -1,10 +1,12 @@
 const fs = require('fs')
 const path = require('path')
 const express = require('express')
+const bodyParser = require('body-parser')   
 
 function init(bot) {
     const app = express()
-
+    app.use( bodyParser.json())
+    
     initRoutes(app, bot)
 
     app.listen(process.env.SERVER_PORT, () => {
