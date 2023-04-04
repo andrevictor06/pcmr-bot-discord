@@ -1,10 +1,7 @@
 const express = require('express')
-const bodyParser = require('body-parser')   
 const router = express.Router()
-const spotify = require('../functions/spotify_playlist')
 const utils = require('../utils/Utils')
 
-router.use( bodyParser.json())
 function init(bot) {
     router.post('/', async (req, res) => {
         try {
