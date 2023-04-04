@@ -1,11 +1,11 @@
 const { MUSIC_PLAY_SONG_EVENT, SPOTIFY_LOGIN_STATE, SPOTIFY_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_REFRESH_TOKEN, SPOTIFY_AUTH_URL, SPOTIFY_BASE_URL, SPOTIFY_PLAYLIST_TRACKS } = require('../utils/constants')
 const events = require('../utils/events');
-const { setSharedVariable, getSharedVariable } = require('../utils/shared_variables');
+const { setSharedVariable, getSharedVariable } = require('../utils/shared_variables')
 const utils = require('../utils/Utils')
 const { default: axios } = require('axios')
-const { randomUUID } = require('crypto');
+const { randomUUID } = require('crypto')
 const querystring = require('querystring')
-const localStorage = require('../utils/localstorage');
+const localStorage = require('../utils/localstorage')
 
 const commands = {
     spotify_login: {
