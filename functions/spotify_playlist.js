@@ -5,7 +5,6 @@ const utils = require('../utils/Utils')
 const { default: axios } = require('axios')
 const { randomUUID } = require('crypto')
 const querystring = require('querystring')
-const localStorage = require('../utils/localstorage')
 
 const commands = {
     spotify_login: {
@@ -29,7 +28,7 @@ const commands = {
 async function getAuthToken() {
     const tokenExpirationEpoch = localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)
     if (!tokenExpirationEpoch) throw new Error('Não estou logado no spotify!')
-    if (epochTimeInSecond() >= Number.parseInt(tokenExpirationEpoch)) {
+    if (utils.nowInSeconds() >= Number.parseInt(tokenExpirationEpoch)) {
         console.log('Atualizando token...')
         const refreshToken = localStorage.getItem(SPOTIFY_REFRESH_TOKEN)
         const response = await refreshAccessToken(refreshToken)
@@ -46,7 +45,7 @@ function saveCredentials(response) {
     if (response.data.refresh_token) {
         localStorage.setItem(SPOTIFY_REFRESH_TOKEN, response.data.refresh_token)
     }
-    localStorage.setItem(SPOTIFY_TOKEN_EXPIRATION, epochTimeInSecond() + response.data.expires_in)
+    localStorage.setItem(SPOTIFY_TOKEN_EXPIRATION, utils.nowInSeconds() + response.data.expires_in)
 }
 
 function deleteCredentials() {
@@ -205,10 +204,6 @@ async function reloadTracksCache() {
     setSharedVariable(SPOTIFY_PLAYLIST_TRACKS, tracks)
     console.log('Cache atualizado')
     return tracks
-}
-
-function epochTimeInSecond() {
-    return Number.parseInt(new Date().getTime() / 1000)
 }
 
 function basicAuth() {

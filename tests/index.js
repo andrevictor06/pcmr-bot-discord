@@ -1,8 +1,10 @@
 const path = require("path")
+const { InMemoryStorage } = require("./in_memory_storage")
 const envPath = path.resolve("tests", ".env.test")
 require('dotenv').config({ path: envPath })
 
 jest.mock('@discordjs/voice')
 jest.mock('play-dl')
-jest.mock('../utils/localstorage')
+jest.mock('axios')
 jest.useFakeTimers()
+localStorage = new InMemoryStorage()
