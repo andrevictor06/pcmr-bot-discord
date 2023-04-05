@@ -29,7 +29,7 @@ module.exports = {
     getSharedVariable,
     sharedVariableExists,
     deleteSharedVariable,
-    clearSharedVariables,
+    clearSharedVariables: process.env.ENVIRONMENT === "TEST" ? clearSharedVariables : undefined,
     AUDIO_QUEUE_NAME,
     MUSIC_QUEUE_NAME,
     MUSIC_TIMEOUT_ID,
