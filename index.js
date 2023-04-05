@@ -1,10 +1,13 @@
 const fs = require('fs');
+const path = require('path')
 require('dotenv/config');
 const Utils = require("./utils/Utils")
 const { Client, Intents } = require("discord.js");
 const SharedVariables = require('./utils/shared_variables');
 const { runAudioPlay } = require('./functions/audio_play');
 const server = require('./server')
+const { LocalStorage } = require('node-localstorage')
+localStorage = new LocalStorage(path.resolve('.localstorage/'))
 
 const bot = new Client({
     intents: [

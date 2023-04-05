@@ -194,6 +194,10 @@ function getRandomFromArray(array){
     return array[between(0, array.length)]
 }
 
+function nowInSeconds() {
+    return Number.parseInt(new Date().getTime() / 1000)
+}
+
 module.exports = {
     getRandomPlacaMae,
     getRandomProcessador,
@@ -210,5 +214,6 @@ module.exports = {
     setPresenceBotDefault,
     getMentions,
     parseArgs,
-    getRandomFromArray
+    getRandomFromArray,
+    nowInSeconds
 }
