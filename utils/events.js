@@ -21,8 +21,9 @@ function reset() {
     if (subject) subject.complete()
     subject = new Subject()
 }
+
 module.exports = {
     emit,
     event,
-    reset
+    reset: process.env.ENVIRONMENT === "TEST" ? reset : undefined
 }
