@@ -54,8 +54,51 @@ bot.on('ready', () => {
     try {
         if (process.env.ENVIRONMENT === "PRD") {
             if (process.env.ID_CHANNEL_LOG_BOT) {
+                let date = new Date().toISOString();
                 bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then(channel => {
-                    channel.send({ content: "Bot iniciado em: " + new Date().toLocaleString("pt-BR") })
+                    channel.send({ 
+                        embeds: [{
+                            title: "Bot iniciado",
+                            timestamp: date
+                        }],
+                        components: [
+                            {
+                                type: 1,
+                                components: [
+                                    {
+                                        type: 2,
+                                        style: 1,
+                                        label: "Logs",
+                                        // Our button id, we can use that later to identify,
+                                        // that the user has clicked this specific button
+                                        custom_id: process.env.ENVIRONMENT + "adm_log" + date
+                                    }
+                                ]
+                            }
+                        ],
+                    })
+                })
+                
+                bot.addInteractionCreate(process.env.ENVIRONMENT + "adm_log" + date, (event)=>{
+                    const customId = event.customId
+                    const logPath = path.resolve(process.env.PATH_LOG)
+                    
+                    let log = customId.split(process.env.ENVIRONMENT + "adm_log")[1]
+                    let date = new Date(log)
+                    date = `${date.getFullYear()}-${date.getMonth().toString().padStart(2, '0')}-${date.getDay().toString().padStart(2, '0')}`
+                    
+                    let files = []
+                    if( fs.existsSync(path.resolve(logPath, `log_pcmr_${date}.log`)))
+                        files.push(path.resolve(logPath, `log_pcmr_${date}.log`))
+
+                    if( fs.existsSync(path.resolve(logPath, `log_pcmr_error_${date}.log`)))
+                        files.push(path.resolve(logPath, `log_pcmr_error_${date}.log`))
+                    
+                    event.reply({
+                        content: `Ta na mão, corno`,
+                        files: files,
+                        components: []
+                    })
                 })
             }
 
