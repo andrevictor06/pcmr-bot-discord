@@ -1,12 +1,16 @@
 const fs = require('fs')
 const path = require('path')
 const express = require('express')
-const bodyParser = require('body-parser')   
+const bodyParser = require('body-parser')
+const helmet = require("helmet")
+const hpp = require('hpp')
 
 function init(bot) {
     const app = express()
-    app.use( bodyParser.json())
-    
+    app.use(helmet())
+    app.use(bodyParser.json())
+    app.use(hpp())
+
     initRoutes(app, bot)
 
     app.listen(process.env.SERVER_PORT, () => {
@@ -18,13 +22,13 @@ function initRoutes(app, bot) {
     try {
         fs.readdirSync("./routes").forEach((file) => {
             const route = require(path.join(__dirname, 'routes', file))
-    
+
             if (route.init) {
                 route.init(bot)
             } else {
                 console.log(`A rota ${file} não possui uma função 'init'.`)
             }
-            
+
             const routePath = '/' + path.basename(file, path.extname(file))
             app.use(routePath, route.router)
         })
