@@ -83,5 +83,7 @@ describe('spotify_cache', () => {
 })
 
 describe('authenticate', () => {
+    test('deveria autenticar com sucesso', () => {
 
+    })
 })
