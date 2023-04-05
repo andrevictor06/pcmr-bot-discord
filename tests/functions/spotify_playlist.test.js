@@ -180,8 +180,6 @@ describe('play song event', () => {
         mockAddToPlaylist(token)
 
         init(mockBot())
-        events.emit(MUSIC_PLAY_SONG_EVENT, song)
-
         events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
             .subscribe({
                 next: () => {
@@ -196,6 +194,7 @@ describe('play song event', () => {
                     }
                 }
             })
+        events.emit(MUSIC_PLAY_SONG_EVENT, song)
     })
 
     test('deveria adicionar uma música com sucesso na playlist buscando pela música e artista', done => {
@@ -222,8 +221,6 @@ describe('play song event', () => {
         mockAddToPlaylist(token)
 
         init(mockBot())
-        events.emit(MUSIC_PLAY_SONG_EVENT, song)
-
         events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
             .subscribe({
                 next: () => {
@@ -238,5 +235,81 @@ describe('play song event', () => {
                     }
                 }
             })
+
+        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+    })
+
+    test('não deveria adicionar uma música na playlist quando ela já existir', done => {
+        const songTitle = 'Música'
+        const artist = 'Artista'
+        const song = {
+            video_details: {
+                title: 'Titulo',
+                music: [
+                    {
+                        song: songTitle,
+                        artist
+                    }
+                ]
+            }
+        }
+        const token = randomUUID()
+        const tokenExpiration = utils.nowInSeconds() + 3600
+        const trackId = randomUUID()
+        localStorage.setItem(SPOTIFY_TOKEN, token)
+        localStorage.setItem(SPOTIFY_TOKEN_EXPIRATION, tokenExpiration)
+        localStorage.setItem(SPOTIFY_PLAYLIST_TRACKS, JSON.stringify([trackId]))
+        mockSearchTrack(token, trackId, `track:${songTitle} artist:${artist}`)
+        mockAddToPlaylist(token)
+
+        init(mockBot())
+        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
+            .subscribe({
+                next: () => {
+                    try {
+                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+                        expect(actualCache).toHaveLength(1)
+                        expect(actualCache).toContain(trackId)
+                        expect(axios.post).toBeCalledTimes(0)
+                        done()
+                    } catch (error) {
+                        done(error)
+                    }
+                }
+            })
+
+        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+    })
+
+    test('não deveria adicionar uma música na playlist quando não existir cache', done => {
+        const songTitle = 'Música'
+        const artist = 'Artista'
+        const song = {
+            video_details: {
+                title: 'Titulo',
+                music: [
+                    {
+                        song: songTitle,
+                        artist
+                    }
+                ]
+            }
+        }
+
+        init(mockBot())
+        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
+            .subscribe({
+                next: () => {
+                    try {
+                        const actualCache = localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS)
+                        expect(actualCache).toBeFalsy()
+                        done()
+                    } catch (error) {
+                        done(error)
+                    }
+                }
+            })
+
+        events.emit(MUSIC_PLAY_SONG_EVENT, song)
     })
 })
