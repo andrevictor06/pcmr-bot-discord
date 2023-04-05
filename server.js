@@ -7,6 +7,7 @@ const hpp = require('hpp')
 
 function init(bot) {
     const app = express()
+
     app.use(helmet())
     app.use(bodyParser.json())
     app.use(hpp())

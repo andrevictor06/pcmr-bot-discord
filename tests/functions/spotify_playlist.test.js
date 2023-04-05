@@ -3,7 +3,7 @@ const { mockMessage, mockBot } = require("../utils_test")
 const { randomUUID } = require('crypto');
 const { run, authenticate } = require('../../functions/spotify_playlist')
 const querystring = require('querystring');
-const { SPOTIFY_LOGIN_STATE, SPOTIFY_BASE_URL, SPOTIFY_TOKEN, SPOTIFY_REFRESH_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_PLAYLIST_TRACKS } = require("../../utils/constants");
+const { SPOTIFY_LOGIN_STATE, SPOTIFY_BASE_URL, SPOTIFY_TOKEN, SPOTIFY_REFRESH_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_PLAYLIST_TRACKS, SPOTIFY_AUTH_URL } = require("../../utils/constants");
 const { default: axios } = require('axios')
 const utils = require('../../utils/Utils')
 
@@ -83,7 +83,35 @@ describe('spotify_cache', () => {
 })
 
 describe('authenticate', () => {
-    test('deveria autenticar com sucesso', () => {
+    test('deveria autenticar com sucesso', async () => {
+        const authorizationCode = randomUUID()
+        const responseData = {
+            access_token: randomUUID(),
+            refresh_token: randomUUID(),
+            expires_in: 3600
+        }
+        axios.post.mockImplementation((url, body, config) => {
+            expect(url).toBe(SPOTIFY_AUTH_URL)
+            expect(body).toMatchObject({
+                grant_type: 'authorization_code',
+                redirect_uri: process.env.SPOTIFY_CALLBACK_URL,
+                code: authorizationCode
+            })
+            expect(config).toMatchObject({
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    Authorization: 'Basic ' + Buffer.from(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64')
+                }
+            })
+            return {
+                data: responseData
+            }
+        })
 
+        await authenticate(authorizationCode)
+
+        expect(localStorage.getItem(SPOTIFY_TOKEN)).toBe(responseData.access_token)
+        expect(localStorage.getItem(SPOTIFY_REFRESH_TOKEN)).toBe(responseData.refresh_token)
+        expect(localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)).toBeGreaterThan(utils.nowInSeconds())
     })
 })
