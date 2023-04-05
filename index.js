@@ -54,8 +54,7 @@ bot.on('ready', () => {
     try {
         if (process.env.ENVIRONMENT === "PRD") {
             if (process.env.ID_CHANNEL_LOG_BOT) {
-                let date = new Date();
-                date = `${date.getFullYear()}-${date.getMonth().toString().padStart(2, '0')}-${date.getDay().toString().padStart(2, '0')}`
+                let date = new Date().toISOString().slice(0, 10)
                 bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then(channel => {
                     channel.send({ 
                         embeds: [{
