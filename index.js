@@ -52,7 +52,7 @@ startJobs()
 
 bot.on('ready', () => {
     try {
-        if (process.env.ENVIRONMENT === "PRD") {
+        //if (process.env.ENVIRONMENT === "PRD") {
             if (process.env.ID_CHANNEL_LOG_BOT) {
                 let date = new Date().toISOString();
                 bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then(channel => {
@@ -88,12 +88,10 @@ bot.on('ready', () => {
                     date = `${date.getFullYear()}-${date.getMonth().toString().padStart(2, '0')}-${date.getDay().toString().padStart(2, '0')}`
                     
                     let files = []
-                    if( fs.existsSync(path.resolve(logPath, `log_pcmr_${date}.log`)))
-                        files.push(path.resolve(logPath, `log_pcmr_${date}.log`))
-
-                    if( fs.existsSync(path.resolve(logPath, `log_pcmr_error_${date}.log`)))
-                        files.push(path.resolve(logPath, `log_pcmr_error_${date}.log`))
+                    files.push(path.resolve(logPath, `log_pcmr_${date}.log`))
+                    files.push(path.resolve(logPath, `log_pcmr_error_${date}.log`))
                     
+                    console.log(files, " files");
                     event.reply({
                         content: `Ta na mão, corno`,
                         files: files,
@@ -103,7 +101,7 @@ bot.on('ready', () => {
             }
 
             Utils.setPresenceBotDefault(bot)
-        }
+        //}
         console.log(`Logged in as ${bot.user.tag}!`);
     } catch (error) { Utils.logError(bot, error, __filename) }
 });
