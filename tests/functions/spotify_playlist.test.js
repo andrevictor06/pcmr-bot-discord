@@ -32,7 +32,7 @@ function mockAddToPlaylist(token) {
     })
 }
 
-function mockSearchTrack(token, id, q) {
+function mockSearchTrack(token, id, q, returnItems = true) {
     axios.get.mockImplementation((url, config) => {
         expect(url).toBe(`${SPOTIFY_BASE_URL}/search`)
         expect(config).toMatchObject({
@@ -45,6 +45,15 @@ function mockSearchTrack(token, id, q) {
                 limit: 1
             }
         })
+        if (!returnItems) {
+            return {
+                data: {
+                    tracks: {
+                        items: []
+                    }
+                }
+            }
+        }
         return {
             data: {
                 tracks: {
@@ -239,6 +248,47 @@ describe('play song event', () => {
         events.emit(MUSIC_PLAY_SONG_EVENT, song)
     })
 
+    test('não deveria adicionar uma música quando não encontrar no spotify', done => {
+        const songTitle = 'Música'
+        const artist = 'Artista'
+        const song = {
+            video_details: {
+                title: 'Titulo',
+                music: [
+                    {
+                        song: songTitle,
+                        artist
+                    }
+                ]
+            }
+        }
+        const token = randomUUID()
+        const tokenExpiration = utils.nowInSeconds() + 3600
+        const trackId = randomUUID()
+        localStorage.setItem(SPOTIFY_TOKEN, token)
+        localStorage.setItem(SPOTIFY_TOKEN_EXPIRATION, tokenExpiration)
+        localStorage.setItem(SPOTIFY_PLAYLIST_TRACKS, JSON.stringify([]))
+        mockSearchTrack(token, trackId, `track:${songTitle} artist:${artist}`, false)
+        mockAddToPlaylist(token)
+
+        init(mockBot())
+        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
+            .subscribe({
+                next: () => {
+                    try {
+                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+                        expect(actualCache).toHaveLength(0)
+                        expect(axios.post).toBeCalledTimes(0)
+                        done()
+                    } catch (error) {
+                        done(error)
+                    }
+                }
+            })
+
+        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+    })
+
     test('não deveria adicionar uma música na playlist quando ela já existir', done => {
         const songTitle = 'Música'
         const artist = 'Artista'
@@ -282,6 +332,7 @@ describe('play song event', () => {
     })
 
     test('não deveria adicionar uma música na playlist quando não existir cache', done => {
+        jest.spyOn(utils, 'logError')
         const songTitle = 'Música'
         const artist = 'Artista'
         const song = {
@@ -303,6 +354,195 @@ describe('play song event', () => {
                     try {
                         const actualCache = localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS)
                         expect(actualCache).toBeFalsy()
+                        expect(utils.logError).toBeCalledTimes(1)
+                        done()
+                    } catch (error) {
+                        done(error)
+                    }
+                }
+            })
+
+        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+    })
+
+    test('não deveria adicionar uma música na playlist quando a pesquisa for vazia', done => {
+        jest.spyOn(utils, 'logError')
+        const song = {
+            video_details: {}
+        }
+
+        init(mockBot())
+        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
+            .subscribe({
+                next: () => {
+                    try {
+                        const actualCache = localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS)
+                        expect(actualCache).toBeFalsy()
+                        expect(utils.logError).toBeCalledTimes(0)
+                        done()
+                    } catch (error) {
+                        done(error)
+                    }
+                }
+            })
+
+        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+    })
+
+    test('deveria dar refresh no token quando o mesmo estiver expirado', done => {
+        const song = {
+            video_details: {
+                title: 'Titulo'
+            }
+        }
+        const tokenExpiration = utils.nowInSeconds() - 3600
+        const refreshToken = randomUUID()
+        const responseData = {
+            access_token: randomUUID(),
+            expires_in: 3600
+        }
+        const trackId = randomUUID()
+        localStorage.setItem(SPOTIFY_REFRESH_TOKEN, refreshToken)
+        localStorage.setItem(SPOTIFY_TOKEN_EXPIRATION, tokenExpiration)
+        localStorage.setItem(SPOTIFY_PLAYLIST_TRACKS, JSON.stringify([]))
+        mockSearchTrack(responseData.access_token, trackId, song.video_details.title)
+        axios.post.mockImplementation((url, body, config) => {
+            if (url === SPOTIFY_AUTH_URL) {
+                expect(body).toMatchObject({
+                    grant_type: 'refresh_token',
+                    refresh_token: refreshToken
+                })
+                expect(config).toMatchObject({
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        Authorization: 'Basic ' + Buffer.from(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64')
+                    }
+                })
+                return {
+                    data: responseData
+                }
+            } else {
+                expect(config).toMatchObject({
+                    headers: {
+                        Authorization: `Bearer ${responseData.access_token}`
+                    }
+                })
+                return {
+                    data: {}
+                }
+            }
+        })
+
+        init(mockBot())
+        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
+            .subscribe({
+                next: () => {
+                    try {
+                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+                        expect(actualCache).toHaveLength(1)
+                        expect(actualCache).toContain(trackId)
+                        expect(axios.post).toBeCalledTimes(2)
+                        expect(localStorage.getItem(SPOTIFY_TOKEN)).toBe(responseData.access_token)
+                        expect(localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)).toBeGreaterThan(utils.nowInSeconds())
+                        expect(localStorage.getItem(SPOTIFY_REFRESH_TOKEN)).toBe(refreshToken)
+                        done()
+                    } catch (error) {
+                        done(error)
+                    }
+                }
+            })
+
+        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+    })
+
+    test('deveria atualizar o refresh token quando vir no response', done => {
+        const song = {
+            video_details: {
+                title: 'Titulo'
+            }
+        }
+        const tokenExpiration = utils.nowInSeconds() - 3600
+        const refreshToken = randomUUID()
+        const responseData = {
+            access_token: randomUUID(),
+            refresh_token: randomUUID(),
+            expires_in: 3600
+        }
+        const trackId = randomUUID()
+        localStorage.setItem(SPOTIFY_REFRESH_TOKEN, refreshToken)
+        localStorage.setItem(SPOTIFY_TOKEN_EXPIRATION, tokenExpiration)
+        localStorage.setItem(SPOTIFY_PLAYLIST_TRACKS, JSON.stringify([]))
+        mockSearchTrack(responseData.access_token, trackId, song.video_details.title)
+        axios.post.mockImplementation((url, body, config) => {
+            if (url === SPOTIFY_AUTH_URL) {
+                expect(body).toMatchObject({
+                    grant_type: 'refresh_token',
+                    refresh_token: refreshToken
+                })
+                expect(config).toMatchObject({
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        Authorization: 'Basic ' + Buffer.from(process.env.SPOTIFY_CLIENT_ID + ':' + process.env.SPOTIFY_CLIENT_SECRET).toString('base64')
+                    }
+                })
+                return {
+                    data: responseData
+                }
+            } else {
+                expect(config).toMatchObject({
+                    headers: {
+                        Authorization: `Bearer ${responseData.access_token}`
+                    }
+                })
+                return {
+                    data: {}
+                }
+            }
+        })
+
+        init(mockBot())
+        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
+            .subscribe({
+                next: () => {
+                    try {
+                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+                        expect(actualCache).toHaveLength(1)
+                        expect(actualCache).toContain(trackId)
+                        expect(axios.post).toBeCalledTimes(2)
+                        expect(localStorage.getItem(SPOTIFY_TOKEN)).toBe(responseData.access_token)
+                        expect(localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)).toBeGreaterThan(utils.nowInSeconds())
+                        expect(localStorage.getItem(SPOTIFY_REFRESH_TOKEN)).toBe(responseData.refresh_token)
+                        done()
+                    } catch (error) {
+                        done(error)
+                    }
+                }
+            })
+
+        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+    })
+
+    test('deveria dar erro quando não existir token expiration no localstorage', done => {
+        jest.spyOn(utils, 'logError')
+        const song = {
+            video_details: {
+                title: 'Titulo'
+            }
+        }
+        const refreshToken = randomUUID()
+        localStorage.setItem(SPOTIFY_REFRESH_TOKEN, refreshToken)
+        localStorage.setItem(SPOTIFY_PLAYLIST_TRACKS, JSON.stringify([]))
+
+        init(mockBot())
+        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
+            .subscribe({
+                next: () => {
+                    try {
+                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+                        expect(actualCache).toHaveLength(0)
+                        expect(axios.post).toBeCalledTimes(0)
+                        expect(localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)).toBeFalsy()
+                        expect(utils.logError).toBeCalledTimes(1)
                         done()
                     } catch (error) {
                         done(error)
