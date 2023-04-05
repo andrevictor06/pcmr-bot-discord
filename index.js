@@ -54,12 +54,13 @@ bot.on('ready', () => {
     try {
         if (process.env.ENVIRONMENT === "PRD") {
             if (process.env.ID_CHANNEL_LOG_BOT) {
-                let date = new Date().toISOString();
+                let date = new Date();
+                date = `${date.getFullYear()}-${date.getMonth().toString().padStart(2, '0')}-${date.getDay().toString().padStart(2, '0')}`
                 bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then(channel => {
                     channel.send({ 
                         embeds: [{
                             title: "Bot iniciado",
-                            timestamp: date
+                            timestamp: new Date().toISOString()
                         }],
                         components: [
                             {
@@ -69,8 +70,6 @@ bot.on('ready', () => {
                                         type: 2,
                                         style: 1,
                                         label: "Logs",
-                                        // Our button id, we can use that later to identify,
-                                        // that the user has clicked this specific button
                                         custom_id: process.env.ENVIRONMENT + "adm_log" + date
                                     }
                                 ]
@@ -84,15 +83,10 @@ bot.on('ready', () => {
                     const logPath = path.resolve(process.env.PATH_LOG)
                     
                     let log = customId.split(process.env.ENVIRONMENT + "adm_log")[1]
-                    let date = new Date(log)
-                    date = `${date.getFullYear()}-${date.getMonth().toString().padStart(2, '0')}-${date.getDay().toString().padStart(2, '0')}`
                     
                     let files = []
-                    if( fs.existsSync(path.resolve(logPath, `log_pcmr_${date}.log`)))
-                        files.push(path.resolve(logPath, `log_pcmr_${date}.log`))
-
-                    if( fs.existsSync(path.resolve(logPath, `log_pcmr_error_${date}.log`)))
-                        files.push(path.resolve(logPath, `log_pcmr_error_${date}.log`))
+                    files.push(path.resolve(logPath, `log_pcmr_${log}.log`))
+                    files.push(path.resolve(logPath, `log_pcmr_error_${log}.log`))
                     
                     event.reply({
                         content: `Ta na mão, corno`,
