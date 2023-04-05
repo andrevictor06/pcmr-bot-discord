@@ -1,16 +1,63 @@
-const { clearSharedVariables, getSharedVariable } = require("../../utils/shared_variables")
+const { clearSharedVariables, getSharedVariable, setSharedVariable } = require("../../utils/shared_variables")
 const { mockMessage, mockBot } = require("../utils_test")
 const { randomUUID } = require('crypto');
-const { run, authenticate } = require('../../functions/spotify_playlist')
+const { run, authenticate, init } = require('../../functions/spotify_playlist')
 const querystring = require('querystring');
-const { SPOTIFY_LOGIN_STATE, SPOTIFY_BASE_URL, SPOTIFY_TOKEN, SPOTIFY_REFRESH_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_PLAYLIST_TRACKS, SPOTIFY_AUTH_URL } = require("../../utils/constants");
+const { SPOTIFY_LOGIN_STATE, SPOTIFY_BASE_URL, SPOTIFY_TOKEN, SPOTIFY_REFRESH_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_PLAYLIST_TRACKS, SPOTIFY_AUTH_URL, MUSIC_PLAY_SONG_EVENT, SPOTIFY_LISTENER_FINISHED_EVENT } = require("../../utils/constants");
 const { default: axios } = require('axios')
 const utils = require('../../utils/Utils')
+const events = require('../../utils/events')
 
 afterEach(() => {
     clearSharedVariables()
+    localStorage.clear()
     jest.resetAllMocks()
+    events.reset()
 })
+
+function mockAddToPlaylist(token) {
+    axios.post.mockImplementation((url, body, config) => {
+        expect(url).toBe(`${SPOTIFY_BASE_URL}/playlists/${process.env.SPOTIFY_URSAL_PLAYLIST_ID}/tracks`)
+        // expect(body).toMatchObject({
+        //     uris: expect.arrayContaining([trackId])
+        // })
+        expect(config).toMatchObject({
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        })
+        return {
+            data: {}
+        }
+    })
+}
+
+function mockSearchTrack(token, id, q) {
+    axios.get.mockImplementation((url, config) => {
+        expect(url).toBe(`${SPOTIFY_BASE_URL}/search`)
+        expect(config).toMatchObject({
+            headers: {
+                Authorization: `Bearer ${token}`
+            },
+            params: {
+                q,
+                type: 'track',
+                limit: 1
+            }
+        })
+        return {
+            data: {
+                tracks: {
+                    items: [
+                        {
+                            id
+                        }
+                    ]
+                }
+            }
+        }
+    })
+}
 
 describe('spotify_login', () => {
     test('deveria retornar o link de login corretamente', async () => {
@@ -113,5 +160,83 @@ describe('authenticate', () => {
         expect(localStorage.getItem(SPOTIFY_TOKEN)).toBe(responseData.access_token)
         expect(localStorage.getItem(SPOTIFY_REFRESH_TOKEN)).toBe(responseData.refresh_token)
         expect(localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)).toBeGreaterThan(utils.nowInSeconds())
+    })
+})
+
+describe('play song event', () => {
+    test('deveria adicionar uma música com sucesso na playlist buscando somente pelo titulo do video', done => {
+        const song = {
+            video_details: {
+                title: 'Titulo'
+            }
+        }
+        const token = randomUUID()
+        const tokenExpiration = utils.nowInSeconds() + 3600
+        const trackId = randomUUID()
+        localStorage.setItem(SPOTIFY_TOKEN, token)
+        localStorage.setItem(SPOTIFY_TOKEN_EXPIRATION, tokenExpiration)
+        localStorage.setItem(SPOTIFY_PLAYLIST_TRACKS, JSON.stringify([]))
+        mockSearchTrack(token, trackId, song.video_details.title)
+        mockAddToPlaylist(token)
+
+        init(mockBot())
+        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+
+        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
+            .subscribe({
+                next: () => {
+                    try {
+                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+                        expect(actualCache).toHaveLength(1)
+                        expect(actualCache).toContain(trackId)
+                        expect(axios.post).toBeCalledTimes(1)
+                        done()
+                    } catch (error) {
+                        done(error)
+                    }
+                }
+            })
+    })
+
+    test('deveria adicionar uma música com sucesso na playlist buscando pela música e artista', done => {
+        const songTitle = 'Música'
+        const artist = 'Artista'
+        const song = {
+            video_details: {
+                title: 'Titulo',
+                music: [
+                    {
+                        song: songTitle,
+                        artist
+                    }
+                ]
+            }
+        }
+        const token = randomUUID()
+        const tokenExpiration = utils.nowInSeconds() + 3600
+        const trackId = randomUUID()
+        localStorage.setItem(SPOTIFY_TOKEN, token)
+        localStorage.setItem(SPOTIFY_TOKEN_EXPIRATION, tokenExpiration)
+        localStorage.setItem(SPOTIFY_PLAYLIST_TRACKS, JSON.stringify([]))
+        mockSearchTrack(token, trackId, `track:${songTitle} artist:${artist}`)
+        mockAddToPlaylist(token)
+
+        init(mockBot())
+        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+
+        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
+            .subscribe({
+                next: () => {
+                    try {
+                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+                        expect(actualCache).toHaveLength(1)
+                        expect(actualCache).toContain(trackId)
+                        expect(axios.post).toBeCalledTimes(1)
+                        done()
+                    } catch (error) {
+                        done(error)
+                    }
+                }
+            })
     })
 })

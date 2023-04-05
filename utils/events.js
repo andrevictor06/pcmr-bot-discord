@@ -1,6 +1,6 @@
 const { Subject, filter, map, catchError } = require('rxjs')
 
-const subject = new Subject()
+let subject = new Subject()
 
 function emit(key, value = null) {
     subject.next({
@@ -17,7 +17,12 @@ function event(key) {
     )
 }
 
+function reset() {
+    if (subject) subject.complete()
+    subject = new Subject()
+}
 module.exports = {
     emit,
-    event
+    event,
+    reset
 }
