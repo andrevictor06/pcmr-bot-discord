@@ -3,8 +3,7 @@ const Utils = require("../utils/Utils")
 const { ExpectedError } = require('../utils/expected_error')
 const playdl = require('play-dl');
 const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, MUSIC_TIMEOUT_ID, sharedVariableExists, setSharedVariable, getSharedVariable, deleteSharedVariable, MUSIC_INTERVAL_ID } = require("../utils/shared_variables")
-const events = require('../utils/events');
-const { MUSIC_PLAY_SONG_EVENT } = require('../utils/constants');
+const { tryAddSongToSpotifyPlaylist } = require('./spotify_playlist')
 
 const musicQueueThreadName = "músicas_na_fila"
 const commands = {
@@ -186,7 +185,7 @@ async function playSong(bot, song) {
         serverQueue.player.play(resource)
         serverQueue.currentSong = songWithInfo
         serverQueue.textChannel.send(`Tocando: **${songWithInfo.video_details.title}**`)
-        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+        tryAddSongToSpotifyPlaylist(bot, song)
 
         Utils.setPresenceBot(bot, { name: songWithInfo.video_details.title, url: songWithInfo.video_details.url, type: 1 })
     } catch (error) {

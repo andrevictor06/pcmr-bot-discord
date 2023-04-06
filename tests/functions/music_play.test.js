@@ -429,7 +429,8 @@ describe("stop", () => {
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeFalsy()
         expect(sharedVariableExists(MUSIC_TIMEOUT_ID)).toBeFalsy()
         expect(setTimeout).toBeCalledTimes(1)
-        expect(utils.logError).toBeCalledTimes(0)
+        expect(utils.logError).toBeCalledTimes(1)
+        expect(utils.logError).toHaveBeenNthCalledWith(1, bot, expect.any(Error), path.resolve("functions", "spotify_playlist.js"))
     })
 })
 

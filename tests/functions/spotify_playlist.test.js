@@ -1,19 +1,17 @@
 const { clearSharedVariables, getSharedVariable, setSharedVariable, sharedVariableExists } = require("../../utils/shared_variables")
 const { mockMessage, mockBot } = require("../utils_test")
 const { randomUUID } = require('crypto');
-const { run, authenticate, init } = require('../../functions/spotify_playlist')
+const { run, authenticate, init, tryAddSongToSpotifyPlaylist } = require('../../functions/spotify_playlist')
 const querystring = require('querystring');
 const { SPOTIFY_LOGIN_STATE, SPOTIFY_BASE_URL, SPOTIFY_TOKEN, SPOTIFY_REFRESH_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_PLAYLIST_TRACKS, SPOTIFY_AUTH_URL, MUSIC_PLAY_SONG_EVENT, SPOTIFY_LISTENER_FINISHED_EVENT } = require("../../utils/constants");
 const { default: axios } = require('axios')
 const utils = require('../../utils/Utils')
-const events = require('../../utils/events');
 const { ExpectedError } = require("../../utils/expected_error");
 
 afterEach(() => {
     clearSharedVariables()
     localStorage.clear()
     jest.resetAllMocks()
-    events.reset()
 })
 
 function mockAddToPlaylist(token) {
@@ -204,7 +202,8 @@ describe('authenticate', () => {
 })
 
 describe('play song event', () => {
-    test('deveria adicionar uma música com sucesso na playlist buscando somente pelo titulo do video', done => {
+    test('deveria adicionar uma música com sucesso na playlist buscando somente pelo titulo do video', async () => {
+        const bot = mockBot()
         const song = {
             video_details: {
                 title: 'Titulo'
@@ -219,25 +218,17 @@ describe('play song event', () => {
         mockSearchTrack(token, trackId, song.video_details.title)
         mockAddToPlaylist(token)
 
-        init(mockBot())
-        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
-            .subscribe({
-                next: () => {
-                    try {
-                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
-                        expect(actualCache).toHaveLength(1)
-                        expect(actualCache).toContain(trackId)
-                        expect(axios.post).toBeCalledTimes(1)
-                        done()
-                    } catch (error) {
-                        done(error)
-                    }
-                }
-            })
-        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+        init(bot)
+        await tryAddSongToSpotifyPlaylist(bot, song)
+
+        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+        expect(actualCache).toHaveLength(1)
+        expect(actualCache).toContain(trackId)
+        expect(axios.post).toBeCalledTimes(1)
     })
 
-    test('deveria adicionar uma música com sucesso na playlist buscando pela música e artista', done => {
+    test('deveria adicionar uma música com sucesso na playlist buscando pela música e artista', async () => {
+        const bot = mockBot()
         const songTitle = 'Música'
         const artist = 'Artista'
         const song = {
@@ -260,26 +251,17 @@ describe('play song event', () => {
         mockSearchTrack(token, trackId, `track:${songTitle} artist:${artist}`)
         mockAddToPlaylist(token)
 
-        init(mockBot())
-        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
-            .subscribe({
-                next: () => {
-                    try {
-                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
-                        expect(actualCache).toHaveLength(1)
-                        expect(actualCache).toContain(trackId)
-                        expect(axios.post).toBeCalledTimes(1)
-                        done()
-                    } catch (error) {
-                        done(error)
-                    }
-                }
-            })
+        init(bot)
+        await tryAddSongToSpotifyPlaylist(bot, song)
 
-        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+        expect(actualCache).toHaveLength(1)
+        expect(actualCache).toContain(trackId)
+        expect(axios.post).toBeCalledTimes(1)
     })
 
-    test('não deveria adicionar uma música quando não encontrar no spotify', done => {
+    test('não deveria adicionar uma música quando não encontrar no spotify', async () => {
+        const bot = mockBot()
         const songTitle = 'Música'
         const artist = 'Artista'
         const song = {
@@ -302,25 +284,16 @@ describe('play song event', () => {
         mockSearchTrack(token, trackId, `track:${songTitle} artist:${artist}`, false)
         mockAddToPlaylist(token)
 
-        init(mockBot())
-        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
-            .subscribe({
-                next: () => {
-                    try {
-                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
-                        expect(actualCache).toHaveLength(0)
-                        expect(axios.post).toBeCalledTimes(0)
-                        done()
-                    } catch (error) {
-                        done(error)
-                    }
-                }
-            })
+        init(bot)
+        await tryAddSongToSpotifyPlaylist(bot, song)
 
-        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+        expect(actualCache).toHaveLength(0)
+        expect(axios.post).toBeCalledTimes(0)
     })
 
-    test('não deveria adicionar uma música na playlist quando ela já existir', done => {
+    test('não deveria adicionar uma música na playlist quando ela já existir', async () => {
+        const bot = mockBot()
         const songTitle = 'Música'
         const artist = 'Artista'
         const song = {
@@ -343,27 +316,18 @@ describe('play song event', () => {
         mockSearchTrack(token, trackId, `track:${songTitle} artist:${artist}`)
         mockAddToPlaylist(token)
 
-        init(mockBot())
-        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
-            .subscribe({
-                next: () => {
-                    try {
-                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
-                        expect(actualCache).toHaveLength(1)
-                        expect(actualCache).toContain(trackId)
-                        expect(axios.post).toBeCalledTimes(0)
-                        done()
-                    } catch (error) {
-                        done(error)
-                    }
-                }
-            })
+        init(bot)
+        await tryAddSongToSpotifyPlaylist(bot, song)
 
-        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+        expect(actualCache).toHaveLength(1)
+        expect(actualCache).toContain(trackId)
+        expect(axios.post).toBeCalledTimes(0)
     })
 
-    test('não deveria adicionar uma música na playlist quando não existir cache', done => {
+    test('não deveria adicionar uma música na playlist quando não existir cache', async () => {
         jest.spyOn(utils, 'logError')
+        const bot = mockBot()
         const songTitle = 'Música'
         const artist = 'Artista'
         const song = {
@@ -378,49 +342,31 @@ describe('play song event', () => {
             }
         }
 
-        init(mockBot())
-        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
-            .subscribe({
-                next: () => {
-                    try {
-                        const actualCache = localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS)
-                        expect(actualCache).toBeFalsy()
-                        expect(utils.logError).toBeCalledTimes(1)
-                        done()
-                    } catch (error) {
-                        done(error)
-                    }
-                }
-            })
+        init(bot)
+        await tryAddSongToSpotifyPlaylist(bot, song)
 
-        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+        const actualCache = localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS)
+        expect(actualCache).toBeFalsy()
+        expect(utils.logError).toBeCalledTimes(1)
     })
 
-    test('não deveria adicionar uma música na playlist quando a pesquisa for vazia', done => {
+    test('não deveria adicionar uma música na playlist quando a pesquisa for vazia', async () => {
         jest.spyOn(utils, 'logError')
+        const bot = mockBot()
         const song = {
             video_details: {}
         }
 
-        init(mockBot())
-        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
-            .subscribe({
-                next: () => {
-                    try {
-                        const actualCache = localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS)
-                        expect(actualCache).toBeFalsy()
-                        expect(utils.logError).toBeCalledTimes(0)
-                        done()
-                    } catch (error) {
-                        done(error)
-                    }
-                }
-            })
+        init(bot)
+        await tryAddSongToSpotifyPlaylist(bot, song)
 
-        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+        const actualCache = localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS)
+        expect(actualCache).toBeFalsy()
+        expect(utils.logError).toBeCalledTimes(0)
     })
 
-    test('deveria dar refresh no token quando o mesmo estiver expirado', done => {
+    test('deveria dar refresh no token quando o mesmo estiver expirado', async () => {
+        const bot = mockBot()
         const song = {
             video_details: {
                 title: 'Titulo'
@@ -464,29 +410,20 @@ describe('play song event', () => {
             }
         })
 
-        init(mockBot())
-        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
-            .subscribe({
-                next: () => {
-                    try {
-                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
-                        expect(actualCache).toHaveLength(1)
-                        expect(actualCache).toContain(trackId)
-                        expect(axios.post).toBeCalledTimes(2)
-                        expect(localStorage.getItem(SPOTIFY_TOKEN)).toBe(responseData.access_token)
-                        expect(localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)).toBeGreaterThan(utils.nowInSeconds())
-                        expect(localStorage.getItem(SPOTIFY_REFRESH_TOKEN)).toBe(refreshToken)
-                        done()
-                    } catch (error) {
-                        done(error)
-                    }
-                }
-            })
+        init(bot)
+        await tryAddSongToSpotifyPlaylist(bot, song)
 
-        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+        expect(actualCache).toHaveLength(1)
+        expect(actualCache).toContain(trackId)
+        expect(axios.post).toBeCalledTimes(2)
+        expect(localStorage.getItem(SPOTIFY_TOKEN)).toBe(responseData.access_token)
+        expect(localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)).toBeGreaterThan(utils.nowInSeconds())
+        expect(localStorage.getItem(SPOTIFY_REFRESH_TOKEN)).toBe(refreshToken)
     })
 
-    test('deveria atualizar o refresh token quando vir no response', done => {
+    test('deveria atualizar o refresh token quando vir no response', async () => {
+        const bot = mockBot()
         const song = {
             video_details: {
                 title: 'Titulo'
@@ -531,30 +468,21 @@ describe('play song event', () => {
             }
         })
 
-        init(mockBot())
-        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
-            .subscribe({
-                next: () => {
-                    try {
-                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
-                        expect(actualCache).toHaveLength(1)
-                        expect(actualCache).toContain(trackId)
-                        expect(axios.post).toBeCalledTimes(2)
-                        expect(localStorage.getItem(SPOTIFY_TOKEN)).toBe(responseData.access_token)
-                        expect(localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)).toBeGreaterThan(utils.nowInSeconds())
-                        expect(localStorage.getItem(SPOTIFY_REFRESH_TOKEN)).toBe(responseData.refresh_token)
-                        done()
-                    } catch (error) {
-                        done(error)
-                    }
-                }
-            })
+        init(bot)
+        await tryAddSongToSpotifyPlaylist(bot, song)
 
-        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+        expect(actualCache).toHaveLength(1)
+        expect(actualCache).toContain(trackId)
+        expect(axios.post).toBeCalledTimes(2)
+        expect(localStorage.getItem(SPOTIFY_TOKEN)).toBe(responseData.access_token)
+        expect(localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)).toBeGreaterThan(utils.nowInSeconds())
+        expect(localStorage.getItem(SPOTIFY_REFRESH_TOKEN)).toBe(responseData.refresh_token)
     })
 
-    test('deveria dar erro quando não existir token expiration no localstorage', done => {
+    test('deveria dar erro quando não existir token expiration no localstorage', async () => {
         jest.spyOn(utils, 'logError')
+        const bot = mockBot()
         const song = {
             video_details: {
                 title: 'Titulo'
@@ -564,23 +492,13 @@ describe('play song event', () => {
         localStorage.setItem(SPOTIFY_REFRESH_TOKEN, refreshToken)
         localStorage.setItem(SPOTIFY_PLAYLIST_TRACKS, JSON.stringify([]))
 
-        init(mockBot())
-        events.event(SPOTIFY_LISTENER_FINISHED_EVENT)
-            .subscribe({
-                next: () => {
-                    try {
-                        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
-                        expect(actualCache).toHaveLength(0)
-                        expect(axios.post).toBeCalledTimes(0)
-                        expect(localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)).toBeFalsy()
-                        expect(utils.logError).toBeCalledTimes(1)
-                        done()
-                    } catch (error) {
-                        done(error)
-                    }
-                }
-            })
+        init(bot)
+        await tryAddSongToSpotifyPlaylist(bot, song)
 
-        events.emit(MUSIC_PLAY_SONG_EVENT, song)
+        const actualCache = JSON.parse(localStorage.getItem(SPOTIFY_PLAYLIST_TRACKS))
+        expect(actualCache).toHaveLength(0)
+        expect(axios.post).toBeCalledTimes(0)
+        expect(localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)).toBeFalsy()
+        expect(utils.logError).toBeCalledTimes(1)
     })
 })

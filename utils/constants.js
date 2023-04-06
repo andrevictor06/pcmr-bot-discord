@@ -1,4 +1,3 @@
-const MUSIC_PLAY_SONG_EVENT = 'music_play:play_song'
 const SPOTIFY_LOGIN_STATE = 'spotify:state'
 const SPOTIFY_TOKEN = 'spotify:token'
 const SPOTIFY_TOKEN_EXPIRATION = 'spotify:token_expiration'
@@ -9,7 +8,6 @@ const SPOTIFY_PLAYLIST_TRACKS = 'spotify:playlist_tracks'
 const SPOTIFY_LISTENER_FINISHED_EVENT = 'spotify:finished'
 
 module.exports = {
-    MUSIC_PLAY_SONG_EVENT,
     SPOTIFY_LOGIN_STATE,
     SPOTIFY_TOKEN,
     SPOTIFY_TOKEN_EXPIRATION,
