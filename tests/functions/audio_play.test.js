@@ -1,10 +1,10 @@
 const fs = require("fs")
 const path = require('path')
-const { clearSharedVariables, MUSIC_QUEUE_NAME } = require("../../utils/shared_variables")
+const { clearSharedVariables, MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME } = require("../../utils/shared_variables")
 const utils = require('../../utils/Utils')
 const { mockMessage, mockBot, mockEventInteraction, mockAudioPlayer, mockVoiceConnection, mockQueueObject } = require('../utils_test')
 const { run } = require('../../functions/audio_play')
-const { joinVoiceChannel, AudioPlayerStatus } = require("@discordjs/voice")
+const { joinVoiceChannel, AudioPlayerStatus, createAudioResource } = require("@discordjs/voice")
 const { ExpectedError } = require("../../utils/expected_error")
 
 afterEach(() => {
@@ -46,10 +46,12 @@ describe("audio", () => {
     })
 
     test("deveria tocar um áudio com sucesso", async () => {
+        jest.spyOn(fs, 'createReadStream')
         const bot = mockBot()
         const message = mockMessage('audio')
         const audios = fs.readdirSync(path.resolve('audio'))
-        const audioButtonId = process.env.ENVIRONMENT + "btn_audio_" + audios[0]
+        const audio = audios[0]
+        const audioButtonId = process.env.ENVIRONMENT + "btn_audio_" + audio
         const event = mockEventInteraction(audioButtonId, bot)
         const player = mockAudioPlayer()
         const connection = mockVoiceConnection()
@@ -65,6 +67,33 @@ describe("audio", () => {
         expect(player.on).toBeCalledTimes(2)
         expect(player.on).toHaveBeenNthCalledWith(1, AudioPlayerStatus.Idle, expect.any(Function))
         expect(player.on).toHaveBeenNthCalledWith(2, "error", expect.any(Function))
+        expect(fs.createReadStream).toBeCalledTimes(1)
+        expect(fs.createReadStream).toHaveBeenNthCalledWith(1, path.resolve('audio', audio), expect.anything())
+    })
+
+    test("deveria tocar um áudio com sucesso mesmo se estiver tocando outro áudio", async () => {
+        jest.spyOn(fs, 'createReadStream')
+        const bot = mockBot()
+        const message = mockMessage('audio')
+        const audios = fs.readdirSync(path.resolve('audio'))
+        const audio = audios[0]
+        const audioButtonId = process.env.ENVIRONMENT + "btn_audio_" + audio
+        const event = mockEventInteraction(audioButtonId, bot)
+        const audioQueue = mockQueueObject(AUDIO_QUEUE_NAME, event.member.voice.channel.id)
+
+        await run(bot, message)
+
+        const playAudio = bot.addInteractionCreate.mock.calls[0][1]
+        playAudio(event)
+
+        expect(audioQueue.connection.subscribe).toBeCalledTimes(0)
+        expect(joinVoiceChannel).toBeCalledTimes(0)
+        expect(audioQueue.player.off).toBeCalledTimes(1)
+        expect(audioQueue.player.stop).toBeCalledTimes(1)
+        expect(audioQueue.player.on).toBeCalledTimes(1)
+        expect(audioQueue.player.play).toBeCalledTimes(1)
+        expect(fs.createReadStream).toBeCalledTimes(1)
+        expect(fs.createReadStream).toHaveBeenNthCalledWith(1, path.resolve('audio', audio), expect.anything())
     })
 
     test("deveria tocar um áudio com sucesso mesmo se tiver tocando uma música", async () => {
