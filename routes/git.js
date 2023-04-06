@@ -41,7 +41,7 @@ function init(bot) {
                 if( sharedVariableExists(id_message)){
                     const message  = getSharedVariable(id_message)
                     message.reactions.removeAll()
-                    
+
                     if( payload.pull_request.merged_at){
                         message.react("✅")
                         message.react("🇨")
@@ -77,7 +77,6 @@ function init(bot) {
                         message.react("🇻")
                         message.react("🇪")
                         message.react("🇩")
-
                     } else if(payload.review.state === "changes_requested"){
                         message.react("❌")
                         message.react("🇨")
