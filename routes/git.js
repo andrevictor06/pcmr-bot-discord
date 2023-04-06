@@ -1,15 +1,15 @@
 const express = require('express')
 const router = express.Router()
 const utils = require('../utils/Utils')
+const { setSharedVariable, sharedVariableExists, getSharedVariable } = require('../utils/shared_variables')
 
 function init(bot) {
     router.post('/', async (req, res) => {
         try {
             let payload = req.body
-
-
+            const channel = bot.channels.cache.get(process.env.ID_CHANNEL_DEV_BOT)
+            const id_message = `git_pr_${payload.number}`
             if( payload.action && payload.pull_request && payload.action === "opened"){
-                const channel = await bot.channels.fetch(process.env.ID_CHANNEL_DEV_BOT)
                 const exampleEmbed = {
                     color: 0xFF00FF,
                     author: {
@@ -34,7 +34,15 @@ function init(bot) {
                     timestamp: new Date(payload.pull_request.created_at).toISOString()    
                 }   
                 
-                channel.send({ content: `<@&${process.env.ID_MEMBER_DEV_PCMR_BOT}>\n**Abrirão um PR para me atualizar!!!!**\n**Alguém aceita ae, na moralzinha!!!!**`,  embeds: [exampleEmbed] }) 
+                const message = await channel.send({ content: `<@&${process.env.ID_MEMBER_DEV_PCMR_BOT}>\n**Abrirão um PR para me atualizar!!!!**\n**Alguém aceita ae, na moralzinha!!!!**`,  embeds: [exampleEmbed] }) 
+                setSharedVariable(id_message, message)
+            }
+
+            if( payload.action && payload.review && payload.action === "submitted"){
+                if( sharedVariableExists(id_message)){
+                    const message  = getSharedVariable(id_message)
+                    message.react("<:baxa_o_api:938131829804920834>")
+                }
             }
             res.send('Requisição aceita')
         } catch (error) {

@@ -50,33 +50,31 @@ function startJobs() {
 listenMessages()
 startJobs()
 
-bot.on('ready', () => {
+bot.on('ready', async() => {
     try {
         if (process.env.ENVIRONMENT === "PRD") {
             if (process.env.ID_CHANNEL_LOG_BOT) {
                 let date = new Date().toISOString().slice(0, 10)
-                bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then(channel => {
-                    channel.send({ 
-                        embeds: [{
-                            title: "Bot iniciado",
-                            timestamp: new Date().toISOString()
-                        }],
-                        components: [
-                            {
-                                type: 1,
-                                components: [
-                                    {
-                                        type: 2,
-                                        style: 1,
-                                        label: "Logs",
-                                        custom_id: process.env.ENVIRONMENT + "adm_log" + date
-                                    }
-                                ]
-                            }
-                        ],
-                    })
+                const channel_log_bot = bot.channels.cache.get(process.env.ID_CHANNEL_LOG_BOT)
+                channel_log_bot.send({
+                    embeds: [{
+                        title: "Bot iniciado",
+                        timestamp: new Date().toISOString()
+                    }],
+                    components: [
+                        {
+                            type: 1,
+                            components: [
+                                {
+                                    type: 2,
+                                    style: 1,
+                                    label: "Logs",
+                                    custom_id: process.env.ENVIRONMENT + "adm_log" + date
+                                }
+                            ]
+                        }
+                    ],
                 })
-                
                 bot.addInteractionCreate(process.env.ENVIRONMENT + "adm_log" + date, (event)=>{
                     const customId = event.customId
                     const logPath = path.resolve(process.env.PATH_LOG)
@@ -96,7 +94,7 @@ bot.on('ready', () => {
             }
 
             Utils.setPresenceBotDefault(bot)
-        }
+       }
         console.log(`Logged in as ${bot.user.tag}!`);
     } catch (error) { Utils.logError(bot, error, __filename) }
 });
