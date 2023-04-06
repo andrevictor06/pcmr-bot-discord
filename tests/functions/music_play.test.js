@@ -18,8 +18,6 @@ afterEach(() => {
     jest.restoreAllMocks()
 })
 
-//TODO: Cenários de teste para setInterval e setTimeout
-
 describe("play", () => {
     test("não deveria iniciar a música quando o usuário não estiver em um canal de voz", async () => {
         const message = mockMessage("play")

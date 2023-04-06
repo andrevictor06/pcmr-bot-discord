@@ -1,7 +1,8 @@
 const { joinVoiceChannel, createAudioPlayer, AudioPlayerStatus } = require("@discordjs/voice")
-const { setSharedVariable, MUSIC_QUEUE_NAME } = require("../utils/shared_variables")
+const { setSharedVariable } = require("../utils/shared_variables")
 const Utils = require("../utils/Utils")
 const playdl = require('play-dl')
+const { randomUUID } = require('crypto')
 
 function mockMessage(command, ...params) {
     const has = jest.fn(() => true)
@@ -28,6 +29,7 @@ function mockMessage(command, ...params) {
         member: {
             voice: {
                 channel: {
+                    id: randomUUID(),
                     permissionsFor: jest.fn(() => {
                         return { has }
                     }),
@@ -39,21 +41,22 @@ function mockMessage(command, ...params) {
                 }
             }
         },
-        reply: jest.fn()
+        reply: jest.fn(),
+        update: jest.fn()
     }
 }
 
-function mockVoiceConnection() {
+function mockVoiceConnection(autoMock = true) {
     const connection = {
         subscribe: jest.fn(),
         destroy: jest.fn(),
         on: jest.fn()
     }
-    joinVoiceChannel.mockImplementation(() => connection)
+    if (autoMock) joinVoiceChannel.mockImplementation(() => connection)
     return connection
 }
 
-function mockAudioPlayer(state = AudioPlayerStatus.Idle) {
+function mockAudioPlayer(state = AudioPlayerStatus.Idle, autoMock = true) {
     const listeners = new Map()
     const on = jest.fn((eventName, fn) => {
         if (!listeners.has(eventName)) {
@@ -63,15 +66,21 @@ function mockAudioPlayer(state = AudioPlayerStatus.Idle) {
         functions.push(fn)
 
     })
+    const off = jest.fn((eventName, fn) => {
+        listeners.delete(eventName)
+    })
     const player = {
         on,
+        off,
         state,
         play: jest.fn(),
         listeners,
         removeAllListeners: jest.fn(),
-        stop: jest.fn()
+        stop: jest.fn(),
+        pause: jest.fn(),
+        unpause: jest.fn()
     }
-    createAudioPlayer.mockImplementation(() => player)
+    if (autoMock) createAudioPlayer.mockImplementation(() => player)
     return player
 }
 
@@ -99,23 +108,17 @@ function mockPlaylistInfo(url, videos) {
     return playlistInfo
 }
 
-function mockQueueObject(queueName) {
+function mockQueueObject(queueName, voiceChannelId = randomUUID()) {
     const serverQueue = {
-        player: {
-            removeAllListeners: jest.fn(),
-            play: jest.fn(),
-            stop: jest.fn(),
-            state: {
-                status: AudioPlayerStatus.Idle
-            }
-        },
-        connection: {
-            destroy: jest.fn()
-        },
+        player: mockAudioPlayer(AudioPlayerStatus.Idle, false),
+        connection: mockVoiceConnection(false),
         songs: [],
         currentSong: null,
         textChannel: {
             send: jest.fn()
+        },
+        voiceChannel: {
+            id: voiceChannelId
         }
     }
     setSharedVariable(queueName, serverQueue)
@@ -148,11 +151,11 @@ function mockBot() {
     }
 }
 
-function mockEventInteraction(customId) {
-    return {
-        customId,
-        update: jest.fn()
-    }
+function mockEventInteraction(customId, bot = null) {
+    const message = mockMessage('')
+    message.customId = customId
+    message.client = bot
+    return message
 }
 
 function mockPlaydlStream() {

@@ -36,20 +36,18 @@ async function play(bot, msg, audio) {
             musicQueue.player.pause(true)
         }
     }
-    if (!sharedVariableExists(AUDIO_QUEUE_NAME)) {
-        createServerQueue(bot, msg)
-    }
-    const serverQueue = getSharedVariable(AUDIO_QUEUE_NAME)
+    let serverQueue = getSharedVariable(AUDIO_QUEUE_NAME)
     if (serverQueue && serverQueue.player.state.status != AudioPlayerStatus.Idle) {
         serverQueue.player.off(AudioPlayerStatus.Idle, stop)
         serverQueue.player.stop(true)
         serverQueue.player.on(AudioPlayerStatus.Idle, stop)
     }
-    if (serverQueue) {
-        const audioPath = path.resolve("audio", audio)
-        const resource = createAudioResource(fs.createReadStream(audioPath, { highWaterMark: 1024 * 1024 }))
-        serverQueue.player.play(resource)
+    if (!serverQueue) {
+        serverQueue = createServerQueue(bot, msg)
     }
+    const audioPath = path.resolve("audio", audio)
+    const resource = createAudioResource(fs.createReadStream(audioPath, { highWaterMark: 1024 * 1024 }))
+    serverQueue.player.play(resource)
 }
 
 function createServerQueue(bot, msg) {
@@ -72,13 +70,13 @@ function createServerQueue(bot, msg) {
         playing: true
     }
     serverQueue.connection.subscribe(serverQueue.player)
-    serverQueue.player
-        .on(AudioPlayerStatus.Idle, stop)
-        .on("error", error => {
-            Utils.logError(bot, error, __filename)
-            msg.channel.send(Utils.getMessageError(error))
-        })
+    serverQueue.player.on(AudioPlayerStatus.Idle, stop)
+    serverQueue.player.on("error", error => {
+        Utils.logError(bot, error, __filename)
+        msg.channel.send(Utils.getMessageError(error))
+    })
     setSharedVariable(AUDIO_QUEUE_NAME, serverQueue)
+    return serverQueue
 }
 
 async function eventPlayAudio(event) {
@@ -150,9 +148,9 @@ function helpComand(bot, msg) {
     }
 }
 
-function runAudioPlay(bot, channelId, audio){
+function runAudioPlay(bot, channelId, audio) {
     bot.channels.fetch(channelId).then(channel => {
-        play(bot, {member:{ voice: {channel: channel}} }, audio)
+        play(bot, { member: { voice: { channel: channel } } }, audio)
     })
 }
 
