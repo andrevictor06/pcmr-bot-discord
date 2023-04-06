@@ -1,4 +1,4 @@
-const { clearSharedVariables, getSharedVariable, setSharedVariable } = require("../../utils/shared_variables")
+const { clearSharedVariables, getSharedVariable, setSharedVariable, sharedVariableExists } = require("../../utils/shared_variables")
 const { mockMessage, mockBot } = require("../utils_test")
 const { randomUUID } = require('crypto');
 const { run, authenticate, init } = require('../../functions/spotify_playlist')
@@ -6,7 +6,8 @@ const querystring = require('querystring');
 const { SPOTIFY_LOGIN_STATE, SPOTIFY_BASE_URL, SPOTIFY_TOKEN, SPOTIFY_REFRESH_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_PLAYLIST_TRACKS, SPOTIFY_AUTH_URL, MUSIC_PLAY_SONG_EVENT, SPOTIFY_LISTENER_FINISHED_EVENT } = require("../../utils/constants");
 const { default: axios } = require('axios')
 const utils = require('../../utils/Utils')
-const events = require('../../utils/events')
+const events = require('../../utils/events');
+const { ExpectedError } = require("../../utils/expected_error");
 
 afterEach(() => {
     clearSharedVariables()
@@ -141,6 +142,8 @@ describe('spotify_cache', () => {
 describe('authenticate', () => {
     test('deveria autenticar com sucesso', async () => {
         const authorizationCode = randomUUID()
+        const state = randomUUID()
+        setSharedVariable(SPOTIFY_LOGIN_STATE, state)
         const responseData = {
             access_token: randomUUID(),
             refresh_token: randomUUID(),
@@ -164,11 +167,39 @@ describe('authenticate', () => {
             }
         })
 
-        await authenticate(authorizationCode)
+        await authenticate(authorizationCode, state)
 
         expect(localStorage.getItem(SPOTIFY_TOKEN)).toBe(responseData.access_token)
         expect(localStorage.getItem(SPOTIFY_REFRESH_TOKEN)).toBe(responseData.refresh_token)
         expect(localStorage.getItem(SPOTIFY_TOKEN_EXPIRATION)).toBeGreaterThan(utils.nowInSeconds())
+        expect(sharedVariableExists(SPOTIFY_LOGIN_STATE)).toBeFalsy()
+    })
+
+    test('não deveria autenticar quando o código state for diferente', async () => {
+        const authorizationCode = randomUUID()
+        setSharedVariable(SPOTIFY_LOGIN_STATE, randomUUID())
+
+        expect.hasAssertions()
+        try {
+            await authenticate(authorizationCode, randomUUID())
+        } catch (error) {
+            expect(error).toBeTruthy()
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+
+    })
+
+    test('não deveria autenticar quando o código state não existir', async () => {
+        const authorizationCode = randomUUID()
+
+        expect.hasAssertions()
+        try {
+            await authenticate(authorizationCode, randomUUID())
+        } catch (error) {
+            expect(error).toBeTruthy()
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+
     })
 })
 
