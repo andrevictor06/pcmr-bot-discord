@@ -37,7 +37,30 @@ function init(bot) {
                 const message = await channel.send({ content: `<@&${process.env.ID_MEMBER_DEV_PCMR_BOT}>\n**Abrirão um PR para me atualizar!!!!**\n**Alguém aceita ae, na moralzinha!!!!**`,  embeds: [exampleEmbed] }) 
                 setSharedVariable(id_message, message)
             }
-
+            if( payload.action && payload.pull_request && payload.action === "closed"){
+                if( sharedVariableExists(id_message)){
+                    const message  = getSharedVariable(id_message)
+                    message.reactions.removeAll()
+                    
+                    if( payload.pull_request.merged_at){
+                        message.react("✅")
+                        message.react("🇨")
+                        message.react("🇱")
+                        message.react("🅾️")
+                        message.react("🇸")
+                        message.react("🇪")
+                        message.react("🇩")
+                    }else{
+                        message.react("❎")
+                        message.react("🇨")
+                        message.react("🇱")
+                        message.react("🅾️")
+                        message.react("🇸")
+                        message.react("🇪")
+                        message.react("🇩")
+                    }
+                }
+            }
             if( payload.action && payload.review && payload.action === "submitted"){
                 id_message = `git_pr_${payload.pull_request.number}`
                 if( sharedVariableExists(id_message)){
