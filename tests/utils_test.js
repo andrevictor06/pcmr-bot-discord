@@ -77,7 +77,8 @@ function mockAudioPlayer(state = AudioPlayerStatus.Idle, autoMock = true) {
         listeners,
         removeAllListeners: jest.fn(),
         stop: jest.fn(),
-        pause: jest.fn()
+        pause: jest.fn(),
+        unpause: jest.fn()
     }
     if (autoMock) createAudioPlayer.mockImplementation(() => player)
     return player
