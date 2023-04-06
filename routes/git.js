@@ -8,7 +8,7 @@ function init(bot) {
         try {
             let payload = req.body
             const channel = bot.channels.cache.get(process.env.ID_CHANNEL_DEV_BOT)
-            const id_message = `git_pr_${payload.number}`
+            let id_message = `git_pr_${payload.number}`
             if( payload.action && payload.pull_request && payload.action === "opened"){
                 const exampleEmbed = {
                     color: 0xFF00FF,
@@ -39,6 +39,7 @@ function init(bot) {
             }
 
             if( payload.action && payload.review && payload.action === "submitted"){
+                id_message = `git_pr_${payload.pull_request.number}`
                 if( sharedVariableExists(id_message)){
                     const message  = getSharedVariable(id_message)
                     message.react("<:baxa_o_api:938131829804920834>")
