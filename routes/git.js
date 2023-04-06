@@ -42,7 +42,40 @@ function init(bot) {
                 id_message = `git_pr_${payload.pull_request.number}`
                 if( sharedVariableExists(id_message)){
                     const message  = getSharedVariable(id_message)
-                    message.react("<:baxa_o_api:938131829804920834>")
+                    message.reactions.removeAll()
+                    
+                    if(payload.review.state === "approved"){
+                        message.react("🚀")
+                        message.react("🅰️")
+                        message.react("🅿️")
+                        message.react("🇵")
+                        message.react("🇷")
+                        message.react("🅾️")
+                        message.react("🇻")
+                        message.react("🇪")
+                        message.react("🇩")
+
+                    } else if(payload.review.state === "changes_requested"){
+                        message.react("❌")
+                        message.react("🇨")
+                        message.react("🇭")
+                        message.react("🅰️")
+                        message.react("🇳")
+                        message.react("🇬")
+                        message.react("🇪")
+                        message.react("🇸")
+                    } else if(payload.review.state === "commented"){
+                        message.react("💬")
+                        message.react("🇨")
+                        message.react("🅾️")
+                        message.react("Ⓜ️")
+                        message.react("🇲")
+                        message.react("🇪")
+                        message.react("🇳")
+                        message.react("🇹")
+                        message.react("📧")
+                        message.react("🇩")
+                    }
                 }
             }
             res.send('Requisição aceita')
