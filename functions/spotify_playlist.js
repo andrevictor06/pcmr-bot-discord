@@ -254,5 +254,6 @@ module.exports = {
     run,
     canHandle,
     helpComand,
-    authenticate
+    authenticate,
+    tryAddSongToSpotifyPlaylist
 }
