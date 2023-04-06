@@ -1,5 +1,4 @@
-const { MUSIC_PLAY_SONG_EVENT, SPOTIFY_LOGIN_STATE, SPOTIFY_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_REFRESH_TOKEN, SPOTIFY_AUTH_URL, SPOTIFY_BASE_URL, SPOTIFY_PLAYLIST_TRACKS, SPOTIFY_LISTENER_FINISHED_EVENT } = require('../utils/constants')
-const events = require('../utils/events');
+const { SPOTIFY_LOGIN_STATE, SPOTIFY_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_REFRESH_TOKEN, SPOTIFY_AUTH_URL, SPOTIFY_BASE_URL, SPOTIFY_PLAYLIST_TRACKS, SPOTIFY_LISTENER_FINISHED_EVENT } = require('../utils/constants')
 const { ExpectedError } = require('../utils/expected_error');
 const { setSharedVariable, getSharedVariable, deleteSharedVariable } = require('../utils/shared_variables')
 const utils = require('../utils/Utils')
@@ -179,17 +178,11 @@ async function tryAddSongToSpotifyPlaylist(bot, song) {
     } catch (error) {
         error = error.response?.data ? error.response.data : error
         utils.logError(bot, error, __filename)
-    } finally {
-        events.emit(SPOTIFY_LISTENER_FINISHED_EVENT)
     }
 }
 
 async function init(bot) {
     loadTracksCache()
-    events.event(MUSIC_PLAY_SONG_EVENT)
-        .subscribe({
-            next: song => tryAddSongToSpotifyPlaylist(bot, song)
-        })
 }
 
 function loadTracksCache() {
