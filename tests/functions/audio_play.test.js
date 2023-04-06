@@ -1,10 +1,10 @@
 const fs = require("fs")
 const path = require('path')
-const { clearSharedVariables, MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, getSharedVariable, sharedVariableExists } = require("../../utils/shared_variables")
+const { clearSharedVariables, MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, sharedVariableExists } = require("../../utils/shared_variables")
 const utils = require('../../utils/Utils')
 const { mockMessage, mockBot, mockEventInteraction, mockAudioPlayer, mockVoiceConnection, mockQueueObject } = require('../utils_test')
 const { run } = require('../../functions/audio_play')
-const { joinVoiceChannel, AudioPlayerStatus, createAudioResource } = require("@discordjs/voice")
+const { joinVoiceChannel, AudioPlayerStatus } = require("@discordjs/voice")
 const { ExpectedError } = require("../../utils/expected_error")
 
 afterEach(() => {
