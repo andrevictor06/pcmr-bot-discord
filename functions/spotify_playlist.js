@@ -1,6 +1,7 @@
 const { MUSIC_PLAY_SONG_EVENT, SPOTIFY_LOGIN_STATE, SPOTIFY_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_REFRESH_TOKEN, SPOTIFY_AUTH_URL, SPOTIFY_BASE_URL, SPOTIFY_PLAYLIST_TRACKS, SPOTIFY_LISTENER_FINISHED_EVENT } = require('../utils/constants')
 const events = require('../utils/events');
-const { setSharedVariable, getSharedVariable } = require('../utils/shared_variables')
+const { ExpectedError } = require('../utils/expected_error');
+const { setSharedVariable, getSharedVariable, deleteSharedVariable } = require('../utils/shared_variables')
 const utils = require('../utils/Utils')
 const { default: axios } = require('axios')
 const { randomUUID } = require('crypto')
@@ -54,7 +55,9 @@ function deleteCredentials() {
     localStorage.removeItem(SPOTIFY_TOKEN_EXPIRATION)
 }
 
-async function authenticate(code) {
+async function authenticate(code, state) {
+    if (state !== getSharedVariable(SPOTIFY_LOGIN_STATE)) throw new ExpectedError('Código de login expirado, gere uma nova URL')
+    deleteSharedVariable(SPOTIFY_LOGIN_STATE)
     const response = await axios.post(
         SPOTIFY_AUTH_URL,
         {
