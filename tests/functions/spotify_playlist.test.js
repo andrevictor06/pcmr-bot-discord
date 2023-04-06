@@ -3,7 +3,7 @@ const { mockMessage, mockBot } = require("../utils_test")
 const { randomUUID } = require('crypto');
 const { run, authenticate, init, tryAddSongToSpotifyPlaylist } = require('../../functions/spotify_playlist')
 const querystring = require('querystring');
-const { SPOTIFY_LOGIN_STATE, SPOTIFY_BASE_URL, SPOTIFY_TOKEN, SPOTIFY_REFRESH_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_PLAYLIST_TRACKS, SPOTIFY_AUTH_URL, MUSIC_PLAY_SONG_EVENT, SPOTIFY_LISTENER_FINISHED_EVENT } = require("../../utils/constants");
+const { SPOTIFY_LOGIN_STATE, SPOTIFY_BASE_URL, SPOTIFY_TOKEN, SPOTIFY_REFRESH_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_PLAYLIST_TRACKS, SPOTIFY_AUTH_URL } = require("../../utils/constants");
 const { default: axios } = require('axios')
 const utils = require('../../utils/Utils')
 const { ExpectedError } = require("../../utils/expected_error");
@@ -12,6 +12,7 @@ afterEach(() => {
     clearSharedVariables()
     localStorage.clear()
     jest.resetAllMocks()
+    jest.restoreAllMocks()
 })
 
 function mockAddToPlaylist(token) {
