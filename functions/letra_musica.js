@@ -35,7 +35,7 @@ function canHandle(bot, msg) {
 
 function helpComand(bot, msg) {
     return {
-        name: Utils.command("letra --mus=[nome-musica] --art=[nome-artista]"),
+        name: Utils.command("letra --mus [nome-musica] --art [nome-artista]"),
         value: "Consulta a letra da música informada",
         url: "https://www.vagalume.com.br/",
         inline: false
