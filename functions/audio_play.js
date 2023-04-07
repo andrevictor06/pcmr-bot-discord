@@ -105,7 +105,7 @@ async function eventPlayAudio(event) {
 async function eventStopAudio(event) {
     stop()
     event.update({
-        content: `Parei man`,
+        content: 'Parei man',
         components: []
     })
 }

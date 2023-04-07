@@ -104,7 +104,7 @@ function checkVoiceChannelPreConditions(message) {
     if (!voiceChannel)
         throw new ExpectedError("Cadê o canal de voz?")
 
-    if(message.client){
+    if (message.client) {
         const permissions = voiceChannel.permissionsFor(message.client.user)
         if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
             throw new ExpectedError("Tô sem permissão, fala com o corno do adm!")
@@ -114,10 +114,9 @@ function checkVoiceChannelPreConditions(message) {
 
 
 function chunkArray(arr, len) {
-
-    var chunks = [],
-        i = 0,
-        n = arr.length;
+    const chunks = []
+    let i = 0
+    const n = arr.length;
 
     while (i < n) {
         chunks.push(arr.slice(i, i += len));
@@ -140,28 +139,28 @@ function parseArgs(message) {
     const command = pieces.shift()
     const parsedArgs = {
         command,
-        mainArg: "",
-        args: {}
+        mainParam: "",
+        params: {}
     }
     for (let i = 0; i < pieces.length; i++) {
         const str = pieces[i]
         if (str.startsWith("--")) {
             const argName = str.replace("--", "")
-            const argValue = []
+            const paramValue = []
             for (let j = i + 1; j < pieces.length; j++) {
                 const el = pieces[j]
                 if (el.startsWith("--")) {
                     break
                 } else {
-                    argValue.push(el)
+                    paramValue.push(el)
                     pieces[j] = ""
                 }
             }
-            parsedArgs.args[argName] = argValue.join(" ")
+            parsedArgs.params[argName] = paramValue.join(" ")
             pieces[i] = ""
         }
     }
-    parsedArgs.mainArg = pieces.filter(el => el != "").join(" ").trim()
+    parsedArgs.mainParam = pieces.filter(el => el != "").join(" ").trim()
     return parsedArgs
 }
 
@@ -187,15 +186,15 @@ function getMentions(mensagem) {
     }
 }
 
-function getRandomFromArray(array){
-    if( ! array || array.length == 0)
+function getRandomFromArray(array) {
+    if (!array || array.length == 0)
         return null
 
     return array[between(0, array.length)]
 }
 
 function nowInSeconds() {
-    return Number.parseInt(new Date().getTime() / 1000)
+    return Math.trunc(new Date().getTime() / 1000)
 }
 
 module.exports = {

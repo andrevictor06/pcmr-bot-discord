@@ -61,7 +61,7 @@ async function play(bot, message) {
     Utils.checkVoiceChannelPreConditions(message)
 
     const parsedArgs = Utils.parseArgs(message)
-    if (parsedArgs.mainArg == null || parsedArgs.mainArg == "") throw new ExpectedError("Cadê a música man?")
+    if (parsedArgs.mainParam == null || parsedArgs.mainParam == "") throw new ExpectedError("Cadê a música man?")
 
     const url = await getURL(bot, parsedArgs)
     if (!url) throw new ExpectedError("Achei nada man")
@@ -84,12 +84,12 @@ async function play(bot, message) {
 }
 
 async function getURL(bot, args) {
-    if (Utils.isValidHttpUrl(args.mainArg)) {
-        const url = new URL(args.mainArg)
+    if (Utils.isValidHttpUrl(args.mainParam)) {
+        const url = new URL(args.mainParam)
         if (!url.host.includes("youtube")) throw new ExpectedError("Essa url não é do youtube não man")
         if (url.searchParams.has("list")) {
             try {
-                const playlistInfo = await playdl.playlist_info(args.mainArg, { incomplete: true })
+                const playlistInfo = await playdl.playlist_info(args.mainParam, { incomplete: true })
                 const videos = await playlistInfo.all_videos()
                 return videos.filter(v => v.url != null).map(v => v.url)
             } catch (error) {
@@ -97,10 +97,10 @@ async function getURL(bot, args) {
             }
         }
 
-        return args.mainArg
+        return args.mainParam
     }
 
-    const result = await playdl.search(args.mainArg, { source: { youtube: 'video' }, limit: 1 })
+    const result = await playdl.search(args.mainParam, { source: { youtube: 'video' }, limit: 1 })
     if (result && result.length > 0) {
         return result[0].url
     }
@@ -114,7 +114,7 @@ async function addToQueue(songURL, message, parsedArgs, showAddedMessage = false
         message.channel.send(`Adicionei ${songURL.length} músicas na fila!`)
     } else {
         const basicInfo = await loadSongInfo(songURL)
-        const times = parsedArgs.args.times != null && parsedArgs.args.times > 0 ? parsedArgs.args.times : 1
+        const times = parsedArgs.params.times != null && parsedArgs.params.times > 0 ? parsedArgs.params.times : 1
         for (let i = 0; i < times; i++) {
             serverQueue.songs.push(basicInfo)
         }
