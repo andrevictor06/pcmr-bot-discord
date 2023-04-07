@@ -114,9 +114,9 @@ function checkVoiceChannelPreConditions(message) {
 
 
 function chunkArray(arr, len) {
-    const chunks = [],
-        i = 0,
-        n = arr.length;
+    const chunks = []
+    let i = 0
+    const n = arr.length;
 
     while (i < n) {
         chunks.push(arr.slice(i, i += len));
