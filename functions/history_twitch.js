@@ -1,4 +1,4 @@
-const request = require('request').defaults({ encoding: null })
+const { default: axios } = require('axios')
 const Utils = require("../utils/Utils")
 
 async function createThreads(channel, message) {
@@ -39,20 +39,15 @@ function run(bot, msg) {
                                 createThreads(channel, message)
                             }
 
-                            setTimeout(() => {
-
-                                request.get({
-                                    url: url,
-                                    method: 'GET'
-                                }, function (error, response, body) {
-                                    if (!error && response.statusCode == 200) {
-                                        const data = Buffer.from(body).toString('utf8')
-                                        if (data.toString().includes(`"isLiveBroadcast":true`)) {
-
-                                            sendMessageThread(channel, url)
-                                        }
+                            setTimeout(async () => {
+                                try {
+                                    const response = await axios.get(url)
+                                    if (response.data.includes('"isLiveBroadcast":true')) {
+                                        sendMessageThread(channel, url)
                                     }
-                                })
+                                } catch (error) {
+                                    console.error(error)
+                                }
                             }, 3000)
                         }
                     }
@@ -72,7 +67,7 @@ function canHandle(bot, msg) {
         || msg.channel.id == process.env.ID_CHANNEL_ATWITCH && msg.content.trim().startsWith(Utils.command("ttlive"))
 }
 
-function helpComand(bot, msg){
+function helpComand(bot, msg) {
     return {
         name: Utils.command("ttlive"),
         value: "Consulta se os canais Twitch selecionados estão online",

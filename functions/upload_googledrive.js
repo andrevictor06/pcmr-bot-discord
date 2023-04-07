@@ -1,7 +1,7 @@
-const request = require('request').defaults({ encoding: null })
+const { default: axios } = require('axios')
 const Utils = require("../utils/Utils")
 
-function run(bot, msg) {
+async function run(bot, msg) {
     const listFiles = []
     //console.log("msg.content 2 ", msg)
     const args = msg.content.split(" ")
@@ -25,25 +25,21 @@ function run(bot, msg) {
         })
     }
 
-    const req_body = {
-        "files": listFiles
-    }
     if (args[1]) {
         const url = process.env.URL_APPLETS + "upload"
-        request.post({
-            url: url,
-            method: 'POST',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json'
+        const response = await axios.post(
+            url,
+            {
+                files: listFiles
             },
-            body: JSON.stringify(req_body)
-        }, function (error, response, body) {
-            if (!error && response.statusCode == 200) {
-                const data = Buffer.from(body).toString('utf8')
-                msg.channel.send(data)
+            {
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json'
+                }
             }
-        })
+        )
+        msg.channel.send(response.data)
     }
 }
 
@@ -51,7 +47,7 @@ function canHandle(bot, msg) {
     return msg.content.startsWith(Utils.command("subreddit"))
 }
 
-function helpComand(bot, msg){
+function helpComand(bot, msg) {
     return {
         name: Utils.command("subreddit") + " [name-subreddit]",
         value: "Meia noite te conto",
