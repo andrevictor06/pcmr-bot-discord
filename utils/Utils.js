@@ -1,5 +1,7 @@
-const path = require('path');
+const path = require('path')
+const fs = require('fs')
 const { ExpectedError } = require('./expected_error')
+
 
 LISTA_IMAGENS_PLACAS_MAE = [
     "https://support.cyberpowerpc.com/hc/article_attachments/360028078513/broken_PCI_01.jpg",
@@ -13,13 +15,6 @@ LISTA_IMAGENS_PLACAS_MAE = [
     "https://i.imgur.com/W2NFfpZ.jpeg"
 ]
 
-LISTA_IMAGENS_PROCESSADORES = [
-    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQlZ7S6-O2_HKhxuZLSskmm6Cawut27VRgIMA&usqp=CAU",
-    "https://linustechtips.com/uploads/monthly_2019_10/20191013_072750.jpg.f8d0bd9a6355ba6ab5e9542ff07a0bf3.jpg",
-    "https://gizmodo.uol.com.br/wp-content/blogs.dir/8/files/2020/10/cooler-cpu-amdryzen.jpg",
-    "https://i.imgur.com/cz8nReE.jpg",
-    "https://i.ytimg.com/vi/ab-rx7t42yo/maxresdefault.jpg"
-]
 
 function between(min, max) {
     return Math.floor(
@@ -28,6 +23,7 @@ function between(min, max) {
 }
 
 function getRandomPlacaMae() {
+
     const lista = LISTA_IMAGENS_PLACAS_MAE;
     let item = lista[between(0, lista.length)];
 
@@ -38,13 +34,9 @@ function getRandomPlacaMae() {
 }
 
 function getRandomProcessador() {
-    const lista = LISTA_IMAGENS_PROCESSADORES;
-    let item = lista[between(0, lista.length)];
-
-    if (!item) {
-        item = lista[0];
-    }
-    return item;
+    const lista = fs.readdirSync( path.resolve("images", "processador"))
+    const item = getRandomFromArray(lista)
+    return path.resolve("images", "processador", item);
 }
 
 function command(commandName) {
