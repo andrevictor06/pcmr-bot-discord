@@ -1,5 +1,42 @@
 const { default: axios } = require('axios');
 const Utils = require("../utils/Utils")
+const playdl = require('play-dl');
+
+async function getInfoVideo(url){
+    const result = await playdl.search(url, { source: { youtube: 'video' }, limit: 1 })
+    if (result && result.length > 0) {
+        return result[0]
+    }
+    return null
+}
+
+async function sendMessageChannel( message, url_video, id_w2g){
+    const video_basic_info = await getInfoVideo(url_video)
+    const exampleEmbed = {
+        author: {
+            name: `Watch2Gether`,
+            icon_url: "https://w2g.tv/assets/256.f5817612.png"
+        },
+        title: `Vídeo adicionado no Watch2Gether com sucesso!!`,
+        url: `https://w2g.tv/rooms/${id_w2g}`,
+
+        fields:[
+            {
+                name: "Acesse a sala:", value: `https://w2g.tv/rooms/${id_w2g}`
+            },
+            {
+                name: video_basic_info.title  , value: video_basic_info.url
+            }
+        ],
+        image: {
+            url: video_basic_info.thumbnails[0].url
+        }
+    }
+
+    message.channel.send({
+        embeds: [exampleEmbed] 
+    })
+}
 
 async function createWatch(message) {
     const args = message.content.split(" ")
@@ -20,8 +57,8 @@ async function createWatch(message) {
                     }
                 }
             )
-            console.log(response.data, " dowloaded")
-            message.channel.send("Sala no Watch2Gether criada com sucesso!! Para participar acesse: https://w2g.tv/rooms/" + response.data.streamkey)
+            
+            await sendMessageChannel(message, args[1], response.data.streamkey)
         } catch (error) {
             message.channel.send("Erro ao criar a sala!")
             throw error
@@ -47,7 +84,8 @@ async function addWatch(message) {
                 }
             }
         )
-        message.channel.send("Vídeo adicionado no Watch2Gether com sucesso!! Para participar acesse: https://w2g.tv/rooms/" + args[1])
+
+        await sendMessageChannel(message, args[2], args[1])
     }
 }
 
@@ -62,6 +100,7 @@ async function execute(message) {
 
 
 function run(bot, msg) {
+    msg.suppressEmbeds(true)
     execute(msg)
 }
 
