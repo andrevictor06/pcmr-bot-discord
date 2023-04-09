@@ -192,7 +192,7 @@ function loadTracksCache() {
     }
 }
 
-function saveTracksCache(tracks) {
+async function saveTracksCache(tracks) {
     localStorage.setItem(SPOTIFY_PLAYLIST_TRACKS, JSON.stringify(tracks))
 }
 
