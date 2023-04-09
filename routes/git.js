@@ -1,35 +1,105 @@
 const express = require('express')
 const router = express.Router()
 const utils = require('../utils/Utils')
+const { setSharedVariable, sharedVariableExists, getSharedVariable } = require('../utils/shared_variables')
 
 function init(bot) {
     router.post('/', async (req, res) => {
         try {
             let payload = req.body
-
-
+            const channel = bot.channels.cache.get(process.env.ID_CHANNEL_DEV_BOT)
+            let id_message = `git_pr_${payload.number}`
             if( payload.action && payload.pull_request && payload.action === "opened"){
-                const channel = await bot.channels.fetch(process.env.ID_CHANNEL_DEV_BOT)
-
                 const exampleEmbed = {
-                    color: 0x0099ff,
+                    color: 0xFF00FF,
                     author: {
-                        name: payload.sender.login,
+                        name: `${payload.sender.login}`,
                         icon_url: payload.sender.avatar_url,
                         url: payload.sender.html_url
                     },
-
-                    title: 'Abrirão um PR pra Atualizar o Bot!!!!',
+                    title: `${payload.pull_request.title || ""} `,
                     url: payload.pull_request.html_url,
-                    description: payload.pull_request.title,
+                    description: `${payload.pull_request.body || ""}`,
+
+                    fields: [
+                        { name: '\u200B', value: '\u200B' },
+                        {
+                            name: "Pull Request", value: `${payload.pull_request.html_url}`,
+                        },
+                        {
+                            name: "Files changed", value: `${payload.pull_request.html_url}/files`,
+                        }
+                    ],
+                    image: { url: `https://opengraph.githubassets.com/${payload.pull_request.head.sha}/${payload.pull_request.head.user.login}/${payload.pull_request.head.repo.name}/pull/${payload.number}`},
                     timestamp: new Date(payload.pull_request.created_at).toISOString()    
                 }   
                 
-                channel.send({ embeds: [exampleEmbed] }) 
+                const message = await channel.send({ content: `<@&${process.env.ID_MEMBER_DEV_PCMR_BOT}>\n**Abrirão um PR para me atualizar!!!!**\n**Alguém aceita ae, na moralzinha!!!!**`,  embeds: [exampleEmbed] }) 
+                setSharedVariable(id_message, message)
             }
+            if( payload.action && payload.pull_request && payload.action === "closed"){
+                if( sharedVariableExists(id_message)){
+                    const message  = getSharedVariable(id_message)
+                    message.reactions.removeAll()
 
-            
-            //msg.reply({ embeds: [exampleEmbed] })
+                    if( payload.pull_request.merged_at){
+                        message.react("✅")
+                        message.react("🇨")
+                        message.react("🇱")
+                        message.react("🅾️")
+                        message.react("🇸")
+                        message.react("🇪")
+                        message.react("🇩")
+                    }else{
+                        message.react("❎")
+                        message.react("🇨")
+                        message.react("🇱")
+                        message.react("🅾️")
+                        message.react("🇸")
+                        message.react("🇪")
+                        message.react("🇩")
+                    }
+                }
+            }
+            if( payload.action && payload.review && payload.action === "submitted"){
+                id_message = `git_pr_${payload.pull_request.number}`
+                if( sharedVariableExists(id_message)){
+                    const message  = getSharedVariable(id_message)
+                    message.reactions.removeAll()
+                    
+                    if(payload.review.state === "approved"){
+                        message.react("🚀")
+                        message.react("🅰️")
+                        message.react("🅿️")
+                        message.react("🇵")
+                        message.react("🇷")
+                        message.react("🅾️")
+                        message.react("🇻")
+                        message.react("🇪")
+                        message.react("🇩")
+                    } else if(payload.review.state === "changes_requested"){
+                        message.react("❌")
+                        message.react("🇨")
+                        message.react("🇭")
+                        message.react("🅰️")
+                        message.react("🇳")
+                        message.react("🇬")
+                        message.react("🇪")
+                        message.react("🇸")
+                    } else if(payload.review.state === "commented"){
+                        message.react("💬")
+                        message.react("🇨")
+                        message.react("🅾️")
+                        message.react("Ⓜ️")
+                        message.react("🇲")
+                        message.react("🇪")
+                        message.react("🇳")
+                        message.react("🇹")
+                        message.react("📧")
+                        message.react("🇩")
+                    }
+                }
+            }
             res.send('Requisição aceita')
         } catch (error) {
             utils.logError(bot, error, __filename)
