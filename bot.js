@@ -1,0 +1,143 @@
+const fs = require('fs')
+const path = require('path')
+const { Client, Intents } = require("discord.js")
+const Utils = require("./utils/Utils")
+const SharedVariables = require('./utils/shared_variables')
+const { runAudioPlay } = require('./functions/audio_play')
+
+function init() {
+    const bot = new Client({
+        intents: [
+            Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_BANS,
+            Intents.FLAGS.GUILD_PRESENCES, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_SCHEDULED_EVENTS, Intents.FLAGS.DIRECT_MESSAGES, Intents.FLAGS.GUILD_WEBHOOKS
+        ]
+    })
+
+    initBotCommands(bot)
+    applyListeners(bot)
+    startJobs(bot)
+    bot.login(process.env.TOKEN_DISCORD)
+    return bot
+}
+
+function initBotCommands(bot) {
+    bot.functions = []
+    fs.readdirSync("./functions").forEach(fnFile => {
+        const fn = require("./functions/" + fnFile)
+        if (fn.init) {
+            fn.init(bot)
+        }
+        bot.functions.push(fn)
+    })
+}
+
+function startJobs(bot) {
+    const jobs = fs.readdirSync("./schedule")
+    jobs.forEach(jobFile => {
+        const job = require("./schedule/" + jobFile);
+        job.initJob(bot)
+    });
+}
+
+function applyListeners(bot) {
+    bot.addInteractionCreate = (customId, func) => {
+        if (!SharedVariables.sharedVariableExists(customId)) {
+            bot.on('interactionCreate', async (event) => {
+                try {
+                    SharedVariables.setSharedVariable(customId, func)
+                    if (event.customId && event.customId === customId) {
+                        await func(event)
+                    }
+                } catch (error) {
+                    Utils.logError(bot, error, __filename)
+                    event.update({
+                        content: Utils.getMessageError(error),
+                        components: []
+                    })
+                }
+            })
+        }
+    }
+
+    bot.on("messageCreate", msg => {
+        bot.functions.forEach(async (fn) => {
+            try {
+                if (fn.canHandle(bot, msg))
+                    await fn.run(bot, msg)
+            } catch (error) {
+                Utils.logError(bot, error, __filename)
+                msg.channel.send(Utils.getMessageError(error))
+            }
+        })
+    })
+
+    bot.on('ready', async () => {
+        try {
+            if (process.env.ENVIRONMENT === "PRD") {
+                if (process.env.ID_CHANNEL_LOG_BOT) {
+                    const date = new Date().toISOString().slice(0, 10)
+                    const channel_log_bot = bot.channels.cache.get(process.env.ID_CHANNEL_LOG_BOT)
+                    channel_log_bot.send({
+                        embeds: [{
+                            title: "Bot iniciado",
+                            timestamp: new Date().toISOString()
+                        }],
+                        components: [
+                            {
+                                type: 1,
+                                components: [
+                                    {
+                                        type: 2,
+                                        style: 1,
+                                        label: "Logs",
+                                        custom_id: process.env.ENVIRONMENT + "adm_log" + date
+                                    }
+                                ]
+                            }
+                        ],
+                    })
+                    bot.addInteractionCreate(process.env.ENVIRONMENT + "adm_log" + date, (event) => {
+                        const customId = event.customId
+                        const logPath = path.resolve(process.env.PATH_LOG)
+
+                        const log = customId.split(process.env.ENVIRONMENT + "adm_log")[1]
+
+                        const files = []
+                        files.push(path.resolve(logPath, `log_pcmr_${log}.log`))
+                        files.push(path.resolve(logPath, `log_pcmr_error_${log}.log`))
+
+                        event.reply({
+                            content: `Ta na mão, corno`,
+                            files: files,
+                            components: []
+                        })
+                    })
+                }
+
+                Utils.setPresenceBotDefault(bot)
+            }
+            console.log(`Logged in as ${bot.user.tag}!`);
+        } catch (error) { Utils.logError(bot, error, __filename) }
+    })
+
+    if (process.env.HABILITA_VOICE_STATE_UPDATE_LISTENER) {
+        bot.on('voiceStateUpdate', (oldState, newState) => {
+            try {
+                if (
+                    newState.channelId
+                    && newState.id !== process.env.ID_MEMBER_PCMR_BOT && newState.channelId === process.env.ID_VOICE_CHANNEL_GAME_PLAY
+                    && (oldState.channel == null || newState.channelId != oldState.channelId)
+                ) {
+                    const musicQueue = SharedVariables.getSharedVariable(SharedVariables.MUSIC_QUEUE_NAME)
+                    if (musicQueue && musicQueue.voiceChannel.id !== process.env.ID_VOICE_CHANNEL_GAME_PLAY) return
+
+                    runAudioPlay(bot, newState.channelId, Utils.getRandomFromArray(['dilera-mamaco.mp3', 'sergio-malandro-mamaco.mp3']))
+                }
+            } catch (error) { Utils.logError(bot, error, __filename) }
+        });
+    }
+}
+
+module.exports = {
+    init
+}
