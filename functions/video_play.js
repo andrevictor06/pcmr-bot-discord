@@ -94,7 +94,7 @@ async function run(bot, msg) {
 }
 
 function canHandle(bot, msg) {
-    return msg.content.startsWith(Utils.command("video "))
+    return Utils.startWithCommand(msg, 'video')
 }
 
 function helpComand(bot, msg) {

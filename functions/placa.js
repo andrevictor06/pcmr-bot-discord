@@ -5,11 +5,11 @@ function run(bot, msg) {
     const userMention = Utils.getMentions(msg)
     if (userMention) {
         user = userMention
-    }   
+    }
     let message = ""
     try {
         const item = Utils.getRandomPlacaMae()
-        message = {content: user, files:[item]}
+        message = { content: user, files: [item] }
     } catch (ex) {
         message = user + ", " + "Erro ao selecionar a Placa mãe!"
     }
@@ -18,11 +18,11 @@ function run(bot, msg) {
 }
 
 function canHandle(bot, msg) {
-    return msg.content.startsWith(Utils.command("placa")) || msg.content.startsWith(Utils.command("praca"))
+    return Utils.startWithCommand(msg, 'placa') || Utils.startWithCommand(msg, 'praca')
 }
 
 
-function helpComand(bot, msg){
+function helpComand(bot, msg) {
     return {
         name: Utils.command("placa") + " [@mention]",
         value: "Envia uma mensagem saudável para o membro, mostrando o que pode acontecer com a placa mãe",

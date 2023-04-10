@@ -121,13 +121,9 @@ async function getAllTracksFromPlaylist(limit, offset = 0) {
         }
     )
     if (response.data?.items?.length > 0) {
-        const tracks = await getAllTracksFromPlaylist(
-            limit,
-            limit + offset
-        )
-        return response.data.items
-            .map(i => i.track.id)
-            .concat(tracks)
+        const tracks = await getAllTracksFromPlaylist(limit, limit + offset)
+        response.data.items.forEach(i => tracks.push(i.track.id))
+        return tracks
     }
     return []
 }

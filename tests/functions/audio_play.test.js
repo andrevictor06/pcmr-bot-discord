@@ -3,7 +3,7 @@ const path = require('path')
 const { clearSharedVariables, MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, sharedVariableExists } = require("../../utils/shared_variables")
 const utils = require('../../utils/Utils')
 const { mockMessage, mockBot, mockEventInteraction, mockAudioPlayer, mockVoiceConnection, mockQueueObject } = require('../utils_test')
-const { run } = require('../../functions/audio_play')
+const { run, canHandle } = require('../../functions/audio_play')
 const { joinVoiceChannel, AudioPlayerStatus } = require("@discordjs/voice")
 const { ExpectedError } = require("../../utils/expected_error")
 
@@ -141,6 +141,10 @@ describe('play audio', () => {
         } catch (error) {
             expect(error).toBeInstanceOf(ExpectedError)
         }
+    })
+
+    test("deveria executar o canHandle corretamente", () => {
+        expect(canHandle(mockBot(), mockMessage('audio'))).toBeTruthy()
     })
 })
 

@@ -44,7 +44,7 @@ async function run(bot, msg) {
 }
 
 function canHandle(bot, msg) {
-    return msg.content.startsWith(Utils.command("subreddit"))
+    return Utils.startWithCommand(msg, 'subreddit')
 }
 
 function helpComand(bot, msg) {

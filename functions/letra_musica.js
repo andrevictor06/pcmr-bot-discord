@@ -30,7 +30,7 @@ async function run(bot, msg) {
 }
 
 function canHandle(bot, msg) {
-    return msg.content.startsWith(Utils.command("letra "))
+    return Utils.startWithCommand(msg, 'letra')
 }
 
 function helpComand(bot, msg) {
