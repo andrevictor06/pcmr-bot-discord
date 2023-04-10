@@ -338,9 +338,7 @@ describe("play", () => {
     })
 
     test("deveria executar o canHandle corretamente", () => {
-        const bot = mockBot()
-
-        expect(canHandle(bot, mockMessage('play'))).toBeTruthy()
+        expect(canHandle(mockBot(), mockMessage('play'))).toBeTruthy()
     })
 })
 
@@ -438,9 +436,7 @@ describe("stop", () => {
     })
 
     test("deveria executar o canHandle corretamente", () => {
-        const bot = mockBot()
-
-        expect(canHandle(bot, mockMessage('stop'))).toBeTruthy()
+        expect(canHandle(mockBot(), mockMessage('stop'))).toBeTruthy()
     })
 })
 
@@ -490,9 +486,7 @@ describe("skip", () => {
     })
 
     test("deveria executar o canHandle corretamente", () => {
-        const bot = mockBot()
-
-        expect(canHandle(bot, mockMessage('skip'))).toBeTruthy()
+        expect(canHandle(mockBot(), mockMessage('skip'))).toBeTruthy()
     })
 })
 
@@ -538,9 +532,7 @@ describe("next", () => {
     })
 
     test("deveria executar o canHandle corretamente", () => {
-        const bot = mockBot()
-
-        expect(canHandle(bot, mockMessage('next'))).toBeTruthy()
+        expect(canHandle(mockBot(), mockMessage('next'))).toBeTruthy()
     })
 })
 
@@ -586,9 +578,7 @@ describe("current", () => {
     })
 
     test("deveria executar o canHandle corretamente", () => {
-        const bot = mockBot()
-
-        expect(canHandle(bot, mockMessage('current'))).toBeTruthy()
+        expect(canHandle(mockBot(), mockMessage('current'))).toBeTruthy()
     })
 })
 
@@ -664,8 +654,6 @@ describe("queue", () => {
     })
 
     test("deveria executar o canHandle corretamente", () => {
-        const bot = mockBot()
-
-        expect(canHandle(bot, mockMessage('queue'))).toBeTruthy()
+        expect(canHandle(mockBot(), mockMessage('queue'))).toBeTruthy()
     })
 })

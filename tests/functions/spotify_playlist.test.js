@@ -94,9 +94,7 @@ describe('spotify_login', () => {
     })
 
     test("deveria executar o canHandle corretamente", () => {
-        const bot = mockBot()
-
-        expect(canHandle(bot, mockMessage('spotify_login'))).toBeTruthy()
+        expect(canHandle(mockBot(), mockMessage('spotify_login'))).toBeTruthy()
     })
 })
 
@@ -144,9 +142,7 @@ describe('spotify_cache', () => {
     })
 
     test("deveria executar o canHandle corretamente", () => {
-        const bot = mockBot()
-
-        expect(canHandle(bot, mockMessage('spotify_cache'))).toBeTruthy()
+        expect(canHandle(mockBot(), mockMessage('spotify_cache'))).toBeTruthy()
     })
 })
 

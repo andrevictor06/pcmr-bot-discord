@@ -144,9 +144,7 @@ describe('play audio', () => {
     })
 
     test("deveria executar o canHandle corretamente", () => {
-        const bot = mockBot()
-
-        expect(canHandle(bot, mockMessage('audio'))).toBeTruthy()
+        expect(canHandle(mockBot(), mockMessage('audio'))).toBeTruthy()
     })
 })
 
