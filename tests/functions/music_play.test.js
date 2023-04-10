@@ -1,4 +1,4 @@
-const { run } = require("../../functions/music_play")
+const { run, canHandle } = require("../../functions/music_play")
 const sharedVariables = require("../../utils/shared_variables")
 const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID } = sharedVariables
 const { AudioPlayerStatus, joinVoiceChannel } = require("@discordjs/voice")
@@ -336,6 +336,12 @@ describe("play", () => {
             expect(error.message).toEqual("Essa url não é do youtube não man")
         }
     })
+
+    test("deveria executar o canHandle corretamente", () => {
+        const bot = mockBot()
+
+        expect(canHandle(bot, mockMessage('play'))).toBeTruthy()
+    })
 })
 
 describe("stop", () => {
@@ -430,6 +436,12 @@ describe("stop", () => {
         expect(utils.logError).toBeCalledTimes(1)
         expect(utils.logError).toHaveBeenNthCalledWith(1, bot, expect.any(Error), path.resolve("functions", "spotify_playlist.js"))
     })
+
+    test("deveria executar o canHandle corretamente", () => {
+        const bot = mockBot()
+
+        expect(canHandle(bot, mockMessage('stop'))).toBeTruthy()
+    })
 })
 
 describe("skip", () => {
@@ -476,6 +488,12 @@ describe("skip", () => {
         expect(musicQueue.player.stop).toBeCalledTimes(1)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
+
+    test("deveria executar o canHandle corretamente", () => {
+        const bot = mockBot()
+
+        expect(canHandle(bot, mockMessage('skip'))).toBeTruthy()
+    })
 })
 
 describe("next", () => {
@@ -518,6 +536,12 @@ describe("next", () => {
         expect(message.channel.send).toHaveBeenCalledWith(`Próxima música: ${urls[0]}`)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
     })
+
+    test("deveria executar o canHandle corretamente", () => {
+        const bot = mockBot()
+
+        expect(canHandle(bot, mockMessage('next'))).toBeTruthy()
+    })
 })
 
 describe("current", () => {
@@ -559,6 +583,12 @@ describe("current", () => {
         expect(message.channel.send).toBeCalledTimes(1)
         expect(message.channel.send).toHaveBeenCalledWith(`Tá tocando isso aqui: ${currentSong}`)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+
+    test("deveria executar o canHandle corretamente", () => {
+        const bot = mockBot()
+
+        expect(canHandle(bot, mockMessage('current'))).toBeTruthy()
     })
 })
 
@@ -631,5 +661,11 @@ describe("queue", () => {
         const thread = message.channel.threads.cache[0]
         expect(thread.send).toBeCalledTimes(2)
         expect(musicQueue.songs).toEqual([song1, song2, song3])
+    })
+
+    test("deveria executar o canHandle corretamente", () => {
+        const bot = mockBot()
+
+        expect(canHandle(bot, mockMessage('queue'))).toBeTruthy()
     })
 })

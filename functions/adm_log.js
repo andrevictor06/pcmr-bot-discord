@@ -3,7 +3,7 @@ const fs = require('fs')
 const path = require("path")
 
 function canHandle(bot, msg) {
-    return msg.channel.id == process.env.ID_CHANNEL_LOG_BOT && msg.content.startsWith(Utils.command("adm_log"))
+    return msg.channel.id == process.env.ID_CHANNEL_LOG_BOT && Utils.startWithCommand(msg, 'adm_log')
 }
 
 function helpComand(bot, msg) {
@@ -13,7 +13,7 @@ function helpComand(bot, msg) {
         inline: false
     }
 }
-function downloadLog(event){
+function downloadLog(event) {
     const customId = event.customId
     const logPath = path.resolve(process.env.PATH_LOG)
     let log = customId.split(process.env.ENVIRONMENT + "adm_log")[1]
@@ -24,26 +24,26 @@ function downloadLog(event){
     })
 }
 
-function run(bot, msg){
+function run(bot, msg) {
     createThreads(msg.channel, msg)
 
     const logPath = path.resolve(process.env.PATH_LOG)
-    
+
     const path_logs = fs.readdirSync(logPath)
-    if( path_logs.length == 0){
+    if (path_logs.length == 0) {
         msg.reply({
             content: "Não tem log, corno"
         })
-    }else{
-        if( path_logs.length == 1){
+    } else {
+        if (path_logs.length == 1) {
             msg.reply({
                 content: "Ta na mão, corno",
-                files:[path.resolve(logPath, path_logs[0])]
-            })    
-        }else{
-            Utils.chunkArray(path_logs, 5).forEach( list =>{
+                files: [path.resolve(logPath, path_logs[0])]
+            })
+        } else {
+            Utils.chunkArray(path_logs, 5).forEach(list => {
                 const logs = []
-                list.forEach((log)=>{
+                list.forEach((log) => {
                     bot.addInteractionCreate(process.env.ENVIRONMENT + "adm_log" + log, downloadLog)
                     logs.push({
                         type: 1,
@@ -61,7 +61,7 @@ function run(bot, msg){
                 setTimeout(() => {
                     sendMessageThread(msg.channel, {
                         content: "Tem esses logs, corno",
-                        components:logs
+                        components: logs
                     })
                 }, 3000)
             })

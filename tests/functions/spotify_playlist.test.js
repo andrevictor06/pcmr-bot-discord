@@ -1,7 +1,7 @@
 const { clearSharedVariables, getSharedVariable, setSharedVariable, sharedVariableExists } = require("../../utils/shared_variables")
 const { mockMessage, mockBot } = require("../utils_test")
 const { randomUUID } = require('crypto');
-const { run, authenticate, init, tryAddSongToSpotifyPlaylist } = require('../../functions/spotify_playlist')
+const { run, authenticate, init, tryAddSongToSpotifyPlaylist, canHandle } = require('../../functions/spotify_playlist')
 const querystring = require('querystring');
 const { SPOTIFY_LOGIN_STATE, SPOTIFY_BASE_URL, SPOTIFY_TOKEN, SPOTIFY_REFRESH_TOKEN, SPOTIFY_TOKEN_EXPIRATION, SPOTIFY_PLAYLIST_TRACKS, SPOTIFY_AUTH_URL } = require("../../utils/constants");
 const { default: axios } = require('axios')
@@ -92,6 +92,12 @@ describe('spotify_login', () => {
         })
         expect(directSend).toBeCalledWith(`https://accounts.spotify.com/authorize?${qs}`)
     })
+
+    test("deveria executar o canHandle corretamente", () => {
+        const bot = mockBot()
+
+        expect(canHandle(bot, mockMessage('spotify_login'))).toBeTruthy()
+    })
 })
 
 describe('spotify_cache', () => {
@@ -135,6 +141,12 @@ describe('spotify_cache', () => {
         expect(tracksCache).toBeTruthy()
         expect(tracksCache).toHaveLength(tracks.length)
         expect(tracksCache).toEqual(expect.arrayContaining(tracks.map(i => i.track.id)))
+    })
+
+    test("deveria executar o canHandle corretamente", () => {
+        const bot = mockBot()
+
+        expect(canHandle(bot, mockMessage('spotify_cache'))).toBeTruthy()
     })
 })
 
