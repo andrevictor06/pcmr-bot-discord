@@ -73,7 +73,7 @@ function applyListeners(bot) {
 
     bot.on('ready', async () => {
         try {
-            //if (process.env.ENVIRONMENT === "PRD") {
+            if (process.env.ENVIRONMENT === "PRD") {
                 if (process.env.ID_CHANNEL_LOG_BOT) {
                     const date = new Date().toISOString().slice(0, 10)
                     const channel_log_bot = bot.channels.cache.get(process.env.ID_CHANNEL_LOG_BOT)
@@ -115,7 +115,7 @@ function applyListeners(bot) {
                 }
 
                 Utils.setPresenceBotDefault(bot)
-            //}
+            }
             console.log(`Logged in as ${bot.user.tag}!`);
         } catch (error) { Utils.logError(bot, error, __filename) }
     })
