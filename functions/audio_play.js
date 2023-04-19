@@ -137,7 +137,7 @@ function getAudioName(audio) {
 }
 
 function canHandle(bot, msg) {
-    return msg.content.startsWith(Utils.command("audio"))
+    return Utils.startWithCommand(msg, 'audio')
 }
 
 function helpComand(bot, msg) {

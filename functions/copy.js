@@ -5,7 +5,7 @@ function run(bot, msg) {
 }
 
 function canHandle(bot, msg) {
-    return msg.content.startsWith(Utils.command("copy "))
+    return Utils.startWithCommand(msg, 'copy')
 }
 
 module.exports = {
