@@ -15,15 +15,23 @@ async function run(bot, msg) {
         }
     )
     if (response.data.mus) {
-        const template_musica = "```" + response.data.mus[0].text + "```"
+        const limit = 4090
+        let musica = response.data.mus[0].text
+        if(musica.length > limit){
+            musica = musica.substring(0, limit)
+        }
+
         const template_header = "" +
             `>>> Música: **${response.data.mus[0].name}**\nArtista: **${response.data.art.name}**\nLink: **${response.data.mus[0].url}**`
         const template =
             `${template_header}
-
-        ${template_musica}
         `
-        return msg.reply(template)
+
+        return msg.reply({content: template,
+            embeds: [{
+                description: "```" + musica + "```"
+            }]
+        })
     } else {
         return msg.reply(response.data.type)
     }
