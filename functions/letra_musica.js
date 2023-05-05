@@ -46,8 +46,6 @@ async function run(bot, msg) {
                 info_letra.letra = Utils.replaceAll(info_letra.letra, "<p>", "\n")
                 info_letra.letra = Utils.replaceAll(info_letra.letra, "</p>", "\n")
                 info_letra.letra = Utils.replaceAll(info_letra.letra, "<br>", "\n")
-
-                console.log( html.querySelector(".cnt-letra").innerHTML);
             }
         }
         //console.log(response_letras);
