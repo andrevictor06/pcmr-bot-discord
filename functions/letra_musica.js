@@ -1,10 +1,9 @@
 const { default: axios } = require('axios')
 const Utils = require("../utils/Utils")
+const { parse } = require('node-html-parser');
 
-async function run(bot, msg) {
-    const args = Utils.parseArgs(msg)
-
-    const response = await axios.get(
+async function search_vagalume(args){
+    return axios.get(
         'https://api.vagalume.com.br/search.php',
         {
             params: {
@@ -14,15 +13,59 @@ async function run(bot, msg) {
             }
         }
     )
-    if (response.data.mus) {
+}
+
+async function search_letras_mus(args){
+    return await axios.get(Utils.replaceAll(`https://solr.sscdn.co/letras/m1/?q=${args.params.art} ${args.params.mus}`, " ", "%20"))
+}
+
+async function search_letras_mus_completa(dns, url){
+    return await axios.get(`https://www.letras.mus.br/${dns}/${url}`)
+}
+
+async function run(bot, msg) {
+    const args = Utils.parseArgs(msg)
+
+    let response = await search_vagalume(args)
+    let info_letra = {}
+    
+    if ( ! response.data.mus) {
+        let response_letras = await search_letras_mus(args);
+        if( response_letras.data){
+            json = JSON.parse(response_letras.data.substring(10, response_letras.data.lastIndexOf(")")))
+            musica = json.response.docs[0]
+            
+            response_letras = await search_letras_mus_completa(musica.dns, musica.url)
+            if(response_letras.data){
+                
+                let html = parse(response_letras.data)
+                info_letra.musica = musica.txt
+                info_letra.artista = musica.art
+                info_letra.link = `https://www.letras.mus.br/${musica.dns}/${musica.url}`
+                info_letra.letra = html.querySelector(".cnt-letra").innerHTML.trim()
+                info_letra.letra = Utils.replaceAll(info_letra.letra, "<p>", "\n")
+                info_letra.letra = Utils.replaceAll(info_letra.letra, "</p>", "\n")
+                info_letra.letra = Utils.replaceAll(info_letra.letra, "<br>", "\n")
+
+                console.log( html.querySelector(".cnt-letra").innerHTML);
+            }
+        }
+        //console.log(response_letras);
+    }else{
+        info_letra.musica = response.data.mus[0].name
+        info_letra.artista = response.data.art.name
+        info_letra.link = response.data.mus[0].url
+        info_letra.letra = response.data.mus[0].text
+    }
+    if (info_letra.musica) {
         const limit = 4090
-        let musica = response.data.mus[0].text
+        let musica = info_letra.letra
         if(musica.length > limit){
             musica = musica.substring(0, limit)
         }
 
         const template_header = "" +
-            `>>> Música: **${response.data.mus[0].name}**\nArtista: **${response.data.art.name}**\nLink: **${response.data.mus[0].url}**`
+            `>>> Música: **${info_letra.musica}**\nArtista: **${info_letra.artista }**\nLink: **${info_letra.link}**`
         const template =
             `${template_header}
         `

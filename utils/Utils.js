@@ -74,6 +74,14 @@ function isValidHttpUrl(string) {
     return url.protocol === "http:" || url.protocol === "https:";
 }
 
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+}
+
+function replaceAll(str, find, replace) {
+    return str.replace(new RegExp(escapeRegExp(find), 'g'), replace);
+}
+
 function getMessageError(error) {
     const message = error.message ? error.message : error
     if (error instanceof ExpectedError) {
@@ -206,5 +214,6 @@ module.exports = {
     getMentions,
     parseArgs,
     getRandomFromArray,
-    nowInSeconds
+    nowInSeconds,
+    replaceAll
 }
