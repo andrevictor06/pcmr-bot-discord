@@ -131,7 +131,10 @@ function applyListeners(bot) {
                     const musicQueue = SharedVariables.getSharedVariable(SharedVariables.MUSIC_QUEUE_NAME)
                     if (musicQueue && musicQueue.voiceChannel.id !== process.env.ID_VOICE_CHANNEL_GAME_PLAY) return
 
-                    runAudioPlay(bot, newState.channelId, Utils.getRandomFromArray(['dilera-mamaco.mp3', 'sergio-malandro-mamaco.mp3']))
+                    setTimeout(
+                        () => runAudioPlay(bot, newState.channelId, Utils.getRandomFromArray(['dilera-mamaco.mp3', 'sergio-malandro-mamaco.mp3'])),
+                        process.env.MAMACO_AUDIO_DELAY_MS
+                    )
                 }
             } catch (error) { Utils.logError(bot, error, __filename) }
         });
