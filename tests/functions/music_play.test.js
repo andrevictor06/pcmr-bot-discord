@@ -3,6 +3,7 @@ const sharedVariables = require("../../utils/shared_variables")
 const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID } = sharedVariables
 const { AudioPlayerStatus, joinVoiceChannel } = require("@discordjs/voice")
 const { mockAudioPlayer, mockBasicInfo, mockMessage, mockPlaylistInfo, mockVoiceConnection, mockQueueObject, mockBot, mockPlaydlStream, fakeYtUrl } = require("../utils_test")
+const spotify = require('../../functions/spotify_playlist')
 const playdl = require('play-dl')
 const { ExpectedError } = require("../../utils/expected_error")
 const utils = require("../../utils/Utils")
@@ -165,6 +166,27 @@ describe("play", () => {
         expect(player.on).toHaveBeenNthCalledWith(2, "error", expect.any(Function))
         expect(getSharedVariable(MUSIC_QUEUE_NAME).songs.length).toEqual(videos.length - 1)
         expect(sharedVariableExists(MUSIC_QUEUE_NAME)).toBeTruthy()
+    })
+
+    test("deveria passar a música com os metadados para tentar adicionar na playlist do spotify", async () => {
+        jest.spyOn(spotify, 'tryAddSongToSpotifyPlaylist')
+        const url = fakeYtUrl(true)
+        const videos = [{ url }, { url }, { url }]
+        const bot = mockBot()
+        mockAudioPlayer()
+        const message = mockMessage("play", url)
+        mockVoiceConnection()
+        const info = mockBasicInfo(url, "titulo")
+        mockPlaylistInfo(url, videos)
+        playdl.stream.mockImplementation(async () => ({ stream: {} }))
+        
+        await run(bot, message)
+
+        expect(spotify.tryAddSongToSpotifyPlaylist).toBeCalledTimes(1)
+        const args = spotify.tryAddSongToSpotifyPlaylist.mock.lastCall
+        expect(args).toHaveLength(2)
+        expect(args[0]).toMatchObject(bot)
+        expect(args[1]).toMatchObject(info)
     })
 
     test("não deveria dar erro quando o link com id de playlist estiver quebrado", async () => {
