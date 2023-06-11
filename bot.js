@@ -8,8 +8,16 @@ const { runAudioPlay } = require('./functions/audio_play')
 function init() {
     const bot = new Client({
         intents: [
-            GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildModeration, GatewayIntentBits.MessageContent,
-            GatewayIntentBits.GuildPresences, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildScheduledEvents, GatewayIntentBits.DirectMessages, GatewayIntentBits.GuildWebhooks
+            GatewayIntentBits.Guilds, 
+            GatewayIntentBits.GuildMessages, 
+            GatewayIntentBits.GuildVoiceStates, 
+            GatewayIntentBits.GuildModeration, 
+            GatewayIntentBits.MessageContent,
+            GatewayIntentBits.GuildPresences, 
+            GatewayIntentBits.GuildMembers, 
+            GatewayIntentBits.GuildScheduledEvents, 
+            GatewayIntentBits.DirectMessages, 
+            GatewayIntentBits.GuildWebhooks
         ]
     })
 
