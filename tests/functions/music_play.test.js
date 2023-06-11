@@ -185,8 +185,8 @@ describe("play", () => {
         expect(spotify.tryAddSongToSpotifyPlaylist).toBeCalledTimes(1)
         const args = spotify.tryAddSongToSpotifyPlaylist.mock.lastCall
         expect(args).toHaveLength(2)
-        expect(args[0]).toMatchObject(bot)
-        expect(args[1]).toMatchObject(info)
+        expect(args[0]).toBe(bot)
+        expect(args[1]).toBe(info)
     })
 
     test("não deveria dar erro quando o link com id de playlist estiver quebrado", async () => {
