@@ -175,7 +175,7 @@ function randomStr(size) {
     const letters = 'abcdefghijklmnopqrstuvxwyz'
     let randomStr = ''
     while (randomStr.length < size) {
-        const randomIndex = Math.floor((Math.random() * size + 1))
+        const randomIndex = Math.floor((Math.random() * letters.length))
         let letter = letters[randomIndex]
         if (Math.floor(Math.random() * 5) == 1) {
             letter = letter.toUpperCase()
