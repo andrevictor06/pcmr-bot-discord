@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const { Client, Intents } = require("discord.js")
+const { Client, GatewayIntentBits  } = require("discord.js")
 const Utils = require("./utils/Utils")
 const SharedVariables = require('./utils/shared_variables')
 const { runAudioPlay } = require('./functions/audio_play')
@@ -8,8 +8,8 @@ const { runAudioPlay } = require('./functions/audio_play')
 function init() {
     const bot = new Client({
         intents: [
-            Intents.FLAGS.GUILDS, Intents.FLAGS.GUILD_MESSAGES, Intents.FLAGS.GUILD_VOICE_STATES, Intents.FLAGS.GUILD_BANS,
-            Intents.FLAGS.GUILD_PRESENCES, Intents.FLAGS.GUILD_MEMBERS, Intents.FLAGS.GUILD_SCHEDULED_EVENTS, Intents.FLAGS.DIRECT_MESSAGES, Intents.FLAGS.GUILD_WEBHOOKS
+            GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildModeration,
+            GatewayIntentBits.GuildPresences, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildScheduledEvents, GatewayIntentBits.DirectMessages, GatewayIntentBits.GuildWebhooks
         ]
     })
 
