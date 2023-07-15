@@ -4,6 +4,7 @@ const { ExpectedError } = require('../../utils/expected_error')
 const { mockBot, mockMessage } = require('../utils_test')
 const fs = require('fs')
 const path = require('path')
+const { STICKERS } = require('../../utils/constants')
 
 const stickersTestFolder = path.resolve(process.env.PASTA_FIGURINHAS)
 
@@ -89,7 +90,7 @@ describe("figurinha", () => {
 
         await run(mockBot(), message)
 
-        const stickersJson = localStorage.getItem("figurinhas")
+        const stickersJson = localStorage.getItem(STICKERS)
         expect(stickersJson).toBeTruthy()
 
         const stickers = JSON.parse(stickersJson)
@@ -111,7 +112,7 @@ describe("figurinha", () => {
         const message = mockMessage(undefined, stickerName)
         const figurinhas = {}
         figurinhas[stickerName] = stickerPath
-        localStorage.setItem("figurinhas", JSON.stringify(figurinhas))
+        localStorage.setItem(STICKERS, JSON.stringify(figurinhas))
         fs.copyFileSync(
             path.resolve("images", "domingo_a_noite.png"),
             stickerPath
@@ -165,7 +166,7 @@ describe("listar_figurinhas", () => {
         const figurinhas = {
             "figurinha": "caminho da figurinha"
         }
-        localStorage.setItem("figurinhas", JSON.stringify(figurinhas))
+        localStorage.setItem(STICKERS, JSON.stringify(figurinhas))
 
         await init(bot)
         await run(bot, message)
@@ -206,7 +207,7 @@ describe("deletar_figurinha", () => {
         const message = mockMessage("deletar_figurinha", stickerName)
         const figurinhas = {}
         figurinhas[stickerName] = stickerPath
-        localStorage.setItem("figurinhas", JSON.stringify(figurinhas))
+        localStorage.setItem(STICKERS, JSON.stringify(figurinhas))
         fs.copyFileSync(
             path.resolve("images", "domingo_a_noite.png"),
             stickerPath
@@ -217,7 +218,7 @@ describe("deletar_figurinha", () => {
 
         expect(fs.existsSync(stickerPath)).toBeFalsy()
 
-        const stickers = JSON.parse(localStorage.getItem("figurinhas"))
+        const stickers = JSON.parse(localStorage.getItem(STICKERS))
         expect(Object.keys(stickers)).toHaveLength(0)
 
         expect(message.reply).toBeCalledTimes(1)

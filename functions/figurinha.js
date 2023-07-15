@@ -4,6 +4,7 @@ const path = require('path')
 const fs = require('fs')
 const sharp = require('sharp');
 const { ExpectedError } = require('../utils/expected_error');
+const { STICKERS } = require('../utils/constants');
 
 let stickers
 const stickersFolderPath = path.resolve(process.env.PASTA_FIGURINHAS)
@@ -40,7 +41,7 @@ async function init(bot) {
     if (!fs.existsSync(stickersFolderPath)) {
         fs.mkdirSync(stickersFolderPath)
     }
-    const stickersJson = localStorage.getItem("figurinhas")
+    const stickersJson = localStorage.getItem(STICKERS)
     stickers = stickersJson ? JSON.parse(stickersJson) : {}
 }
 
@@ -85,7 +86,7 @@ function saveSticker(msg, data, stickerName) {
             .on("finish", () => {
                 try {
                     stickers[stickerName] = imagePath
-                    localStorage.setItem("figurinhas", JSON.stringify(stickers))
+                    localStorage.setItem(STICKERS, JSON.stringify(stickers))
                     msg.reply(`Figurinha ${stickerName} criada!`)
                     resolve()
                 } catch (error) {
@@ -118,7 +119,7 @@ async function deleteSticker(bot, msg) {
     }
     fs.rmSync(stickerPath)
     delete stickers[args.mainParam]
-    localStorage.setItem("figurinhas", JSON.stringify(stickers))
+    localStorage.setItem(STICKERS, JSON.stringify(stickers))
     msg.reply(`Figurinha ${args.mainParam} deletada!`)
 }
 
