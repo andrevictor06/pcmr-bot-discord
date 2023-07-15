@@ -7,8 +7,9 @@ const { randomUUID } = require('crypto')
 function mockMessage(command, ...params) {
     const has = jest.fn(() => true)
     const cache = []
+    const content = params && params.length > 0 ? params.join(" ") : ""
     return {
-        content: Utils.command(command) + (params && params.length > 0 ? " " + params.join(" ") : ""),
+        content: command ? Utils.command(command) + " " + content : content,
         client: {
             user: {}
         },
@@ -42,7 +43,8 @@ function mockMessage(command, ...params) {
             }
         },
         reply: jest.fn(),
-        update: jest.fn()
+        update: jest.fn(),
+        delete: jest.fn()
     }
 }
 
