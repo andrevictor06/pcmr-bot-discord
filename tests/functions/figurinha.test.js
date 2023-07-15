@@ -101,6 +101,7 @@ describe("figurinha", () => {
         const files = fs.readdirSync(stickersTestFolder)
         expect(files).toBeTruthy()
         expect(files).toHaveLength(1)
+        expect(files[0]).toEqual("NOME_FIGURINHA.jpg")
 
         expect(message.reply).toBeCalledTimes(1)
     })
