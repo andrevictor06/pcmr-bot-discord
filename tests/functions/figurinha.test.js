@@ -75,7 +75,6 @@ describe("figurinha", () => {
         message.attachments = new Map([
             ["1", attachment]
         ])
-
         axios.get.mockImplementation((url, options) => {
             expect(url).toEqual(attachment.url)
             expect(options).toMatchObject({
@@ -95,19 +94,59 @@ describe("figurinha", () => {
 
         const stickers = JSON.parse(stickersJson)
         expect(stickers).toMatchObject({
-            "NOME_FIGURINHA": path.resolve(stickersTestFolder, "NOME_FIGURINHA.jpg")
+            "nome_figurinha": path.resolve(stickersTestFolder, "nome_figurinha.jpg")
         })
 
         const files = fs.readdirSync(stickersTestFolder)
         expect(files).toBeTruthy()
         expect(files).toHaveLength(1)
-        expect(files[0]).toEqual("NOME_FIGURINHA.jpg")
+        expect(files[0]).toEqual("nome_figurinha.jpg")
+
+        expect(message.reply).toBeCalledTimes(1)
+    })
+
+    test("deveria criar uma figurinha de gif com sucesso", async () => {
+        const message = mockMessage("figurinha", "nome figurinha")
+        const attachment = {
+            url: path.resolve("images", "monkey-sleep.gif"),
+            name: "monkey-sleep.gif",
+            contentType: "image/gif"
+        }
+        message.attachments = new Map([
+            ["1", attachment]
+        ])
+        axios.get.mockImplementation((url, options) => {
+            expect(url).toEqual(attachment.url)
+            expect(options).toMatchObject({
+                responseType: 'stream'
+            })
+
+            const response = {
+                data: fs.createReadStream(attachment.url)
+            }
+            return response
+        })
+
+        await run(mockBot(), message)
+
+        const stickersJson = localStorage.getItem(STICKERS)
+        expect(stickersJson).toBeTruthy()
+
+        const stickers = JSON.parse(stickersJson)
+        expect(stickers).toMatchObject({
+            "nome_figurinha": path.resolve(stickersTestFolder, "nome_figurinha.gif")
+        })
+
+        const files = fs.readdirSync(stickersTestFolder)
+        expect(files).toBeTruthy()
+        expect(files).toHaveLength(1)
+        expect(files[0]).toEqual("nome_figurinha.gif")
 
         expect(message.reply).toBeCalledTimes(1)
     })
 
     test("deveria enviar a figurinha corretamente", async () => {
-        const stickerName = "NOME_FIGURINHA"
+        const stickerName = "nome_figurinha"
         const stickerPath = path.resolve(stickersTestFolder, stickerName + ".png")
         const bot = mockBot()
         const message = mockMessage(undefined, stickerName)
@@ -202,7 +241,7 @@ describe("deletar_figurinha", () => {
     })
 
     test("deveria deletar a figurinha corretamente", async () => {
-        const stickerName = "NOME_FIGURINHA"
+        const stickerName = "nome_figurinha"
         const stickerPath = path.resolve(stickersTestFolder, stickerName + ".png")
         const bot = mockBot()
         const message = mockMessage("deletar_figurinha", stickerName)

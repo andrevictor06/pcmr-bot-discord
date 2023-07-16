@@ -69,25 +69,22 @@ async function createSticker(bot, msg) {
         throw new ExpectedError("Cadê a imagem?")
     }
     const attachment = getFirstAttachment(msg)
-    if (attachment.contentType != "image/png" && attachment.contentType != "image/jpeg") {
-        throw new ExpectedError("Tem certeza que isso é uma imagem?")
-    }
     const stickerName = prepareStickerName(args.mainParam)
     const response = await axios.get(attachment.url, { responseType: 'stream' })
-    return saveSticker(msg, response.data, stickerName)
+    return saveSticker(msg, response.data, stickerName, attachment.contentType)
 }
 
-function saveSticker(msg, data, stickerName) {
+function saveSticker(msg, data, stickerName, contentType) {
     return new Promise((resolve, reject) => {
-        const imagePath = createImagePath(stickerName)
+        const imagePath = createImagePath(stickerName, contentType)
         data
-            .pipe(compressImage())
+            .pipe(compressImage(contentType))
             .pipe(fs.createWriteStream(imagePath))
             .on("finish", () => {
                 try {
                     stickers[stickerName] = imagePath
                     localStorage.setItem(STICKERS, JSON.stringify(stickers))
-                    msg.reply(`Figurinha ${stickerName} criada!`)
+                    msg.reply(`Figurinha **${stickerName}** criada!`)
                     resolve()
                 } catch (error) {
                     reject(error)
@@ -134,21 +131,29 @@ function helpComand(bot, msg) {
 }
 
 function getFirstAttachment(msg) {
-    return msg.attachments.values().next().value
+    const attachment = msg.attachments.values().next().value
+    if (!["image/png", "image/jpeg", "image/gif"].includes(attachment.contentType)) {
+        throw new ExpectedError("Tem certeza que isso é uma imagem?")
+    }
+    return attachment
 }
 
 function prepareStickerName(name) {
-    return name.toUpperCase().replace(/ /, "_")
+    return name.trim().replace(/ /, "_")
 }
 
-function createImagePath(stickerName) {
-    return path.resolve(stickersFolderPath, stickerName + defaultImageExtension)
+function createImagePath(stickerName, contentType) {
+    const extension = contentType == "image/gif"
+        ? ".gif"
+        : defaultImageExtension
+    return path.resolve(stickersFolderPath, stickerName + extension)
 }
 
-function compressImage() {
-    return sharp()
-        .resize(150)
-        .jpeg()
+function compressImage(contentType) {
+    return contentType == "image/gif"
+        ? sharp({ animated: true }).resize(250).gif()
+        : sharp().resize(150).jpeg()
+
 }
 
 function checkStickersFolderSizeLimit() {
