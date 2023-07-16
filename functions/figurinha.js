@@ -139,7 +139,12 @@ function getFirstAttachment(msg) {
 }
 
 function prepareStickerName(name) {
-    return name.trim().replace(/ /, "_")
+    return name
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/ /, "_")
+        .toLowerCase()
 }
 
 function createImagePath(stickerName, contentType) {

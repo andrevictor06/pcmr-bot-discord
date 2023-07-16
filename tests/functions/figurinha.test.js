@@ -66,7 +66,7 @@ describe("figurinha", () => {
     })
 
     test("deveria criar uma figurinha com sucesso", async () => {
-        const message = mockMessage("figurinha", "nome figurinha")
+        const message = mockMessage("figurinha", "joão")
         const attachment = {
             url: path.resolve("images", "domingo_a_noite.png"),
             name: "domingo_a_noite.png",
@@ -94,13 +94,13 @@ describe("figurinha", () => {
 
         const stickers = JSON.parse(stickersJson)
         expect(stickers).toMatchObject({
-            "nome_figurinha": path.resolve(stickersTestFolder, "nome_figurinha.jpg")
+            "joao": path.resolve(stickersTestFolder, "joao.jpg")
         })
 
         const files = fs.readdirSync(stickersTestFolder)
         expect(files).toBeTruthy()
         expect(files).toHaveLength(1)
-        expect(files[0]).toEqual("nome_figurinha.jpg")
+        expect(files[0]).toEqual("joao.jpg")
 
         expect(message.reply).toBeCalledTimes(1)
     })
