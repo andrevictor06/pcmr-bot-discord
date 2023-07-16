@@ -66,7 +66,7 @@ describe("figurinha", () => {
     })
 
     test("deveria criar uma figurinha com sucesso", async () => {
-        const message = mockMessage("figurinha", "joão")
+        const message = mockMessage("figurinha", "João")
         const attachment = {
             url: path.resolve("images", "domingo_a_noite.png"),
             name: "domingo_a_noite.png",
