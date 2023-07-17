@@ -1,15 +1,24 @@
 const fs = require('fs')
 const path = require('path')
-const { Client, GatewayIntentBits  } = require("discord.js")
+const { Client, GatewayIntentBits } = require("discord.js")
 const Utils = require("./utils/Utils")
 const SharedVariables = require('./utils/shared_variables')
 const { runAudioPlay } = require('./functions/audio_play')
+const { ExpectedError } = require('./utils/expected_error')
 
 function init() {
     const bot = new Client({
         intents: [
-            GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.GuildVoiceStates, GatewayIntentBits.GuildModeration, GatewayIntentBits.MessageContent,
-            GatewayIntentBits.GuildPresences, GatewayIntentBits.GuildMembers, GatewayIntentBits.GuildScheduledEvents, GatewayIntentBits.DirectMessages, GatewayIntentBits.GuildWebhooks
+            GatewayIntentBits.Guilds,
+            GatewayIntentBits.GuildMessages,
+            GatewayIntentBits.GuildVoiceStates,
+            GatewayIntentBits.GuildModeration,
+            GatewayIntentBits.MessageContent,
+            GatewayIntentBits.GuildPresences,
+            GatewayIntentBits.GuildMembers,
+            GatewayIntentBits.GuildScheduledEvents,
+            GatewayIntentBits.DirectMessages,
+            GatewayIntentBits.GuildWebhooks
         ]
     })
 
@@ -66,7 +75,11 @@ function applyListeners(bot) {
                     await fn.run(bot, msg)
             } catch (error) {
                 Utils.logError(bot, error, __filename)
-                msg.channel.send(Utils.getMessageError(error))
+                if (error instanceof ExpectedError) {
+                    msg.reply(Utils.getMessageError(error))
+                } else {
+                    msg.channel.send(Utils.getMessageError(error))
+                }
             }
         })
     })
