@@ -35,18 +35,21 @@ async function run(bot, msg) {
             json = JSON.parse(response_letras.data.substring(10, response_letras.data.lastIndexOf(")")))
             musica = json.response.docs[0]
             
-            response_letras = await search_letras_mus_completa(musica.dns, musica.url)
-            if(response_letras.data){
-                
-                let html = parse(response_letras.data)
-                info_letra.musica = musica.txt
-                info_letra.artista = musica.art
-                info_letra.link = `https://www.letras.mus.br/${musica.dns}/${musica.url}`
-                info_letra.letra = html.querySelector(".cnt-letra").innerHTML.trim()
-                info_letra.letra = Utils.replaceAll(info_letra.letra, "<p>", "\n")
-                info_letra.letra = Utils.replaceAll(info_letra.letra, "</p>", "\n")
-                info_letra.letra = Utils.replaceAll(info_letra.letra, "<br>", "\n")
+            if(musica && musica.dns){
+                response_letras = await search_letras_mus_completa(musica.dns, musica.url)
+                if(response_letras.data){
+                    
+                    let html = parse(response_letras.data)
+                    info_letra.musica = musica.txt
+                    info_letra.artista = musica.art
+                    info_letra.link = `https://www.letras.mus.br/${musica.dns}/${musica.url}`
+                    info_letra.letra = html.querySelector(".cnt-letra").innerHTML.trim()
+                    info_letra.letra = Utils.replaceAll(info_letra.letra, "<p>", "\n")
+                    info_letra.letra = Utils.replaceAll(info_letra.letra, "</p>", "\n")
+                    info_letra.letra = Utils.replaceAll(info_letra.letra, "<br>", "\n")
+                }
             }
+            
         }
         //console.log(response_letras);
     }else{
@@ -74,7 +77,7 @@ async function run(bot, msg) {
             }]
         })
     } else {
-        return msg.reply(response.data.type)
+        return msg.reply("Letra não encontrada")
     }
 }
 

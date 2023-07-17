@@ -8,11 +8,13 @@ async function getInfoVideo(url) {
     if (result && result.length > 0) {
         return result[0]
     }
-    throw new ExpectedError('Não achei os metadados do vídeo')
+    return {"title": url, "url": url, "thumbnails":[{"url":url}]}
+    //throw new ExpectedError('Não achei os metadados do vídeo')
 }
 
 async function sendMessageChannel(message, url_video, id_w2g) {
-    const video_basic_info = await getInfoVideo(url_video)
+    const video_basic_info = await getInfoVideo(url_video)    
+    
     const exampleEmbed = {
         author: {
             name: `Watch2Gether`,
