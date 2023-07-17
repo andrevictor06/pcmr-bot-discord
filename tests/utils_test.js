@@ -25,6 +25,9 @@ function mockMessage(command, ...params) {
                     })
                 }),
                 cache
+            },
+            messages: {
+                fetch: jest.fn()
             }
         },
         member: {

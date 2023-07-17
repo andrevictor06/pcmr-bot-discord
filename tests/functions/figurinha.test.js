@@ -5,6 +5,7 @@ const { mockBot, mockMessage } = require('../utils_test')
 const fs = require('fs')
 const path = require('path')
 const { STICKERS } = require('../../utils/constants')
+const { randomUUID } = require('crypto')
 
 const stickersTestFolder = path.resolve(process.env.PASTA_FIGURINHAS)
 
@@ -168,6 +169,37 @@ describe("figurinha", () => {
             files: [stickerPath]
         })
 
+        expect(message.delete).toBeCalledTimes(1)
+    })
+
+    test("deveria dar reply na mensagem original ao mandar a figurinha", async () => {
+        const stickerName = "nome_figurinha"
+        const stickerPath = path.resolve(stickersTestFolder, stickerName + ".png")
+        const bot = mockBot()
+        const message = mockMessage(undefined, stickerName)
+        const messageToBeReplied = mockMessage("original message")
+        message.reference = {
+            messageId: randomUUID()
+        }
+        message.channel.messages.fetch.mockImplementation(messageId => {
+            expect(messageId).toEqual(message.reference.messageId)
+            return messageToBeReplied
+        })
+        const figurinhas = {}
+        figurinhas[stickerName] = stickerPath
+        localStorage.setItem(STICKERS, JSON.stringify(figurinhas))
+        fs.copyFileSync(
+            path.resolve("images", "domingo_a_noite.png"),
+            stickerPath
+        )
+
+        await init(bot)
+        await run(bot, message)
+
+        expect(messageToBeReplied.reply).toBeCalledTimes(1)
+        expect(messageToBeReplied.reply.mock.lastCall[0]).toMatchObject({
+            files: [stickerPath]
+        })
         expect(message.delete).toBeCalledTimes(1)
     })
 

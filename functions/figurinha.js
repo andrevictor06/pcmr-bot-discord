@@ -52,9 +52,15 @@ async function run(bot, msg) {
 
     const stickerName = Object.keys(stickers).find(value => msg.content == value)
     if (stickerName) {
-        msg.channel.send({
+        const messagePayload = {
             files: [stickers[stickerName]]
-        })
+        }
+        if (msg.reference?.messageId) {
+            const msgToReply = await msg.channel.messages.fetch(msg.reference.messageId)
+            msgToReply.reply(messagePayload)
+        } else {
+            msg.channel.send(messagePayload)
+        }
         msg.delete()
     }
 }
