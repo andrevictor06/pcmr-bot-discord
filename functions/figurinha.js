@@ -53,6 +53,7 @@ async function run(bot, msg) {
     const stickerName = Object.keys(stickers).find(value => msg.content == value)
     if (stickerName) {
         const messagePayload = {
+            content: `**${msg.member.nickname}** enviou:`,
             files: [stickers[stickerName]]
         }
         if (msg.reference?.messageId) {
