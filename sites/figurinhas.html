@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+    <head>
+        <title>Figurinhas</title>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    </head>
+    <style>
+        body{
+            font-size: large;
+            font-family: cursive;
+            font-weight: bold;
+        }
+        #div_imagens > div{
+            display: flex;
+        }
+        #div_imagens > div > div{
+            display: grid;
+            border: 2px 2px 2px 2px;
+            border-style: solid;
+            border-color: red;
+        }
+        #div_imagens * img{
+            max-height: 20rem;
+            max-width: 20rem;
+        }
+    </style>
+    <body>
+        <div id="div_imagens"></div>
+    </body>
+    
+    <script type="text/javascript" crossorigin="anonymous" src="figurinhas.js"></script>
+</html>
