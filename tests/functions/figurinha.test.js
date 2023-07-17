@@ -8,6 +8,7 @@ const { STICKERS } = require('../../utils/constants')
 const { randomUUID } = require('crypto')
 
 const stickersTestFolder = path.resolve(process.env.PASTA_FIGURINHAS)
+const defaultImageExtension = ".png"
 
 function clearStickersTestFolder(p = stickersTestFolder) {
     if (fs.statSync(p).isDirectory()) {
@@ -83,7 +84,10 @@ describe("figurinha", () => {
             })
 
             const response = {
-                data: fs.createReadStream(attachment.url)
+                data: fs.createReadStream(attachment.url),
+                headers: {
+                    "content-type": attachment.contentType
+                }
             }
             return response
         })
@@ -95,13 +99,102 @@ describe("figurinha", () => {
 
         const stickers = JSON.parse(stickersJson)
         expect(stickers).toMatchObject({
-            "joao": path.resolve(stickersTestFolder, "joao.jpg")
+            "joao": path.resolve(stickersTestFolder, "joao" + defaultImageExtension)
         })
 
         const files = fs.readdirSync(stickersTestFolder)
         expect(files).toBeTruthy()
         expect(files).toHaveLength(1)
-        expect(files[0]).toEqual("joao.jpg")
+        expect(files[0]).toEqual("joao" + defaultImageExtension)
+
+        expect(message.reply).toBeCalledTimes(1)
+    })
+
+    test("deveria criar uma figurinha com sucesso utilizando a imagem da mensagem original", async () => {
+        const message = mockMessage("figurinha", "João")
+        message.reference = {
+            messageId: randomUUID()
+        }
+        const attachment = {
+            url: path.resolve("images", "domingo_a_noite.png"),
+            name: "domingo_a_noite.png",
+            contentType: "image/png"
+        }
+        const repliedMessage = mockMessage("mensagme")
+        repliedMessage.attachments = new Map([
+            ["1", attachment]
+        ])
+        message.channel.messages.fetch.mockImplementation(messageId => {
+            expect(messageId).toEqual(message.reference.messageId)
+            return repliedMessage
+        })
+        axios.get.mockImplementation((url, options) => {
+            expect(url).toEqual(attachment.url)
+            expect(options).toMatchObject({
+                responseType: 'stream'
+            })
+
+            const response = {
+                data: fs.createReadStream(attachment.url),
+                headers: {
+                    "content-type": attachment.contentType
+                }
+            }
+            return response
+        })
+
+        await run(mockBot(), message)
+
+        expect(message.channel.messages.fetch).toBeCalledTimes(1)
+
+        const stickersJson = localStorage.getItem(STICKERS)
+        expect(stickersJson).toBeTruthy()
+
+        const stickers = JSON.parse(stickersJson)
+        expect(stickers).toMatchObject({
+            "joao": path.resolve(stickersTestFolder, "joao" + defaultImageExtension)
+        })
+
+        const files = fs.readdirSync(stickersTestFolder)
+        expect(files).toBeTruthy()
+        expect(files).toHaveLength(1)
+        expect(files[0]).toEqual("joao" + defaultImageExtension)
+
+        expect(message.reply).toBeCalledTimes(1)
+    })
+
+    test("deveria criar uma figurinha com sucesso a partir de uma URL", async () => {
+        const imageUrl = path.resolve("images", "domingo_a_noite.png")
+        const message = mockMessage("figurinha", "João", "--url " + imageUrl)
+        axios.get.mockImplementation((url, options) => {
+            expect(url).toEqual(imageUrl)
+            expect(options).toMatchObject({
+                responseType: 'stream'
+            })
+
+            const response = {
+                data: fs.createReadStream(imageUrl),
+                headers: {
+                    "content-type": "image/png"
+                }
+            }
+            return response
+        })
+
+        await run(mockBot(), message)
+
+        const stickersJson = localStorage.getItem(STICKERS)
+        expect(stickersJson).toBeTruthy()
+
+        const stickers = JSON.parse(stickersJson)
+        expect(stickers).toMatchObject({
+            "joao": path.resolve(stickersTestFolder, "joao" + defaultImageExtension)
+        })
+
+        const files = fs.readdirSync(stickersTestFolder)
+        expect(files).toBeTruthy()
+        expect(files).toHaveLength(1)
+        expect(files[0]).toEqual("joao" + defaultImageExtension)
 
         expect(message.reply).toBeCalledTimes(1)
     })
@@ -123,7 +216,10 @@ describe("figurinha", () => {
             })
 
             const response = {
-                data: fs.createReadStream(attachment.url)
+                data: fs.createReadStream(attachment.url),
+                headers: {
+                    "content-type": attachment.contentType
+                }
             }
             return response
         })

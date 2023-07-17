@@ -8,7 +8,7 @@ const { STICKERS } = require('../utils/constants');
 
 let stickers
 const stickersFolderPath = path.resolve(process.env.PASTA_FIGURINHAS)
-const defaultImageExtension = ".jpg"
+const defaultImageExtension = ".png"
 
 const commands = {
     figurinha: {
@@ -71,13 +71,22 @@ async function createSticker(bot, msg) {
     if (!args.mainParam) {
         throw new ExpectedError("Cadê o nome da figurinha?")
     }
-    if (!msg.attachments || msg.attachments.size == 0) {
-        throw new ExpectedError("Cadê a imagem?")
+    let url
+    if (args.params.url) {
+        url = args.params.url
+    } else {
+        let attachment = getFirstAttachmentFrom(msg)
+        if (msg.reference?.messageId) {
+            const msgReplied = await msg.channel.messages.fetch(msg.reference.messageId)
+            attachment = getFirstAttachmentFrom(msgReplied)
+        }
+        url = attachment?.url
     }
-    const attachment = getFirstAttachment(msg)
+    if (!url) throw new ExpectedError("Cadê a imagem?")
     const stickerName = prepareStickerName(args.mainParam)
-    const response = await axios.get(attachment.url, { responseType: 'stream' })
-    return saveSticker(msg, response.data, stickerName, attachment.contentType)
+    const response = await axios.get(url, { responseType: 'stream' })
+    checkContentType(response.headers['content-type'])
+    return saveSticker(msg, response.data, stickerName, response.headers['content-type'])
 }
 
 function saveSticker(msg, data, stickerName, contentType) {
@@ -136,11 +145,10 @@ function helpComand(bot, msg) {
         .filter(value => value != null)
 }
 
-function getFirstAttachment(msg) {
+function getFirstAttachmentFrom(msg) {
+    if (msg.attachments?.size == null || msg.attachments.size == 0) return null
     const attachment = msg.attachments.values().next().value
-    if (!["image/png", "image/jpeg", "image/gif"].includes(attachment.contentType)) {
-        throw new ExpectedError("Tem certeza que isso é uma imagem?")
-    }
+    checkContentType(attachment.contentType)
     return attachment
 }
 
@@ -149,7 +157,7 @@ function prepareStickerName(name) {
         .trim()
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
-        .replace(/ /, "_")
+        .replace(/ /g, "_")
         .toLowerCase()
 }
 
@@ -163,7 +171,7 @@ function createImagePath(stickerName, contentType) {
 function compressImage(contentType) {
     return contentType == "image/gif"
         ? sharp({ animated: true }).resize(250).gif()
-        : sharp().resize(150).jpeg()
+        : sharp().resize(175).png()
 
 }
 
@@ -171,6 +179,12 @@ function checkStickersFolderSizeLimit() {
     const stats = fs.statSync(stickersFolderPath)
     if (stats.size > parseInt(process.env.PASTA_FIGURINHAS_LIMITE)) {
         throw new ExpectedError("Tamanho limite da pasta atingido!")
+    }
+}
+
+function checkContentType(contentType) {
+    if (!["image/png", "image/jpeg", "image/gif"].includes(contentType)) {
+        throw new ExpectedError("Tem certeza que isso é uma imagem?")
     }
 }
 
