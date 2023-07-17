@@ -13,6 +13,7 @@ const defaultImageExtension = ".png"
 function clearStickersTestFolder(p = stickersTestFolder) {
     if (fs.statSync(p).isDirectory()) {
         fs.readdirSync(p).forEach(file => clearStickersTestFolder(path.resolve(p, file)))
+        fs.rmdirSync(p)
     } else {
         fs.rmSync(p)
     }
@@ -21,8 +22,6 @@ function clearStickersTestFolder(p = stickersTestFolder) {
 beforeEach(async () => {
     if (fs.existsSync(stickersTestFolder)) {
         clearStickersTestFolder()
-    } else {
-        fs.mkdirSync(stickersTestFolder)
     }
     localStorage.clear()
     await init(mockBot())
