@@ -7,8 +7,9 @@ const { randomUUID } = require('crypto')
 function mockMessage(command, ...params) {
     const has = jest.fn(() => true)
     const cache = []
+    const content = params && params.length > 0 ? params.join(" ") : ""
     return {
-        content: Utils.command(command) + (params && params.length > 0 ? " " + params.join(" ") : ""),
+        content: command ? Utils.command(command) + " " + content : content,
         client: {
             user: {}
         },
@@ -24,6 +25,9 @@ function mockMessage(command, ...params) {
                     })
                 }),
                 cache
+            },
+            messages: {
+                fetch: jest.fn()
             }
         },
         member: {
@@ -42,7 +46,8 @@ function mockMessage(command, ...params) {
             }
         },
         reply: jest.fn(),
-        update: jest.fn()
+        update: jest.fn(),
+        delete: jest.fn()
     }
 }
 
@@ -175,7 +180,7 @@ function randomStr(size) {
     const letters = 'abcdefghijklmnopqrstuvxwyz'
     let randomStr = ''
     while (randomStr.length < size) {
-        const randomIndex = Math.floor((Math.random() * size + 1))
+        const randomIndex = Math.floor((Math.random() * letters.length))
         let letter = letters[randomIndex]
         if (Math.floor(Math.random() * 5) == 1) {
             letter = letter.toUpperCase()
