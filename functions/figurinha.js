@@ -99,7 +99,10 @@ function saveSticker(msg, data, stickerName, contentType) {
                 try {
                     stickers[stickerName] = imagePath
                     localStorage.setItem(STICKERS, JSON.stringify(stickers))
-                    msg.reply(`Figurinha **${stickerName}** criada!`)
+                    msg.reply({
+                        content: `Figurinha **${stickerName}** criada!`,
+                        files: [imagePath]
+                    })
                     resolve()
                 } catch (error) {
                     reject(error)
