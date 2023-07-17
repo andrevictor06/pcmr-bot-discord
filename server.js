@@ -1,7 +1,6 @@
 const fs = require('fs')
 const path = require('path')
 const express = require('express')
-var cors = require('cors')
 const bodyParser = require('body-parser')
 const helmet = require("helmet")
 const hpp = require('hpp')
@@ -9,7 +8,6 @@ const Utils = require("./utils/Utils")
 
 function init(bot) {
     const app = express()
-    app.use(cors())
     app.use(helmet())
     app.use(bodyParser.json())
     app.use(hpp())
