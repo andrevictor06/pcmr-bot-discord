@@ -52,18 +52,22 @@ async function run(bot, msg) {
 
     const stickerName = Object.keys(stickers).find(value => msg.content == value)
     if (stickerName) {
-        const messagePayload = {
-            content: `**${msg.member.nickname}** enviou:`,
-            files: [stickers[stickerName]]
-        }
-        if (msg.reference?.messageId) {
-            const msgToReply = await msg.channel.messages.fetch(msg.reference.messageId)
-            msgToReply.reply(messagePayload)
-        } else {
-            msg.channel.send(messagePayload)
-        }
-        msg.delete()
+        sendSticker(bot, msg, stickerName)
     }
+}
+
+async function sendSticker(bot, msg, stickerName) {
+    const messagePayload = {
+        content: `**${msg.member.nickname}** enviou:`,
+        files: [stickers[stickerName]]
+    }
+    if (msg.reference?.messageId) {
+        const msgToReply = await msg.channel.messages.fetch(msg.reference.messageId)
+        msgToReply.reply(messagePayload)
+    } else {
+        msg.channel.send(messagePayload)
+    }
+    msg.delete()
 }
 
 async function createSticker(bot, msg) {
