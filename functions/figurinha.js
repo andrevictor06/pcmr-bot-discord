@@ -80,12 +80,12 @@ async function createSticker(bot, msg) {
     if (args.params.url) {
         url = args.params.url
     } else {
-        let attachment = getFirstAttachmentFrom(msg)
         if (msg.reference?.messageId) {
             const msgReplied = await msg.channel.messages.fetch(msg.reference.messageId)
-            attachment = getFirstAttachmentFrom(msgReplied)
+            url = getFirstAttachmentFrom(msgReplied)?.url
+        } else {
+            url = getFirstAttachmentFrom(msg)?.url
         }
-        url = attachment?.url
     }
     if (!url) throw new ExpectedError("Cadê a imagem?")
     const stickerName = prepareStickerName(args.mainParam)
