@@ -1,6 +1,7 @@
 const fs = require("fs")
 const path = require('path')
-const { clearSharedVariables, MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, sharedVariableExists } = require("../../utils/shared_variables")
+const { clearSharedVariables, sharedVariableExists } = require("../../utils/shared_variables")
+const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME } = require('../../utils/constants')
 const utils = require('../../utils/Utils')
 const { mockMessage, mockBot, mockEventInteraction, mockAudioPlayer, mockVoiceConnection, mockQueueObject } = require('../utils_test')
 const { run, canHandle } = require('../../functions/audio_play')

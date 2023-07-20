@@ -7,6 +7,10 @@ const SPOTIFY_AUTH_URL = 'https://accounts.spotify.com/api/token'
 const SPOTIFY_PLAYLIST_TRACKS = 'spotify:playlist_tracks'
 const SPOTIFY_LISTENER_FINISHED_EVENT = 'spotify:finished'
 const STICKERS = 'figurinhas'
+const AUDIO_QUEUE_NAME = 'audio:queue'
+const MUSIC_QUEUE_NAME = "music:queue"
+const MUSIC_TIMEOUT_ID = "music:timeout_id"
+const MUSIC_INTERVAL_ID = "music:interval_id"
 
 module.exports = {
     SPOTIFY_LOGIN_STATE,
@@ -17,5 +21,9 @@ module.exports = {
     SPOTIFY_AUTH_URL,
     SPOTIFY_PLAYLIST_TRACKS,
     SPOTIFY_LISTENER_FINISHED_EVENT,
-    STICKERS
+    STICKERS,
+    AUDIO_QUEUE_NAME,
+    MUSIC_QUEUE_NAME,
+    MUSIC_TIMEOUT_ID,
+    MUSIC_INTERVAL_ID
 }

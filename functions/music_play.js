@@ -2,7 +2,8 @@ const { joinVoiceChannel, AudioPlayerStatus, createAudioResource, createAudioPla
 const Utils = require("../utils/Utils")
 const { ExpectedError } = require('../utils/expected_error')
 const playdl = require('play-dl');
-const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, MUSIC_TIMEOUT_ID, sharedVariableExists, setSharedVariable, getSharedVariable, deleteSharedVariable, MUSIC_INTERVAL_ID } = require("../utils/shared_variables")
+const { sharedVariableExists, setSharedVariable, getSharedVariable, deleteSharedVariable } = require("../utils/shared_variables")
+const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID } = require('../utils/constants')
 const spotify = require('./spotify_playlist')
 
 const musicQueueThreadName = "músicas_na_fila"
