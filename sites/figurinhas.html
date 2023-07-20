@@ -8,9 +8,13 @@
         <link rel="icon" type="image/png" href="favicon.png">
     </head>
     <style>
+        @font-face {
+            font-family: 'Gotham';
+            src: URL('font/Gotham/Gotham-Light.ttf') format('truetype');
+        }
         body{
             font-size: large;
-            font-family: cursive;
+            font-family: 'Gotham';
             font-weight: bold;
             background: #0A1725;
             color: #C1D3d3;
@@ -24,6 +28,7 @@
             border-color: #C1D3d3;
             padding: 5px;
             margin: 2px;
+            border-radius: 5px;
         }
         #div_imagens * img{
             max-height: 20rem;
@@ -32,7 +37,7 @@
     </style>
     <body>
         <div>
-            <h1>Lista de Figurinhas Disponíveis</h1>
+            <h1 style="font-weight: bold;">Lista de Figurinhas Disponíveis</h1>
         </div>
         <div id="div_imagens"></div>
     </body>

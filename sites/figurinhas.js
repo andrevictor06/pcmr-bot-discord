@@ -9,7 +9,7 @@ function consultaFigurinhas(){
         let html = '<div>'
         div_imagens.innerHTML = div_imagens.innerHTML + ``
         lista.forEach(element => {
-            html = html + `<div><label>${element}</label><img src="/figurinhas/${element}" alt="" srcset=""/></div>`
+            html = html + `<div><label>${element.split(".")[0]}</label><img src="/figurinhas/${element}" alt="" srcset=""/></div>`
         }); 
         html = html + `</div>`
         div_imagens.innerHTML = div_imagens.innerHTML + html
