@@ -12,7 +12,7 @@ function init(bot) {
     app.use(bodyParser.json())
     app.use(hpp())
     if( process.env.ENVIRONMENT == "DES"){
-        app.use('/figurinhas', express.static("images/figurinhas"))
+        app.use('/images/figurinhas', express.static("images/figurinhas"))
     }
     app.use('/site', express.static("sites"))
     initRoutes(app, bot)

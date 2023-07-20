@@ -3,13 +3,13 @@ function consultaFigurinhas(){
     let div_imagens = document.getElementById("div_imagens")
     console.log("Bora");
     div_imagens.innerHTML = ""
-    fetch("/figurinhas/all").then( (data)=> data.json()).then( (data)=> {
+    fetch("/figurinhas").then( (data)=> data.json()).then( (data)=> {
 
     data.chunk(5).forEach(lista => {
         let html = '<div>'
         div_imagens.innerHTML = div_imagens.innerHTML + ``
         lista.forEach(element => {
-            html = html + `<div><label>${element.split(".")[0]}</label><div class='div-image'><img src="/figurinhas/${element}" alt="" srcset=""/></div></div>`
+            html = html + `<div><label>${element.split(".")[0]}</label><div class='div-image'><img src="/images/figurinhas/${element}" alt="" srcset=""/></div></div>`
         }); 
         html = html + `</div>`
         div_imagens.innerHTML = div_imagens.innerHTML + html
