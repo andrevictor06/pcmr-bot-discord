@@ -11,7 +11,9 @@ function init(bot) {
     app.use(helmet())
     app.use(bodyParser.json())
     app.use(hpp())
-    app.use('/figurinhas', express.static("images/figurinhas"))
+    if( process.env.ENVIRONMENT == "DES"){
+        app.use('/figurinhas', express.static("images/figurinhas"))
+    }
     app.use('/site', express.static("sites"))
     initRoutes(app, bot)
 
