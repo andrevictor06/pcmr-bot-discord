@@ -6,7 +6,7 @@ const fs = require('fs')
 const path = require("path")
 function init(bot) {
     
-    router.get('/all', async (req, res) => {
+    router.get('/', async (req, res) => {
         try {
             const figurinhas = fs.readdirSync(path.resolve("images", "figurinhas"))
             res.send(figurinhas)
