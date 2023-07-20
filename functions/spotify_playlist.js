@@ -55,7 +55,7 @@ function deleteCredentials() {
 }
 
 async function authenticate(code, state) {
-    if (state !== getSharedVariable(SPOTIFY_LOGIN_STATE)) throw new ExpectedError('Código de login expirado, gere uma nova URL')
+    if (state !== getSharedVariable(SPOTIFY_LOGIN_STATE)) throw new ExpectedError('Código de login inválido ou expirado, gere uma nova URL')
     deleteSharedVariable(SPOTIFY_LOGIN_STATE)
     const response = await axios.post(
         SPOTIFY_AUTH_URL,
@@ -214,7 +214,7 @@ function spotifyLogin(bot, msg) {
         redirect_uri: process.env.SPOTIFY_CALLBACK_URL,
         state
     })
-    setSharedVariable(SPOTIFY_LOGIN_STATE, state)
+    setSharedVariable(SPOTIFY_LOGIN_STATE, state, utils.nowInSeconds() + parseInt(process.env.SPOTIFY_LOGIN_STATE_DURATION))
     deleteCredentials()
     bot.users.cache.get(msg.author.id).send(`https://accounts.spotify.com/authorize?${qs}`)
 }

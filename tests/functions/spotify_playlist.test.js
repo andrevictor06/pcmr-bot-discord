@@ -90,7 +90,13 @@ describe('spotify_login', () => {
             redirect_uri: process.env.SPOTIFY_CALLBACK_URL,
             state: getSharedVariable(SPOTIFY_LOGIN_STATE)
         })
+
         expect(directSend).toBeCalledWith(`https://accounts.spotify.com/authorize?${qs}`)
+        expect(sharedVariableExists(SPOTIFY_LOGIN_STATE)).toBeTruthy()
+
+        const loginStateExpiration = getSharedVariable(SPOTIFY_LOGIN_STATE + "_expiration")
+        expect(loginStateExpiration).toBeTruthy()
+        expect(loginStateExpiration > utils.nowInSeconds())
     })
 
     test("deveria executar o canHandle corretamente", () => {
@@ -189,6 +195,22 @@ describe('authenticate', () => {
         expect.hasAssertions()
         try {
             await authenticate(authorizationCode, randomUUID())
+        } catch (error) {
+            expect(error).toBeTruthy()
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+
+    })
+
+    test('não deveria autenticar quando o código state estiver expirado', async () => {
+        const authorizationCode = randomUUID()
+        const state = randomUUID()
+        setSharedVariable(SPOTIFY_LOGIN_STATE, state)
+        setSharedVariable(SPOTIFY_LOGIN_STATE + "_expiration", utils.nowInSeconds() - 10)
+
+        expect.hasAssertions()
+        try {
+            await authenticate(authorizationCode, state)
         } catch (error) {
             expect(error).toBeTruthy()
             expect(error).toBeInstanceOf(ExpectedError)

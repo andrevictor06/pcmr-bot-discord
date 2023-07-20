@@ -1,6 +1,7 @@
 const { run, canHandle } = require("../../functions/music_play")
 const sharedVariables = require("../../utils/shared_variables")
-const { setSharedVariable, AUDIO_QUEUE_NAME, sharedVariableExists, MUSIC_QUEUE_NAME, clearSharedVariables, getSharedVariable, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID } = sharedVariables
+const { setSharedVariable, sharedVariableExists, clearSharedVariables, getSharedVariable } = sharedVariables
+const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID } = require('../../utils/constants')
 const { AudioPlayerStatus, joinVoiceChannel } = require("@discordjs/voice")
 const { mockAudioPlayer, mockBasicInfo, mockMessage, mockPlaylistInfo, mockVoiceConnection, mockQueueObject, mockBot, mockPlaydlStream, fakeYtUrl } = require("../utils_test")
 const spotify = require('../../functions/spotify_playlist')
@@ -179,7 +180,7 @@ describe("play", () => {
         const info = mockBasicInfo(url, "titulo")
         mockPlaylistInfo(url, videos)
         playdl.stream.mockImplementation(async () => ({ stream: {} }))
-        
+
         await run(bot, message)
 
         expect(spotify.tryAddSongToSpotifyPlaylist).toBeCalledTimes(1)

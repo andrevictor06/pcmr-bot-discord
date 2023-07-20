@@ -3,7 +3,8 @@ const Utils = require("../utils/Utils")
 const fs = require('fs')
 const path = require("path")
 const { ExpectedError } = require('../utils/expected_error')
-const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, setSharedVariable, getSharedVariable, deleteSharedVariable, sharedVariableExists } = require("../utils/shared_variables")
+const { setSharedVariable, getSharedVariable, deleteSharedVariable } = require("../utils/shared_variables")
+const { AUDIO_QUEUE_NAME, MUSIC_QUEUE_NAME } = require('../utils/constants')
 
 function stop() {
     const serverQueue = getSharedVariable(AUDIO_QUEUE_NAME)

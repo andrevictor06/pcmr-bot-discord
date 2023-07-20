@@ -1,14 +1,21 @@
-const sharedVariables = new Map()
-const AUDIO_QUEUE_NAME = "audio_queue"
-const MUSIC_QUEUE_NAME = "music_queue"
-const MUSIC_TIMEOUT_ID = "music_timeout_id"
-const MUSIC_INTERVAL_ID = "music_interval_id"
+const utils = require("./Utils")
 
-function setSharedVariable(name, value) {
+const sharedVariables = new Map()
+
+function setSharedVariable(name, value, expiration = 0) {
+    if (expiration != null && expiration > 0) {
+        sharedVariables.set(name + "_expiration", expiration)
+    }
     sharedVariables.set(name, value)
 }
 
 function getSharedVariable(name) {
+    const expiration = sharedVariables.get(name + "_expiration")
+    if (expiration && utils.nowInSeconds() > expiration) {
+        sharedVariables.delete(name)
+        sharedVariables.delete(name + "_expiration")
+        return null
+    }
     return sharedVariables.get(name)
 }
 
@@ -29,9 +36,5 @@ module.exports = {
     getSharedVariable,
     sharedVariableExists,
     deleteSharedVariable,
-    clearSharedVariables: process.env.ENVIRONMENT === "TEST" ? clearSharedVariables : undefined,
-    AUDIO_QUEUE_NAME,
-    MUSIC_QUEUE_NAME,
-    MUSIC_TIMEOUT_ID,
-    MUSIC_INTERVAL_ID
+    clearSharedVariables: process.env.ENVIRONMENT === "TEST" ? clearSharedVariables : undefined
 }
