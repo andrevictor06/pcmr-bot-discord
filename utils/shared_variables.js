@@ -2,8 +2,8 @@ const utils = require("./Utils")
 
 const sharedVariables = new Map()
 
-function setSharedVariable(name, value, expiration) {
-    if (expiration) {
+function setSharedVariable(name, value, expiration = 0) {
+    if (expiration != null && expiration > 0) {
         sharedVariables.set(name + "_expiration", expiration)
     }
     sharedVariables.set(name, value)
