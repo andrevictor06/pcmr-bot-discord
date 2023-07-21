@@ -14,7 +14,7 @@ function init(bot) {
     if( process.env.ENVIRONMENT == "DES"){
         app.use('/images/figurinhas', express.static("images/figurinhas"))
     }
-    app.use('/site', express.static("sites"))
+    //app.use('/site', express.static("sites"))
     initRoutes(app, bot)
 
     app.listen(process.env.SERVER_PORT, () => {
