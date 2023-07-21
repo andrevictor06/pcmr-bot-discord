@@ -96,7 +96,7 @@ describe('spotify_login', () => {
 
         const loginStateExpiration = getSharedVariable(SPOTIFY_LOGIN_STATE + "_expiration")
         expect(loginStateExpiration).toBeTruthy()
-        expect(loginStateExpiration > utils.nowInSeconds())
+        expect(loginStateExpiration).toBeGreaterThan(utils.nowInSeconds())
     })
 
     test("deveria executar o canHandle corretamente", () => {
