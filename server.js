@@ -3,18 +3,24 @@ const path = require('path')
 const express = require('express')
 const bodyParser = require('body-parser')
 const helmet = require("helmet")
+const cors = require("cors")
 const hpp = require('hpp')
 const Utils = require("./utils/Utils")
 
 function init(bot) {
     const app = express()
-    app.use(helmet())
-    app.use(bodyParser.json())
-    app.use(hpp())
     if( process.env.ENVIRONMENT == "DES"){
+        app.use(helmet({crossOriginResourcePolicy: false}))
+        app.use(bodyParser.json())
+        app.use(hpp())
+        app.use(cors())
         app.use('/images/figurinhas', express.static("images/figurinhas"))
+    }else{
+        app.use(helmet())
+        app.use(bodyParser.json())
+        app.use(hpp())
     }
-    app.use('/site', express.static("sites"))
+    
     initRoutes(app, bot)
 
     app.listen(process.env.SERVER_PORT, () => {
