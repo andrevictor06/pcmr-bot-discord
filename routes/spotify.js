@@ -5,7 +5,7 @@ const utils = require('../utils/Utils')
 const { ExpectedError } = require('../utils/expected_error')
 
 function init(bot) {
-    router.get('/login', async (req, res) => {
+    router.get('/', async (req, res) => {
         try {
             await spotify.authenticate(req.query.code, req.query.state)
             res.send('Login realizado com sucesso!')

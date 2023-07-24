@@ -9,18 +9,16 @@ const Utils = require("./utils/Utils")
 
 function init(bot) {
     const app = express()
-    if( process.env.ENVIRONMENT == "DES"){
-        app.use(helmet({crossOriginResourcePolicy: false}))
-        app.use(bodyParser.json())
-        app.use(hpp())
+    if (process.env.ENVIRONMENT == "DES") {
+        app.use(helmet({ crossOriginResourcePolicy: false }))
         app.use(cors())
         app.use('/images/figurinhas', express.static("images/figurinhas"))
-    }else{
+    } else {
         app.use(helmet())
-        app.use(bodyParser.json())
-        app.use(hpp())
     }
-    
+    app.use(bodyParser.json())
+    app.use(hpp())
+
     initRoutes(app, bot)
 
     app.listen(process.env.SERVER_PORT, () => {
@@ -39,7 +37,7 @@ function initRoutes(app, bot) {
                 console.log(`A rota ${file} não possui uma função 'init'.`)
             }
 
-            const routePath = '/' + path.basename(file, path.extname(file))
+            const routePath = '/bot/' + path.basename(file, path.extname(file))
             app.use(routePath, route.router)
         })
     } catch (error) { Utils.logError(bot, error, __filename) }
