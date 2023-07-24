@@ -7,7 +7,14 @@ function run(bot, msg) {
     fs.readdirSync("./functions").forEach(fnFile => {
         try {
             const fn = require("../functions/" + fnFile)
-            fields.push(fn.helpComand(bot, msg))
+            const help = fn.helpComand(bot, msg)
+            if (Array.isArray(help)) {
+                for (let h of help) {
+                    fields.push(h)
+                }
+            } else {
+                fields.push(fn.helpComand(bot, msg))
+            }
         } catch (error) {
             console.log(fnFile)
         }
