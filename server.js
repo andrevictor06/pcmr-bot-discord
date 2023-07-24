@@ -37,7 +37,7 @@ function initRoutes(app, bot) {
                 console.log(`A rota ${file} não possui uma função 'init'.`)
             }
 
-            const routePath = '/' + path.basename(file, path.extname(file))
+            const routePath = '/bot/' + path.basename(file, path.extname(file))
             app.use(routePath, route.router)
         })
     } catch (error) { Utils.logError(bot, error, __filename) }

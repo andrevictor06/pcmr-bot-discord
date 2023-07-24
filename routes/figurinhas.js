@@ -4,8 +4,8 @@ const utils = require('../utils/Utils')
 const { ExpectedError } = require('../utils/expected_error')
 const fs = require('fs')
 const path = require("path")
+
 function init(bot) {
-    
     router.get('/', async (req, res) => {
         try {
             const figurinhas = fs.readdirSync(path.resolve("images", "figurinhas"))
