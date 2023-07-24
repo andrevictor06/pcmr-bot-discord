@@ -6,7 +6,8 @@
 	"image": "mcr.microsoft.com/devcontainers/javascript-node:0-18",
 
 	"runArgs": [
-		"--network=pcmr"
+		"--name", "pcmrbot-discord",
+		"--network=pcmrbot_net"
 	]
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
