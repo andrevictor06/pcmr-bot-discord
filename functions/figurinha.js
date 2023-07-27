@@ -125,7 +125,13 @@ function listStickers(bot, msg) {
     if (!stickersNames || stickersNames.length == 0) {
         throw new ExpectedError("Nenhuma figurinha por enquanto")
     }
-    msg.reply("Lista de figurinhas:\n\n" + stickersNames.reduce((p, v) => p + "\n" + v))
+    const template =
+    `
+        >>> Para visualizar todas as figurinhas, acesse: **${process.env.URL_SITE}/figurinhas**\nLista de figurinhas:\n\n**${stickersNames.reduce((p, v) => p + "\n" + v)}**
+    `
+    
+    msg.reply({content: template, embeds: []})
+    //"Lista de figurinhas:\n\n" + stickersNames.reduce((p, v) => p + "\n" + v))
 }
 
 async function deleteSticker(bot, msg) {

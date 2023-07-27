@@ -12,7 +12,26 @@ function getSchedule(){
 }
 
 function run(bot){
+    removerLogsBot();
+    removerLogsSite();
+}
+function removerLogsBot(){
     const logPath = path.resolve(process.env.PATH_LOG)
+    const path_logs = fs.readdirSync(logPath)
+    
+    var date = new Date();
+    date.setDate(date.getDate() - 1);
+    path_logs.forEach(file =>{
+        const logFile = path.resolve(logPath, file)
+        const stat = fs.statSync( logFile )
+        if( stat.mtime.getTime() < date.getTime()){
+            fs.unlinkSync(logFile)
+        }
+    })
+}
+
+function removerLogsSite(){
+    const logPath = path.resolve(process.env.PATH_LOG_SITE)
     const path_logs = fs.readdirSync(logPath)
     
     var date = new Date();
