@@ -12,26 +12,12 @@ function getSchedule(){
 }
 
 function run(bot){
-    removerLogsBot();
-    removerLogsSite();
-}
-function removerLogsBot(){
-    const logPath = path.resolve(process.env.PATH_LOG)
-    const path_logs = fs.readdirSync(logPath)
-    
-    var date = new Date();
-    date.setDate(date.getDate() - 1);
-    path_logs.forEach(file =>{
-        const logFile = path.resolve(logPath, file)
-        const stat = fs.statSync( logFile )
-        if( stat.mtime.getTime() < date.getTime()){
-            fs.unlinkSync(logFile)
-        }
-    })
+    removerLogs(process.env.PATH_LOG)
+    removerLogs(process.env.PATH_LOG_SITE)
 }
 
-function removerLogsSite(){
-    const logPath = path.resolve(process.env.PATH_LOG_SITE)
+function removerLogs(path_resolve){
+    const logPath = path.resolve(path_resolve)
     const path_logs = fs.readdirSync(logPath)
     
     var date = new Date();
