@@ -12,7 +12,12 @@ function getSchedule(){
 }
 
 function run(bot){
-    const logPath = path.resolve(process.env.PATH_LOG)
+    removerLogs(process.env.PATH_LOG)
+    removerLogs(process.env.PATH_LOG_SITE)
+}
+
+function removerLogs(path_resolve){
+    const logPath = path.resolve(path_resolve)
     const path_logs = fs.readdirSync(logPath)
     
     var date = new Date();
