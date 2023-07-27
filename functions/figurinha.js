@@ -84,7 +84,6 @@ async function createSticker(bot, msg) {
         if (msg.reference?.messageId) {
             messageToFindAttachment = await msg.channel.messages.fetch(msg.reference.messageId)
         }
-        // TODO: testar verificação por tamanho
         url = Utils.getFirstAttachmentFrom(messageToFindAttachment, ["image/png", "image/jpeg", "image/gif"], parseInt(process.env.FIGURINHA_MAX_SIZE))?.url
     }
     if (!url) throw new ExpectedError("Cadê a imagem?")

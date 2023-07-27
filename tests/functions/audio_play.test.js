@@ -1,12 +1,28 @@
+const { default: axios } = require('axios')
 const fs = require("fs")
 const path = require('path')
 const { clearSharedVariables, sharedVariableExists } = require("../../utils/shared_variables")
 const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME } = require('../../utils/constants')
 const utils = require('../../utils/Utils')
-const { mockMessage, mockBot, mockEventInteraction, mockAudioPlayer, mockVoiceConnection, mockQueueObject } = require('../utils_test')
+const { mockMessage, mockBot, mockEventInteraction, mockAudioPlayer, mockVoiceConnection, mockQueueObject, clearFolder } = require('../utils_test')
 const { run, canHandle } = require('../../functions/audio_play')
 const { joinVoiceChannel, AudioPlayerStatus } = require("@discordjs/voice")
 const { ExpectedError } = require("../../utils/expected_error")
+const { randomUUID } = require('crypto')
+
+const audioFolderPath = path.resolve(process.env.PASTA_AUDIO)
+const defaultImageExtension = ".mp3"
+
+beforeEach(() => {
+    if (fs.existsSync(audioFolderPath)) {
+        clearFolder(audioFolderPath)
+    }
+    fs.mkdirSync(audioFolderPath)
+    fs.copyFileSync(
+        path.resolve("tests", "files", "monki-flip.mp3"),
+        path.resolve(audioFolderPath, "monki-flip.mp3")
+    )
+})
 
 afterEach(() => {
     clearSharedVariables()
@@ -94,6 +110,88 @@ describe("audio", () => {
         } catch (error) {
             expect(error).toBeInstanceOf(ExpectedError)
         }
+    })
+
+    test("deveria salvar um áudio com sucesso", async () => {
+        const message = mockMessage("audio", "monki flip")
+        const audioPath = path.resolve("tests", "files", "monki-flip.mp3")
+        const attachment = {
+            url: audioPath,
+            name: "monki-flip.mp3",
+            contentType: "audio/mpeg",
+            size: fs.statSync(audioPath).size
+        }
+        message.attachments = new Map([
+            ["1", attachment]
+        ])
+        axios.get.mockImplementation((url, options) => {
+            expect(url).toEqual(attachment.url)
+            expect(options).toMatchObject({
+                responseType: 'stream'
+            })
+
+            const response = {
+                data: fs.createReadStream(attachment.url),
+                headers: {
+                    "content-type": attachment.contentType
+                }
+            }
+            return response
+        })
+
+        await run(mockBot(), message)
+
+        const files = fs.readdirSync(audioFolderPath)
+        expect(files).toBeTruthy()
+        expect(files.find(v => v == "monki_flip.mp3")).toBeDefined()
+
+        expect(message.reply).toBeCalledTimes(1)
+    })
+
+    test("deveria salvar um áudio com sucesso utilizando o áudio da mensagem original", async () => {
+        const message = mockMessage("audio", "monki flip")
+        message.reference = {
+            messageId: randomUUID()
+        }
+        const audioPath = path.resolve("tests", "files", "monki-flip.mp3")
+        const attachment = {
+            url: audioPath,
+            name: "monki-flip.mp3",
+            contentType: "audio/mpeg",
+            size: fs.statSync(audioPath).size
+        }
+        const repliedMessage = mockMessage("mensagem")
+        repliedMessage.attachments = new Map([
+            ["1", attachment]
+        ])
+        message.channel.messages.fetch.mockImplementation(messageId => {
+            expect(messageId).toEqual(message.reference.messageId)
+            return repliedMessage
+        })
+        axios.get.mockImplementation((url, options) => {
+            expect(url).toEqual(attachment.url)
+            expect(options).toMatchObject({
+                responseType: 'stream'
+            })
+
+            const response = {
+                data: fs.createReadStream(attachment.url),
+                headers: {
+                    "content-type": attachment.contentType
+                }
+            }
+            return response
+        })
+
+        await run(mockBot(), message)
+
+        expect(message.channel.messages.fetch).toBeCalledTimes(1)
+
+        const files = fs.readdirSync(audioFolderPath)
+        expect(files).toBeTruthy()
+        expect(files.find(v => v == "monki_flip.mp3")).toBeDefined()
+
+        expect(message.reply).toBeCalledTimes(1)
     })
 })
 

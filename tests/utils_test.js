@@ -2,6 +2,8 @@ const { joinVoiceChannel, createAudioPlayer, AudioPlayerStatus } = require("@dis
 const { setSharedVariable } = require("../utils/shared_variables")
 const Utils = require("../utils/Utils")
 const playdl = require('play-dl')
+const fs = require('fs')
+const path = require('path')
 const { randomUUID } = require('crypto')
 
 function mockMessage(command, ...params) {
@@ -190,6 +192,15 @@ function randomStr(size) {
     return randomStr
 }
 
+function clearFolder(p) {
+    if (fs.statSync(p).isDirectory()) {
+        fs.readdirSync(p).forEach(file => clearFolder(path.resolve(p, file)))
+        fs.rmdirSync(p)
+    } else {
+        fs.rmSync(p)
+    }
+}
+
 module.exports = {
     mockAudioPlayer,
     mockBasicInfo,
@@ -200,5 +211,6 @@ module.exports = {
     mockBot,
     mockEventInteraction,
     mockPlaydlStream,
-    fakeYtUrl
+    fakeYtUrl,
+    clearFolder
 }
