@@ -80,15 +80,14 @@ async function createSticker(bot, msg) {
     if (args.params.url) {
         url = args.params.url
     } else {
+        let messageToFindAttachment = msg
         if (msg.reference?.messageId) {
-            const msgReplied = await msg.channel.messages.fetch(msg.reference.messageId)
-            url = getFirstAttachmentFrom(msgReplied)?.url
-        } else {
-            url = getFirstAttachmentFrom(msg)?.url
+            messageToFindAttachment = await msg.channel.messages.fetch(msg.reference.messageId)
         }
+        url = Utils.getFirstAttachmentFrom(messageToFindAttachment, ["image/png", "image/jpeg", "image/gif"], parseInt(process.env.FIGURINHA_MAX_SIZE))?.url
     }
     if (!url) throw new ExpectedError("Cadê a imagem?")
-    const stickerName = prepareStickerName(args.mainParam)
+    const stickerName = Utils.normalizeString(args.mainParam)
     const response = await axios.get(url, { responseType: 'stream' })
     checkContentType(response.headers['content-type'])
     return saveSticker(msg, response.data, stickerName, response.headers['content-type'])
@@ -151,22 +150,6 @@ function helpComand(bot, msg) {
     return Object.values(commands)
         .map(value => value.help)
         .filter(value => value != null)
-}
-
-function getFirstAttachmentFrom(msg) {
-    if (msg.attachments?.size == null || msg.attachments.size == 0) return null
-    const attachment = msg.attachments.values().next().value
-    checkContentType(attachment.contentType)
-    return attachment
-}
-
-function prepareStickerName(name) {
-    return name
-        .trim()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/ /g, "_")
-        .toLowerCase()
 }
 
 function createImagePath(stickerName, contentType) {
