@@ -49,23 +49,23 @@ function startJobs(bot) {
 }
 
 function applyListeners(bot) {
-    bot.addInteractionCreate = (customId, func) => {
-        if (!SharedVariables.sharedVariableExists(customId)) {
-            bot.on('interactionCreate', async (event) => {
-                try {
-                    SharedVariables.setSharedVariable(customId, func)
-                    if (event.customId && event.customId === customId) {
-                        await func(event)
-                    }
-                } catch (error) {
-                    Utils.logError(bot, error, __filename)
-                    event.update({
-                        content: Utils.getMessageError(error),
-                        components: []
-                    })
-                }
+    bot.on('interactionCreate', async (event) => {
+        try {
+            const func = SharedVariables.getSharedVariable(event.customId)
+            if (func) {
+                await func(event)
+            }
+        } catch (error) {
+            Utils.logError(bot, error, __filename)
+            event.update({
+                content: Utils.getMessageError(error),
+                components: []
             })
         }
+    })
+
+    bot.addInteractionCreate = (customId, func) => {
+        SharedVariables.setSharedVariable(customId, func)
     }
 
     bot.on("messageCreate", msg => {

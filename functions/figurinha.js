@@ -98,7 +98,7 @@ function saveSticker(msg, data, stickerName, contentType) {
     return new Promise((resolve, reject) => {
         const imagePath = createImagePath(stickerName, contentType)
         data
-            .pipe(compressImage(contentType))
+            .pipe(resizeImage(contentType))
             .pipe(fs.createWriteStream(imagePath))
             .on("finish", () => {
                 try {
@@ -176,7 +176,7 @@ function createImagePath(stickerName, contentType) {
     return path.resolve(stickersFolderPath, stickerName + extension)
 }
 
-function compressImage(contentType) {
+function resizeImage(contentType) {
     return contentType == "image/gif"
         ? sharp({ animated: true }).resize(250).gif()
         : sharp().resize(175).png()
