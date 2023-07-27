@@ -44,6 +44,57 @@ describe("audio", () => {
             ]
         })
     })
+
+    test("deveria dar erro se não for enviado o áudio", async () => {
+        expect.hasAssertions()
+        try {
+            await run(mockBot(), mockMessage("audio", "nome do audio"))
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
+
+    test("deveria dar erro o tempo inical for maior que o final", async () => {
+        expect.hasAssertions()
+        try {
+            await run(mockBot(), mockMessage("audio", "nome do audio", "--start 4", "--end 2"))
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
+
+    test("deveria dar erro se o anexo não for um mp3", async () => {
+        expect.hasAssertions()
+        try {
+            const message = mockMessage("audio", "nome audio")
+            const attachment = {
+                contentType: "application/json"
+            }
+            message.attachments = new Map([
+                ["1", attachment]
+            ])
+            await run(mockBot(), message)
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
+
+    test("deveria dar erro se o anexo for muito grande", async () => {
+        expect.hasAssertions()
+        try {
+            const message = mockMessage("audio", "nome audio")
+            const attachment = {
+                contentType: "audio/mpeg",
+                size: 100 * 1024 * 1024
+            }
+            message.attachments = new Map([
+                ["1", attachment]
+            ])
+            await run(mockBot(), message)
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
 })
 
 describe('play audio', () => {
