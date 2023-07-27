@@ -109,6 +109,42 @@ describe("figurinha", () => {
         expect(message.reply).toBeCalledTimes(1)
     })
 
+    test("deveria dar erro ao tentar processar uma imagem maior que o limite definido", async () => {
+        expect.hasAssertions()
+
+        const message = mockMessage("figurinha", "João")
+        const attachment = {
+            url: path.resolve("images", "domingo_a_noite.png"),
+            name: "domingo_a_noite.png",
+            contentType: "image/png",
+            size: 100 * 1024 * 1024
+        }
+        message.attachments = new Map([
+            ["1", attachment]
+        ])
+        axios.get.mockImplementation((url, options) => {
+            expect(url).toEqual(attachment.url)
+            expect(options).toMatchObject({
+                responseType: 'stream'
+            })
+
+            const response = {
+                data: fs.createReadStream(attachment.url),
+                headers: {
+                    "content-type": attachment.contentType
+                }
+            }
+            return response
+        })
+
+        try {
+            await run(mockBot(), message)
+        } catch (error) {
+            console.error(error)
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
+
     test("deveria criar uma figurinha com sucesso utilizando a imagem da mensagem original", async () => {
         const message = mockMessage("figurinha", "João")
         message.reference = {

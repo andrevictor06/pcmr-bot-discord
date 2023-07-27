@@ -8,6 +8,7 @@ const { AUDIO_QUEUE_NAME, MUSIC_QUEUE_NAME } = require('../utils/constants')
 const { default: axios } = require('axios')
 const { MP3Cutter } = require('mp3-cutter')
 
+// TODO: adicionar pasta audio no gitignore
 const commands = {
     audio: {
         fn: audio,
