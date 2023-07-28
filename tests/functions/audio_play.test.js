@@ -17,7 +17,7 @@ beforeEach(async () => {
     if (fs.existsSync(audioFolderPath)) {
         clearFolder(audioFolderPath)
     }
-    await init(mockBot())
+    init(mockBot())
     fs.copyFileSync(
         path.resolve("tests", "files", "monki-flip.mp3"),
         path.resolve(audioFolderPath, "monki-flip.mp3")
@@ -61,9 +61,17 @@ describe("audio", () => {
         })
     })
 
-    test("não deveria dar erro se não existir nenhum áudio", async () => {
+    test("não deveria dar erro a pasta de áudio não existir", async () => {
         const message = mockMessage('audio')
         clearFolder(audioFolderPath)
+
+        await run(mockBot(), message)
+
+        expect(message.reply).toBeCalledTimes(1)
+    })
+
+    test("não deveria dar erro se não existir nenhum áudio", async () => {
+        const message = mockMessage('audio')
 
         await run(mockBot(), message)
 
