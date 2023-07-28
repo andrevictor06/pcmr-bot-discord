@@ -61,6 +61,15 @@ describe("audio", () => {
         })
     })
 
+    test("não deveria dar erro se não existir nenhum áudio", async () => {
+        const message = mockMessage('audio')
+        clearFolder(audioFolderPath)
+
+        await run(mockBot(), message)
+
+        expect(message.reply).toBeCalledTimes(1)
+    })
+
     test("deveria dar erro se não for enviado o áudio", async () => {
         expect.hasAssertions()
         try {
