@@ -10,7 +10,7 @@ function getSchedule(){
 
 function run(bot){
     bot.channels.fetch(process.env.ID_CHANNEL_UPGOOGLE).then( channel => { 
-        channel.send({files: ["./images/monkey-sleep.gif"]})
+        channel.send({files: ["./assets/monkey-sleep.gif"]})
     });
 }
 

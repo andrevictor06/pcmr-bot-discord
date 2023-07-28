@@ -19,8 +19,8 @@ beforeEach(async () => {
     }
     init(mockBot())
     fs.copyFileSync(
-        path.resolve("tests", "files", "monki-flip.mp3"),
-        path.resolve(audioFolderPath, "monki-flip.mp3")
+        path.resolve("assets", "dilera-mamaco.mp3"),
+        path.resolve(audioFolderPath, "dilera-mamaco.mp3")
     )
 })
 
@@ -131,10 +131,10 @@ describe("audio", () => {
 
     test("deveria salvar um áudio com sucesso", async () => {
         const message = mockMessage("audio", "monki flip")
-        const audioPath = path.resolve("tests", "files", "monki-flip.mp3")
+        const audioPath = path.resolve("assets", "dilera-mamaco.mp3")
         const attachment = {
             url: audioPath,
-            name: "monki-flip.mp3",
+            name: "dilera-mamaco.mp3",
             contentType: "audio/mpeg",
             size: fs.statSync(audioPath).size
         }
@@ -170,10 +170,10 @@ describe("audio", () => {
         message.reference = {
             messageId: randomUUID()
         }
-        const audioPath = path.resolve("tests", "files", "monki-flip.mp3")
+        const audioPath = path.resolve("assets", "dilera-mamaco.mp3")
         const attachment = {
             url: audioPath,
-            name: "monki-flip.mp3",
+            name: "dilera-mamaco.mp3",
             contentType: "audio/mpeg",
             size: fs.statSync(audioPath).size
         }
@@ -475,7 +475,7 @@ describe("deletar_audio", () => {
         const bot = mockBot()
         const message = mockMessage("deletar_audio", audioName)
         fs.copyFileSync(
-            path.resolve("tests", "files", "monki-flip.mp3"),
+            path.resolve("assets", "dilera-mamaco.mp3"),
             audioPath
         )
 
