@@ -228,7 +228,7 @@ function run(bot, msg) {
 }
 
 function getAudioName(audio) {
-    return audio.split("-").join(" ").replace(/(^\w{1})|(\s+\w{1})/g, letter => letter.toUpperCase())
+    return path.basename(audio, path.extname(audio))
 }
 
 function canHandle(bot, msg) {
