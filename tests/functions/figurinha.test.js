@@ -60,7 +60,7 @@ describe("figurinha", () => {
     test("deveria criar uma figurinha com sucesso", async () => {
         const message = mockMessage("figurinha", "João")
         const attachment = {
-            url: path.resolve("images", "domingo_a_noite.png"),
+            url: path.resolve("assets", "domingo_a_noite.png"),
             name: "domingo_a_noite.png",
             contentType: "image/png"
         }
@@ -105,7 +105,7 @@ describe("figurinha", () => {
 
         const message = mockMessage("figurinha", "João")
         const attachment = {
-            url: path.resolve("images", "domingo_a_noite.png"),
+            url: path.resolve("assets", "domingo_a_noite.png"),
             name: "domingo_a_noite.png",
             contentType: "image/png",
             size: 100 * 1024 * 1024
@@ -142,7 +142,7 @@ describe("figurinha", () => {
             messageId: randomUUID()
         }
         const attachment = {
-            url: path.resolve("images", "domingo_a_noite.png"),
+            url: path.resolve("assets", "domingo_a_noite.png"),
             name: "domingo_a_noite.png",
             contentType: "image/png"
         }
@@ -190,7 +190,7 @@ describe("figurinha", () => {
     })
 
     test("deveria criar uma figurinha com sucesso a partir de uma URL", async () => {
-        const imageUrl = path.resolve("images", "domingo_a_noite.png")
+        const imageUrl = path.resolve("assets", "domingo_a_noite.png")
         const message = mockMessage("figurinha", "João", "--url " + imageUrl)
         axios.get.mockImplementation((url, options) => {
             expect(url).toEqual(imageUrl)
@@ -228,7 +228,7 @@ describe("figurinha", () => {
     test("deveria criar uma figurinha de gif com sucesso", async () => {
         const message = mockMessage("figurinha", "nome figurinha")
         const attachment = {
-            url: path.resolve("images", "monkey-sleep.gif"),
+            url: path.resolve("assets", "monkey-sleep.gif"),
             name: "monkey-sleep.gif",
             contentType: "image/gif"
         }
@@ -277,7 +277,7 @@ describe("figurinha", () => {
         figurinhas[stickerName] = stickerPath
         localStorage.setItem(STICKERS, JSON.stringify(figurinhas))
         fs.copyFileSync(
-            path.resolve("images", "domingo_a_noite.png"),
+            path.resolve("assets", "domingo_a_noite.png"),
             stickerPath
         )
 
@@ -311,7 +311,7 @@ describe("figurinha", () => {
         figurinhas[stickerName] = stickerPath
         localStorage.setItem(STICKERS, JSON.stringify(figurinhas))
         fs.copyFileSync(
-            path.resolve("images", "domingo_a_noite.png"),
+            path.resolve("assets", "domingo_a_noite.png"),
             stickerPath
         )
 
@@ -403,7 +403,7 @@ describe("deletar_figurinha", () => {
         figurinhas[stickerName] = stickerPath
         localStorage.setItem(STICKERS, JSON.stringify(figurinhas))
         fs.copyFileSync(
-            path.resolve("images", "domingo_a_noite.png"),
+            path.resolve("assets", "domingo_a_noite.png"),
             stickerPath
         )
 

@@ -34,9 +34,9 @@ function getRandomPlacaMae() {
 }
 
 function getRandomProcessador() {
-    const lista = fs.readdirSync(path.resolve("images", "processador"))
+    const lista = fs.readdirSync(path.resolve("assets", "processador"))
     const item = getRandomFromArray(lista)
-    return path.resolve("images", "processador", item);
+    return path.resolve("assets", "processador", item);
 }
 
 function command(commandName) {
