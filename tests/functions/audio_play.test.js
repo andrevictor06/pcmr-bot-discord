@@ -214,6 +214,18 @@ describe("audio", () => {
     test("deveria executar o canHandle corretamente", () => {
         expect(canHandle(mockBot(), mockMessage('audio'))).toBeTruthy()
     })
+
+    test("deveria dar erro ao tentar criar uma figurinha quando a pasta tiver atingido o limite", async () => {
+        process.env.PASTA_AUDIO_LIMITE = 10
+
+        expect.hasAssertions()
+
+        try {
+            await run(mockBot(), mockMessage("audio", "nome audio"))
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
 })
 
 describe('play audio', () => {
