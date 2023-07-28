@@ -70,7 +70,7 @@ async function play(bot, msg, audio) {
     if (!serverQueue) {
         serverQueue = createServerQueue(bot, msg)
     }
-    const audioPath = path.resolve("audio", audio)
+    const audioPath = path.isAbsolute(audio) ? audio : path.resolve("audio", audio)
     const resource = createAudioResource(fs.createReadStream(audioPath, { highWaterMark: 1024 * 1024 }))
     serverQueue.player.play(resource)
 }
@@ -243,7 +243,7 @@ function helpComand(bot, msg) {
 
 function runAudioPlay(bot, channelId, audio) {
     bot.channels.fetch(channelId).then(channel => {
-        play(bot, { member: { voice: { channel: channel } } }, audio)
+        play(bot, { member: { voice: { channel: channel } } }, path.resolve("assets", audio))
     })
 }
 
