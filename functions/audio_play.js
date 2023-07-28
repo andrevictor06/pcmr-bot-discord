@@ -136,8 +136,11 @@ async function eventStopAudio(event) {
 }
 
 async function listAudios(bot, msg) {
-    const audios = fs.readdirSync("./audio")
+    if (!fs.existsSync(process.env.PASTA_AUDIO)) {
+        return msg.reply("Sem áudios por enquanto")
+    }
 
+    const audios = fs.readdirSync("./audio")
     Utils.chunkArray(audios, 5).forEach(list => {
         const buttons = list.map(audio => {
             bot.addInteractionCreate(process.env.ENVIRONMENT + "btn_audio_" + audio, eventPlayAudio)
