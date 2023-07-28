@@ -14,7 +14,7 @@ function init(bot) {
         app.use(helmet({ crossOriginResourcePolicy: false }))
         app.use(cors())
         app.use('/images/figurinhas', express.static("images/figurinhas"))
-        app.use('/bot/audios', express.static("audio"))
+        app.use('/assets/audios', express.static("audio"))
     } else {
         //app.use(checkTokenBearer)
         app.use(helmet())
