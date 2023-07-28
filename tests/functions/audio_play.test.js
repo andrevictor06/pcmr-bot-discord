@@ -5,7 +5,7 @@ const { clearSharedVariables, sharedVariableExists } = require("../../utils/shar
 const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME } = require('../../utils/constants')
 const utils = require('../../utils/Utils')
 const { mockMessage, mockBot, mockEventInteraction, mockAudioPlayer, mockVoiceConnection, mockQueueObject, clearFolder } = require('../utils_test')
-const { run, canHandle } = require('../../functions/audio_play')
+const { init, run, canHandle } = require('../../functions/audio_play')
 const { joinVoiceChannel, AudioPlayerStatus } = require("@discordjs/voice")
 const { ExpectedError } = require("../../utils/expected_error")
 const { randomUUID } = require('crypto')
@@ -13,11 +13,11 @@ const { randomUUID } = require('crypto')
 const audioFolderPath = path.resolve(process.env.PASTA_AUDIO)
 const defaultImageExtension = ".mp3"
 
-beforeEach(() => {
+beforeEach(async () => {
     if (fs.existsSync(audioFolderPath)) {
         clearFolder(audioFolderPath)
     }
-    fs.mkdirSync(audioFolderPath)
+    await init(mockBot())
     fs.copyFileSync(
         path.resolve("tests", "files", "monki-flip.mp3"),
         path.resolve(audioFolderPath, "monki-flip.mp3")

@@ -254,6 +254,12 @@ function checkAudioFolderSizeLimit() {
     }
 }
 
+function init(bot) {
+    if (!fs.existsSync(audioFolderPath)) {
+        fs.mkdirSync(audioFolderPath)
+    }
+}
+
 module.exports = {
-    run, canHandle, helpComand, runAudioPlay
+    init, run, canHandle, helpComand, runAudioPlay
 }
