@@ -1,12 +1,28 @@
+const { default: axios } = require('axios')
 const fs = require("fs")
 const path = require('path')
 const { clearSharedVariables, sharedVariableExists } = require("../../utils/shared_variables")
 const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME } = require('../../utils/constants')
 const utils = require('../../utils/Utils')
-const { mockMessage, mockBot, mockEventInteraction, mockAudioPlayer, mockVoiceConnection, mockQueueObject } = require('../utils_test')
+const { mockMessage, mockBot, mockEventInteraction, mockAudioPlayer, mockVoiceConnection, mockQueueObject, clearFolder } = require('../utils_test')
 const { run, canHandle } = require('../../functions/audio_play')
 const { joinVoiceChannel, AudioPlayerStatus } = require("@discordjs/voice")
 const { ExpectedError } = require("../../utils/expected_error")
+const { randomUUID } = require('crypto')
+
+const audioFolderPath = path.resolve(process.env.PASTA_AUDIO)
+const defaultImageExtension = ".mp3"
+
+beforeEach(() => {
+    if (fs.existsSync(audioFolderPath)) {
+        clearFolder(audioFolderPath)
+    }
+    fs.mkdirSync(audioFolderPath)
+    fs.copyFileSync(
+        path.resolve("tests", "files", "monki-flip.mp3"),
+        path.resolve(audioFolderPath, "monki-flip.mp3")
+    )
+})
 
 afterEach(() => {
     clearSharedVariables()
@@ -20,7 +36,7 @@ describe("audio", () => {
         const chunksSize = 5
         const bot = mockBot()
         const message = mockMessage('audio')
-        const audios = fs.readdirSync(path.resolve('audio'))
+        const audios = fs.readdirSync(path.resolve(process.env.PASTA_AUDIO))
         const audioButtonId = process.env.ENVIRONMENT + "btn_audio_" + audios[0]
 
         await run(bot, message)
@@ -44,6 +60,143 @@ describe("audio", () => {
             ]
         })
     })
+
+    test("deveria dar erro se não for enviado o áudio", async () => {
+        expect.hasAssertions()
+        try {
+            await run(mockBot(), mockMessage("audio", "nome do audio"))
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
+
+    test("deveria dar erro o tempo inical for maior que o final", async () => {
+        expect.hasAssertions()
+        try {
+            await run(mockBot(), mockMessage("audio", "nome do audio", "--start 4", "--end 2"))
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
+
+    test("deveria dar erro se o anexo não for um mp3", async () => {
+        expect.hasAssertions()
+        try {
+            const message = mockMessage("audio", "nome audio")
+            const attachment = {
+                contentType: "application/json"
+            }
+            message.attachments = new Map([
+                ["1", attachment]
+            ])
+            await run(mockBot(), message)
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
+
+    test("deveria dar erro se o anexo for muito grande", async () => {
+        expect.hasAssertions()
+        try {
+            const message = mockMessage("audio", "nome audio")
+            const attachment = {
+                contentType: "audio/mpeg",
+                size: 100 * 1024 * 1024
+            }
+            message.attachments = new Map([
+                ["1", attachment]
+            ])
+            await run(mockBot(), message)
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
+
+    test("deveria salvar um áudio com sucesso", async () => {
+        const message = mockMessage("audio", "monki flip")
+        const audioPath = path.resolve("tests", "files", "monki-flip.mp3")
+        const attachment = {
+            url: audioPath,
+            name: "monki-flip.mp3",
+            contentType: "audio/mpeg",
+            size: fs.statSync(audioPath).size
+        }
+        message.attachments = new Map([
+            ["1", attachment]
+        ])
+        axios.get.mockImplementation((url, options) => {
+            expect(url).toEqual(attachment.url)
+            expect(options).toMatchObject({
+                responseType: 'stream'
+            })
+
+            const response = {
+                data: fs.createReadStream(attachment.url),
+                headers: {
+                    "content-type": attachment.contentType
+                }
+            }
+            return response
+        })
+
+        await run(mockBot(), message)
+
+        const files = fs.readdirSync(audioFolderPath)
+        expect(files).toBeTruthy()
+        expect(files.find(v => v == "monki_flip.mp3")).toBeDefined()
+
+        expect(message.reply).toBeCalledTimes(1)
+    })
+
+    test("deveria salvar um áudio com sucesso utilizando o áudio da mensagem original", async () => {
+        const message = mockMessage("audio", "monki flip")
+        message.reference = {
+            messageId: randomUUID()
+        }
+        const audioPath = path.resolve("tests", "files", "monki-flip.mp3")
+        const attachment = {
+            url: audioPath,
+            name: "monki-flip.mp3",
+            contentType: "audio/mpeg",
+            size: fs.statSync(audioPath).size
+        }
+        const repliedMessage = mockMessage("mensagem")
+        repliedMessage.attachments = new Map([
+            ["1", attachment]
+        ])
+        message.channel.messages.fetch.mockImplementation(messageId => {
+            expect(messageId).toEqual(message.reference.messageId)
+            return repliedMessage
+        })
+        axios.get.mockImplementation((url, options) => {
+            expect(url).toEqual(attachment.url)
+            expect(options).toMatchObject({
+                responseType: 'stream'
+            })
+
+            const response = {
+                data: fs.createReadStream(attachment.url),
+                headers: {
+                    "content-type": attachment.contentType
+                }
+            }
+            return response
+        })
+
+        await run(mockBot(), message)
+
+        expect(message.channel.messages.fetch).toBeCalledTimes(1)
+
+        const files = fs.readdirSync(audioFolderPath)
+        expect(files).toBeTruthy()
+        expect(files.find(v => v == "monki_flip.mp3")).toBeDefined()
+
+        expect(message.reply).toBeCalledTimes(1)
+    })
+
+    test("deveria executar o canHandle corretamente", () => {
+        expect(canHandle(mockBot(), mockMessage('audio'))).toBeTruthy()
+    })
 })
 
 describe('play audio', () => {
@@ -51,7 +204,7 @@ describe('play audio', () => {
         jest.spyOn(fs, 'createReadStream')
         const bot = mockBot()
         const message = mockMessage('audio')
-        const audios = fs.readdirSync(path.resolve('audio'))
+        const audios = fs.readdirSync(path.resolve(process.env.PASTA_AUDIO))
         const audio = audios[0]
         const audioButtonId = process.env.ENVIRONMENT + "btn_audio_" + audio
         const event = mockEventInteraction(audioButtonId, bot)
@@ -78,7 +231,7 @@ describe('play audio', () => {
         jest.spyOn(fs, 'createReadStream')
         const bot = mockBot()
         const message = mockMessage('audio')
-        const audios = fs.readdirSync(path.resolve('audio'))
+        const audios = fs.readdirSync(path.resolve(process.env.PASTA_AUDIO))
         const audio = audios[0]
         const audioButtonId = process.env.ENVIRONMENT + "btn_audio_" + audio
         const event = mockEventInteraction(audioButtonId, bot)
@@ -103,7 +256,7 @@ describe('play audio', () => {
     test("deveria tocar um áudio com sucesso mesmo se tiver tocando uma música", async () => {
         const bot = mockBot()
         const message = mockMessage('audio')
-        const audios = fs.readdirSync(path.resolve('audio'))
+        const audios = fs.readdirSync(path.resolve(process.env.PASTA_AUDIO))
         const audioButtonId = process.env.ENVIRONMENT + "btn_audio_" + audios[0]
         const event = mockEventInteraction(audioButtonId, bot)
         const player = mockAudioPlayer()
@@ -127,7 +280,7 @@ describe('play audio', () => {
     test("deveria ocorrer um erro ao tentar tocar um áudio quando o bot já estiver tocando música em outra sala", async () => {
         const bot = mockBot()
         const message = mockMessage('audio')
-        const audios = fs.readdirSync(path.resolve('audio'))
+        const audios = fs.readdirSync(path.resolve(process.env.PASTA_AUDIO))
         const audioButtonId = process.env.ENVIRONMENT + "btn_audio_" + audios[0]
         const event = mockEventInteraction(audioButtonId, bot)
         mockAudioPlayer()
@@ -153,7 +306,7 @@ describe('stop audio', () => {
     test("deveria parar de tocar um audio quando o usuário clicar no botão de parar", async () => {
         const bot = mockBot()
         const message = mockMessage('audio')
-        const audios = fs.readdirSync(path.resolve('audio'))
+        const audios = fs.readdirSync(path.resolve(process.env.PASTA_AUDIO))
         const audio = audios[0]
         const audioButtonId = process.env.ENVIRONMENT + "btn_audio_" + audio
         const event = mockEventInteraction(audioButtonId, bot)
@@ -177,7 +330,7 @@ describe('stop audio', () => {
     test("deveria desconectar da sala quando o áudio terminar de tocar", async () => {
         const bot = mockBot()
         const message = mockMessage('audio')
-        const audios = fs.readdirSync(path.resolve('audio'))
+        const audios = fs.readdirSync(path.resolve(process.env.PASTA_AUDIO))
         const audio = audios[0]
         const audioButtonId = process.env.ENVIRONMENT + "btn_audio_" + audio
         const event = mockEventInteraction(audioButtonId, bot)
@@ -201,7 +354,7 @@ describe('stop audio', () => {
     test("deveria parar de tocar o audio e voltar a música quando o usuário clicar no botão de parar", async () => {
         const bot = mockBot()
         const message = mockMessage('audio')
-        const audios = fs.readdirSync(path.resolve('audio'))
+        const audios = fs.readdirSync(path.resolve(process.env.PASTA_AUDIO))
         const audio = audios[0]
         const audioButtonId = process.env.ENVIRONMENT + "btn_audio_" + audio
         const event = mockEventInteraction(audioButtonId, bot)
@@ -227,7 +380,7 @@ describe('stop audio', () => {
     test("deveria voltar a tocar a música quando o áudio terminar de tocar", async () => {
         const bot = mockBot()
         const message = mockMessage('audio')
-        const audios = fs.readdirSync(path.resolve('audio'))
+        const audios = fs.readdirSync(path.resolve(process.env.PASTA_AUDIO))
         const audio = audios[0]
         const audioButtonId = process.env.ENVIRONMENT + "btn_audio_" + audio
         const event = mockEventInteraction(audioButtonId, bot)
@@ -253,7 +406,7 @@ describe('stop audio', () => {
     test("deveria ocorrer um erro quando o usuário clicar no botão de parar e não tiver nenhum áudio tocando", async () => {
         const bot = mockBot()
         const message = mockMessage('audio')
-        const audios = fs.readdirSync(path.resolve('audio'))
+        const audios = fs.readdirSync(path.resolve(process.env.PASTA_AUDIO))
         const audio = audios[0]
         const audioButtonId = process.env.ENVIRONMENT + "btn_audio_" + audio
         const event = mockEventInteraction(audioButtonId, bot)
@@ -271,5 +424,47 @@ describe('stop audio', () => {
         } catch (error) {
             expect(error).toBeInstanceOf(ExpectedError)
         }
+    })
+})
+
+describe("deletar_audio", () => {
+    test("deveria executar o canHandle corretamente", () => {
+        expect(canHandle(mockBot(), mockMessage('deletar_audio'))).toBeTruthy()
+    })
+
+    test("deveria dar erro se não for informado o nome áudio", async () => {
+        expect.hasAssertions()
+
+        try {
+            await run(mockBot(), mockMessage("deletar_audio"))
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
+
+    test("deveria dar erro se o áudio não existir", async () => {
+        expect.hasAssertions()
+
+        try {
+            await run(mockBot(), mockMessage("deletar_audio", "nome figurinha"))
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
+
+    test("deveria deletar o áudio corretamente", async () => {
+        const audioName = "monki_flip"
+        const audioPath = path.resolve(audioFolderPath, audioName + defaultImageExtension)
+        const bot = mockBot()
+        const message = mockMessage("deletar_audio", audioName)
+        fs.copyFileSync(
+            path.resolve("tests", "files", "monki-flip.mp3"),
+            audioPath
+        )
+
+        await run(bot, message)
+
+        expect(fs.existsSync(audioPath)).toBeFalsy()
+        expect(message.reply).toBeCalledTimes(1)
     })
 })

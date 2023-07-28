@@ -1,7 +1,7 @@
 const { default: axios } = require('axios')
 const { init, run, canHandle } = require('../../functions/figurinha')
 const { ExpectedError } = require('../../utils/expected_error')
-const { mockBot, mockMessage } = require('../utils_test')
+const { mockBot, mockMessage, clearFolder } = require('../utils_test')
 const fs = require('fs')
 const path = require('path')
 const { STICKERS } = require('../../utils/constants')
@@ -10,18 +10,9 @@ const { randomUUID } = require('crypto')
 const stickersTestFolder = path.resolve(process.env.PASTA_FIGURINHAS)
 const defaultImageExtension = ".png"
 
-function clearStickersTestFolder(p = stickersTestFolder) {
-    if (fs.statSync(p).isDirectory()) {
-        fs.readdirSync(p).forEach(file => clearStickersTestFolder(path.resolve(p, file)))
-        fs.rmdirSync(p)
-    } else {
-        fs.rmSync(p)
-    }
-}
-
 beforeEach(async () => {
     if (fs.existsSync(stickersTestFolder)) {
-        clearStickersTestFolder()
+        clearFolder(stickersTestFolder)
     }
     localStorage.clear()
     await init(mockBot())
@@ -109,6 +100,42 @@ describe("figurinha", () => {
         expect(message.reply).toBeCalledTimes(1)
     })
 
+    test("deveria dar erro ao tentar processar uma imagem maior que o limite definido", async () => {
+        expect.hasAssertions()
+
+        const message = mockMessage("figurinha", "João")
+        const attachment = {
+            url: path.resolve("images", "domingo_a_noite.png"),
+            name: "domingo_a_noite.png",
+            contentType: "image/png",
+            size: 100 * 1024 * 1024
+        }
+        message.attachments = new Map([
+            ["1", attachment]
+        ])
+        axios.get.mockImplementation((url, options) => {
+            expect(url).toEqual(attachment.url)
+            expect(options).toMatchObject({
+                responseType: 'stream'
+            })
+
+            const response = {
+                data: fs.createReadStream(attachment.url),
+                headers: {
+                    "content-type": attachment.contentType
+                }
+            }
+            return response
+        })
+
+        try {
+            await run(mockBot(), message)
+        } catch (error) {
+            console.error(error)
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
+
     test("deveria criar uma figurinha com sucesso utilizando a imagem da mensagem original", async () => {
         const message = mockMessage("figurinha", "João")
         message.reference = {
@@ -119,7 +146,7 @@ describe("figurinha", () => {
             name: "domingo_a_noite.png",
             contentType: "image/png"
         }
-        const repliedMessage = mockMessage("mensagme")
+        const repliedMessage = mockMessage("mensagem")
         repliedMessage.attachments = new Map([
             ["1", attachment]
         ])

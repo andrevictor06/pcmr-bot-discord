@@ -34,7 +34,7 @@ function getRandomPlacaMae() {
 }
 
 function getRandomProcessador() {
-    const lista = fs.readdirSync( path.resolve("images", "processador"))
+    const lista = fs.readdirSync(path.resolve("images", "processador"))
     const item = getRandomFromArray(lista)
     return path.resolve("images", "processador", item);
 }
@@ -197,6 +197,27 @@ function nowInSeconds() {
     return Math.trunc(new Date().getTime() / 1000)
 }
 
+function getFirstAttachmentFrom(msg, allowedContentTypes, maxSize) {
+    if (msg.attachments?.size == null || msg.attachments.size == 0) return null
+    const attachment = msg.attachments.values().next().value
+    if (allowedContentTypes && Array.isArray(allowedContentTypes)) {
+        if (!allowedContentTypes.includes(attachment.contentType)) {
+            throw new ExpectedError(`Anexo com formato [${attachment.contentType}] inválido!`)
+        }
+    }
+    if (attachment.size > maxSize) throw new ExpectedError("Arquivo muito grande man, não consigo")
+    return attachment
+}
+
+function normalizeString(str) {
+    return str
+        .trim()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/ /g, "_")
+        .toLowerCase()
+}
+
 module.exports = {
     getRandomPlacaMae,
     getRandomProcessador,
@@ -215,5 +236,7 @@ module.exports = {
     parseArgs,
     getRandomFromArray,
     nowInSeconds,
-    replaceAll
+    replaceAll,
+    getFirstAttachmentFrom,
+    normalizeString
 }
