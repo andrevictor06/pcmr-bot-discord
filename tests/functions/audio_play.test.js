@@ -193,6 +193,10 @@ describe("audio", () => {
 
         expect(message.reply).toBeCalledTimes(1)
     })
+
+    test("deveria executar o canHandle corretamente", () => {
+        expect(canHandle(mockBot(), mockMessage('audio'))).toBeTruthy()
+    })
 })
 
 describe('play audio', () => {
@@ -420,5 +424,47 @@ describe('stop audio', () => {
         } catch (error) {
             expect(error).toBeInstanceOf(ExpectedError)
         }
+    })
+})
+
+describe("deletar_audio", () => {
+    test("deveria executar o canHandle corretamente", () => {
+        expect(canHandle(mockBot(), mockMessage('deletar_audio'))).toBeTruthy()
+    })
+
+    test("deveria dar erro se não for informado o nome áudio", async () => {
+        expect.hasAssertions()
+
+        try {
+            await run(mockBot(), mockMessage("deletar_audio"))
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
+
+    test("deveria dar erro se o áudio não existir", async () => {
+        expect.hasAssertions()
+
+        try {
+            await run(mockBot(), mockMessage("deletar_audio", "nome figurinha"))
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+        }
+    })
+
+    test("deveria deletar o áudio corretamente", async () => {
+        const audioName = "monki_flip"
+        const audioPath = path.resolve(audioFolderPath, audioName + defaultImageExtension)
+        const bot = mockBot()
+        const message = mockMessage("deletar_audio", audioName)
+        fs.copyFileSync(
+            path.resolve("tests", "files", "monki-flip.mp3"),
+            audioPath
+        )
+
+        await run(bot, message)
+
+        expect(fs.existsSync(audioPath)).toBeFalsy()
+        expect(message.reply).toBeCalledTimes(1)
     })
 })
