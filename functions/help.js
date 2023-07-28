@@ -1,8 +1,8 @@
 const fs = require('fs')
 const Utils = require("../utils/Utils")
 
-function run(bot, msg) {
-    let comands = ""
+function getHelpCommands(bot, msg){
+    
     let fields = []
     fs.readdirSync("./functions").forEach(fnFile => {
         try {
@@ -19,7 +19,12 @@ function run(bot, msg) {
             console.log(fnFile)
         }
     })
+    return fields
+}
 
+function run(bot, msg) {
+    let fields = getHelpCommands(bot, msg)
+    
     const exampleEmbed = {
         color: 0x0099ff,
         author: {
@@ -48,5 +53,5 @@ function helpComand(bot, msg) {
 }
 
 module.exports = {
-    run, canHandle, helpComand
+    run, canHandle, helpComand, getHelpCommands
 }

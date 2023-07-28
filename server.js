@@ -6,6 +6,7 @@ const helmet = require("helmet")
 const cors = require("cors")
 const hpp = require('hpp')
 const Utils = require("./utils/Utils")
+const bcrypt = require('bcrypt');
 
 function init(bot) {
     const app = express()
@@ -13,7 +14,9 @@ function init(bot) {
         app.use(helmet({ crossOriginResourcePolicy: false }))
         app.use(cors())
         app.use('/images/figurinhas', express.static("images/figurinhas"))
+        app.use('/bot/audios', express.static("audio"))
     } else {
+        //app.use(checkTokenBearer)
         app.use(helmet())
     }
     app.use(bodyParser.json())
@@ -41,6 +44,27 @@ function initRoutes(app, bot) {
             app.use(routePath, route.router)
         })
     } catch (error) { Utils.logError(bot, error, __filename) }
+}
+
+function checkTokenBearer(req, res, next){
+    let token = req.headers['x-acess-token'] || req.headers['authorization']
+    if( ! token){
+        return res.status(401).send({"message": "Token não informado."})
+    }
+
+    if(token.startsWith("Bearer ")){
+        token = token.substr(7)
+    }
+
+    if(token){
+        if( bcrypt.compareSync(process.env.TOKEN_SECRET_PASSWORD, token)){
+            next()
+        }else{
+            return res.status(401).send({"message": "Token inválido."})
+        }
+    }else{
+        return res.status(401).send({"message": "Token inválido."})
+    }
 }
 
 module.exports = {
