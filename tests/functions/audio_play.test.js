@@ -109,6 +109,28 @@ describe("audio", () => {
         }
     })
 
+    test("deveria dar erro tempo inicial for negativo", async () => {
+        jest.spyOn(utils, 'getFirstAttachmentFrom')
+        expect.hasAssertions()
+        try {
+            await run(mockBot(), mockMessage("audio", "nome do audio", "--start -5", "--end 50"))
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+            expect(utils.getFirstAttachmentFrom).toBeCalledTimes(0)
+        }
+    })
+
+    test("deveria dar erro tempo final for negativo", async () => {
+        jest.spyOn(utils, 'getFirstAttachmentFrom')
+        expect.hasAssertions()
+        try {
+            await run(mockBot(), mockMessage("audio", "nome do audio", "--start 5", "--end -50"))
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+            expect(utils.getFirstAttachmentFrom).toBeCalledTimes(0)
+        }
+    })
+
     test("deveria dar erro se o anexo não for um mp3", async () => {
         expect.hasAssertions()
         try {
