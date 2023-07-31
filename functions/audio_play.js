@@ -173,6 +173,7 @@ async function saveAudio(bot, msg, args) {
     checkAudioFolderSizeLimit()
     if (!args.mainParam) throw new ExpectedError("Cadê o nome do áudio?")
     if (args.params?.start > args.params?.end) throw new ExpectedError("O tempo final precisa ser > tempo inicial")
+    if (args.params?.end - args.params?.start > 30) throw new ExpectedError("O áudio não pode ter mais que 30s de duração man")
 
     let messageToFindAttachment = msg
     if (msg.reference?.messageId) {
