@@ -6,9 +6,8 @@ const { ExpectedError } = require('../utils/expected_error')
 const { setSharedVariable, getSharedVariable, deleteSharedVariable } = require("../utils/shared_variables")
 const { AUDIO_QUEUE_NAME, MUSIC_QUEUE_NAME } = require('../utils/constants')
 const { default: axios } = require('axios')
-const { MP3Cutter } = require('mp3-cutter')
+const { cutMP3 } = require('mp3-cutter')
 
-// TODO: adicionar pasta audio no gitignore
 const commands = {
     audio: {
         fn: audio,
@@ -172,6 +171,7 @@ async function audio(bot, msg) {
 async function saveAudio(bot, msg, args) {
     checkAudioFolderSizeLimit()
     if (!args.mainParam) throw new ExpectedError("Cadê o nome do áudio?")
+    if (args.params.start < 0 || args.params.end < 0) throw new ExpectedError("E esses tempos negativos aí man?")
     if (args.params?.start > args.params?.end) throw new ExpectedError("O tempo final precisa ser > tempo inicial")
     if (args.params?.end - args.params?.start > 30) throw new ExpectedError("O áudio não pode ter mais que 30s de duração man")
 
@@ -191,7 +191,7 @@ async function saveAudio(bot, msg, args) {
         const start = args.params.start || 0
         const end = args.params.end || 30
         response.data
-            .pipe(new MP3Cutter({ start, end }))
+            .pipe(cutMP3({ start, end }))
             .pipe(fs.createWriteStream(audioPath))
             .on("finish", () => {
                 try {
