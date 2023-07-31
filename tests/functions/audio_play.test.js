@@ -88,11 +88,24 @@ describe("audio", () => {
     })
 
     test("deveria dar erro o tempo inical for maior que o final", async () => {
+        jest.spyOn(utils, 'getFirstAttachmentFrom')
         expect.hasAssertions()
         try {
             await run(mockBot(), mockMessage("audio", "nome do audio", "--start 4", "--end 2"))
         } catch (error) {
             expect(error).toBeInstanceOf(ExpectedError)
+            expect(utils.getFirstAttachmentFrom).toBeCalledTimes(0)
+        }
+    })
+
+    test("deveria dar erro se o tempo final - tempo inicial for maior que 30s", async () => {
+        jest.spyOn(utils, 'getFirstAttachmentFrom')
+        expect.hasAssertions()
+        try {
+            await run(mockBot(), mockMessage("audio", "nome do audio", "--start 5", "--end 50"))
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+            expect(utils.getFirstAttachmentFrom).toBeCalledTimes(0)
         }
     })
 
