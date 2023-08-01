@@ -200,13 +200,31 @@ function nowInSeconds() {
 function getFirstAttachmentFrom(msg, allowedContentTypes, maxSize) {
     if (msg.attachments?.size == null || msg.attachments.size == 0) return null
     const attachment = msg.attachments.values().next().value
-    if (allowedContentTypes && Array.isArray(allowedContentTypes)) {
-        if (!allowedContentTypes.includes(attachment.contentType)) {
-            throw new ExpectedError(`Anexo com formato [${attachment.contentType}] inválido!`)
-        }
-    }
-    if (attachment.size > maxSize) throw new ExpectedError("Arquivo muito grande man, não consigo")
+    checkContentType(attachment.contentType, allowedContentTypes)
+    checkContentLength(attachment.size, maxSize)
     return attachment
+}
+
+function checkContentLengthAndType(axiosResponse, allowedContentTypes, maxContentLength) {
+    checkContentType(axiosResponse.headers.get("Content-Type"), allowedContentTypes)
+    checkContentLength(axiosResponse.headers.get("Content-Length"), maxContentLength)
+}
+
+function checkContentType(contentType, allowedContentTypes) {
+    const message = "Formato de arquivo não permitido"
+    if (Array.isArray(allowedContentTypes)) {
+        if (!allowedContentTypes.includes(contentType)) {
+            throw new ExpectedError(message)
+        }
+    } else if (contentType != allowedContentTypes) {
+        throw new ExpectedError(message)
+    }
+}
+
+function checkContentLength(contentLength, maxContentLength) {
+    if (maxContentLength && contentLength > maxContentLength) {
+        throw new ExpectedError("Arquivo muito grande man, não consigo")
+    }
 }
 
 function normalizeString(str) {
@@ -238,5 +256,6 @@ module.exports = {
     nowInSeconds,
     replaceAll,
     getFirstAttachmentFrom,
-    normalizeString
+    normalizeString,
+    checkContentLengthAndType
 }
