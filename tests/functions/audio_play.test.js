@@ -202,6 +202,35 @@ describe("audio", () => {
         expect(message.reply).toBeCalledTimes(1)
     })
 
+    test("deveria salvar um áudio com sucesso a partir de uma URL", async () => {
+        const audioUrl = path.resolve("assets", "dilera-mamaco.mp3")
+        const message = mockMessage("audio", "monki flip", "--url", audioUrl)
+        axios.get.mockImplementation((url, options) => {
+            expect(url).toEqual(audioUrl)
+            expect(options).toMatchObject({
+                responseType: 'stream'
+            })
+
+            const response = {
+                data: fs.createReadStream(audioUrl),
+                headers: mockAxiosHeaders({
+                    "Content-Type": "audio/mpeg",
+                    "Content-Length": fs.statSync(audioUrl).size
+                })
+            }
+
+            return response
+        })
+
+        await run(mockBot(), message)
+
+        const files = fs.readdirSync(audioFolderPath)
+        expect(files).toBeTruthy()
+        expect(files.find(v => v == "monki_flip.mp3")).toBeDefined()
+
+        expect(message.reply).toBeCalledTimes(1)
+    })
+
     test("deveria salvar um áudio com sucesso utilizando o áudio da mensagem original", async () => {
         const message = mockMessage("audio", "monki flip")
         message.reference = {
