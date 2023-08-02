@@ -1,14 +1,15 @@
-const { default: axios, AxiosHeaders } = require('axios')
+const { default: axios } = require('axios')
 const fs = require("fs")
 const path = require('path')
 const { clearSharedVariables, sharedVariableExists } = require("../../utils/shared_variables")
 const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME } = require('../../utils/constants')
 const utils = require('../../utils/Utils')
-const { mockMessage, mockBot, mockEventInteraction, mockAudioPlayer, mockVoiceConnection, mockQueueObject, clearFolder, mockAxiosHeaders } = require('../utils_test')
+const { mockMessage, mockBot, mockEventInteraction, mockAudioPlayer, mockVoiceConnection, mockQueueObject, clearFolder, mockAxiosHeaders, fakeYtUrl, mockBasicInfo } = require('../utils_test')
 const { init, run, canHandle } = require('../../functions/audio_play')
 const { joinVoiceChannel, AudioPlayerStatus } = require("@discordjs/voice")
 const { ExpectedError } = require("../../utils/expected_error")
 const { randomUUID } = require('crypto')
+const playdl = require('play-dl')
 
 const audioFolderPath = path.resolve(process.env.PASTA_AUDIO)
 const defaultImageExtension = ".mp3"
@@ -98,11 +99,11 @@ describe("audio", () => {
         }
     })
 
-    test("deveria dar erro se o tempo final - tempo inicial for maior que 30s", async () => {
+    test("deveria dar erro se o tempo final - tempo inicial for maior que limite", async () => {
         jest.spyOn(utils, 'getFirstAttachmentFrom')
         expect.hasAssertions()
         try {
-            await run(mockBot(), mockMessage("audio", "nome do audio", "--start 5", "--end 50"))
+            await run(mockBot(), mockMessage("audio", "nome do audio", "--start 5", "--end", parseInt(process.env.AUDIO_MAX_SECONDS) * 2))
         } catch (error) {
             expect(error).toBeInstanceOf(ExpectedError)
             expect(utils.getFirstAttachmentFrom).toBeCalledTimes(0)
@@ -229,6 +230,73 @@ describe("audio", () => {
         expect(files.find(v => v == "monki_flip.mp3")).toBeDefined()
 
         expect(message.reply).toBeCalledTimes(1)
+    })
+
+    test("deveria salvar um áudio com sucesso a partir de um vídeo do youtube", async () => {
+        const audioPath = path.resolve("assets", "dilera-mamaco.mp3")
+        const ytUrl = fakeYtUrl()
+        const message = mockMessage("audio", "monki flip", "--url", ytUrl)
+        mockBasicInfo(ytUrl, "titulo", 5)
+        playdl.stream.mockImplementation((url, options) => {
+            expect(url).toEqual(ytUrl)
+            expect(options).toMatchObject({
+                quality: 1,
+                discordPlayerCompatibility: true
+            })
+
+            return {
+                content_length: fs.statSync(audioPath).size,
+                stream: fs.createReadStream(audioPath)
+            }
+        })
+
+        await run(mockBot(), message)
+
+        const files = fs.readdirSync(audioFolderPath)
+        expect(files).toBeTruthy()
+        expect(files.find(v => v == "monki_flip.webm")).toBeDefined()
+
+        expect(message.reply).toBeCalledTimes(1)
+    })
+
+    test("deveria dar erro ao tentar salvar um vídeo do youtube com duração maior que o limite permitido", async () => {
+        expect.hasAssertions()
+        const ytUrl = fakeYtUrl()
+        const message = mockMessage("audio", "monki flip", "--url", ytUrl)
+        mockBasicInfo(ytUrl, "titulo", 5)
+        playdl.stream.mockImplementation((url, options) => {
+            expect(url).toEqual(ytUrl)
+            expect(options).toMatchObject({
+                quality: 1,
+                discordPlayerCompatibility: true
+            })
+
+            return {
+                content_length: parseInt(process.env.AUDIO_MAX_SIZE) * 2
+            }
+        })
+
+        try {
+            await run(mockBot(), message)
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+            expect(playdl.video_basic_info).toBeCalledTimes(1)
+            expect(playdl.stream).toBeCalledTimes(1)
+        }
+    })
+    test("deveria dar erro ao tentar salvar um vídeo do youtube maior que o limite permitido", async () => {
+        expect.hasAssertions()
+        const ytUrl = fakeYtUrl()
+        const message = mockMessage("audio", "monki flip", "--url", ytUrl)
+        mockBasicInfo(ytUrl, "titulo", parseInt(process.env.AUDIO_MAX_SECONDS) + 10)
+
+        try {
+            await run(mockBot(), message)
+        } catch (error) {
+            expect(error).toBeInstanceOf(ExpectedError)
+            expect(playdl.video_basic_info).toBeCalledTimes(1)
+            expect(playdl.stream).toBeCalledTimes(0)
+        }
     })
 
     test("deveria salvar um áudio com sucesso utilizando o áudio da mensagem original", async () => {

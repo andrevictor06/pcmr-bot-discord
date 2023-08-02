@@ -180,8 +180,8 @@ async function playSong(bot, song) {
         clearDelayedStopTimeout()
 
         const songWithInfo = await loadSongInfo(song)
-        const stream = await playdl.stream(songWithInfo.video_details.url, { quality: 1 })
-        const resource = createAudioResource(stream.stream, { inputType: stream.type })
+        const source = await playdl.stream(songWithInfo.video_details.url, { quality: 1 })
+        const resource = createAudioResource(source.stream, { inputType: source.type })
 
         serverQueue.player.play(resource)
         serverQueue.currentSong = songWithInfo

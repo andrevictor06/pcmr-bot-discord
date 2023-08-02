@@ -91,9 +91,13 @@ function mockAudioPlayer(state = AudioPlayerStatus.Idle, autoMock = true) {
     return player
 }
 
-function mockBasicInfo(url, title) {
+function mockBasicInfo(url, title, durationInSec) {
     const basicInfo = {
-        video_details: { url, title }
+        video_details: {
+            url,
+            title,
+            durationInSec
+        }
     }
     playdl.video_basic_info.mockImplementation(async (urlParam) => {
         if (urlParam != url) throw new Error()

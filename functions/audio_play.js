@@ -7,9 +7,11 @@ const { setSharedVariable, getSharedVariable, deleteSharedVariable } = require("
 const { AUDIO_QUEUE_NAME, MUSIC_QUEUE_NAME } = require('../utils/constants')
 const { default: axios } = require('axios')
 const { cutMP3 } = require('mp3-cutter')
+const playdl = require('play-dl')
 
 const allowedContentTypes = ["audio/mpeg"]
 const audioMaxSize = parseInt(process.env.AUDIO_MAX_SIZE)
+const audioMaxSeconds = parseInt(process.env.AUDIO_MAX_SECONDS)
 const commands = {
     audio: {
         fn: audio,
@@ -175,7 +177,7 @@ async function saveAudio(bot, msg, args) {
     if (!args.mainParam) throw new ExpectedError("Cadê o nome do áudio?")
     if (args.params.start < 0 || args.params.end < 0) throw new ExpectedError("E esses tempos negativos aí man?")
     if (args.params?.start > args.params?.end) throw new ExpectedError("O tempo final precisa ser > tempo inicial")
-    if (args.params?.end - args.params?.start > 30) throw new ExpectedError("O áudio não pode ter mais que 30s de duração man")
+    if (args.params?.end - args.params?.start > audioMaxSeconds) throw new ExpectedError("O áudio não pode ter mais que 30s de duração man")
 
     let messageToFindAttachment = msg
     if (msg.reference?.messageId) {
@@ -185,15 +187,28 @@ async function saveAudio(bot, msg, args) {
     if (!url) throw new ExpectedError("Cadê o áudio?")
 
     const audioName = Utils.normalizeString(args.mainParam)
-    const audioPath = path.resolve(audioFolderPath, audioName + defaultAudioExtension)
-    const response = await axios.get(url, { responseType: 'stream' })
-    Utils.checkContentLengthAndType(response, allowedContentTypes, audioMaxSize)
+    let stream
+    let extension = defaultAudioExtension
+    if (Utils.isValidHttpUrl(url) && new URL(url).host.includes("youtube")) {
+        const info = await playdl.video_basic_info(url)
+        if (info.video_details.durationInSec > audioMaxSeconds) throw new ExpectedError("É um áudio ou uma música?")
+
+        const ytSource = await playdl.stream(url, { quality: 1, discordPlayerCompatibility: true })
+        Utils.checkContentLength(ytSource.content_length, audioMaxSize)
+        extension = ".webm"
+        stream = ytSource.stream
+    } else {
+        const start = args.params.start || 0
+        const end = args.params.end || audioMaxSeconds
+        const response = await axios.get(url, { responseType: 'stream' })
+        Utils.checkContentLengthAndType(response, allowedContentTypes, audioMaxSize)
+        stream = response.data
+            .pipe(cutMP3({ start, end }))
+    }
+    const audioPath = path.resolve(audioFolderPath, audioName + extension)
 
     return new Promise((resolve, reject) => {
-        const start = args.params.start || 0
-        const end = args.params.end || 30
-        response.data
-            .pipe(cutMP3({ start, end }))
+        stream
             .pipe(fs.createWriteStream(audioPath))
             .on("finish", () => {
                 try {
