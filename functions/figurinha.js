@@ -41,7 +41,7 @@ const commands = {
 
 async function init(bot) {
     if (!fs.existsSync(stickersFolderPath)) {
-        fs.mkdirSync(stickersFolderPath)
+        fs.mkdirSync(stickersFolderPath, { recursive: true })
     }
     const stickersJson = localStorage.getItem(STICKERS)
     stickers = stickersJson ? JSON.parse(stickersJson) : {}

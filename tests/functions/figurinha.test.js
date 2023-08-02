@@ -11,9 +11,6 @@ const stickersTestFolder = path.resolve(process.env.PASTA_FIGURINHAS)
 const defaultImageExtension = ".png"
 
 beforeEach(async () => {
-    if (!fs.existsSync(path.resolve("images"))) {
-        fs.mkdirSync(path.resolve("images"))
-    }
     if (fs.existsSync(stickersTestFolder)) {
         clearFolder(stickersTestFolder)
     }
