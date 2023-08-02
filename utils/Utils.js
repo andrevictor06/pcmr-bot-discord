@@ -257,5 +257,6 @@ module.exports = {
     replaceAll,
     getFirstAttachmentFrom,
     normalizeString,
-    checkContentLengthAndType
+    checkContentLengthAndType,
+    checkContentLength
 }
