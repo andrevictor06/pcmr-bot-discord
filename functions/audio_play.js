@@ -202,8 +202,7 @@ async function saveAudio(bot, msg, args) {
         const end = args.params.end || audioMaxSeconds
         const response = await axios.get(url, { responseType: 'stream' })
         Utils.checkContentLengthAndType(response, allowedContentTypes, audioMaxSize)
-        stream = response.data
-            .pipe(cutMP3({ start, end }))
+        stream = response.data.pipe(cutMP3({ start, end }))
     }
     const audioPath = path.resolve(audioFolderPath, audioName + extension)
 
