@@ -201,6 +201,13 @@ function clearFolder(p) {
     }
 }
 
+function mockAxiosHeaders(headers) {
+    headers.get = header => {
+        return headers[header]
+    }
+    return headers
+}
+
 module.exports = {
     mockAudioPlayer,
     mockBasicInfo,
@@ -212,5 +219,6 @@ module.exports = {
     mockEventInteraction,
     mockPlaydlStream,
     fakeYtUrl,
-    clearFolder
+    clearFolder,
+    mockAxiosHeaders
 }

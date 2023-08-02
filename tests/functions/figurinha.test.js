@@ -1,7 +1,7 @@
 const { default: axios } = require('axios')
 const { init, run, canHandle } = require('../../functions/figurinha')
 const { ExpectedError } = require('../../utils/expected_error')
-const { mockBot, mockMessage, clearFolder } = require('../utils_test')
+const { mockBot, mockMessage, clearFolder, mockAxiosHeaders } = require('../utils_test')
 const fs = require('fs')
 const path = require('path')
 const { STICKERS } = require('../../utils/constants')
@@ -59,10 +59,12 @@ describe("figurinha", () => {
 
     test("deveria criar uma figurinha com sucesso", async () => {
         const message = mockMessage("figurinha", "João")
+        const imagePath = path.resolve("assets", "domingo_a_noite.png")
         const attachment = {
-            url: path.resolve("assets", "domingo_a_noite.png"),
+            url: imagePath,
             name: "domingo_a_noite.png",
-            contentType: "image/png"
+            contentType: "image/png",
+            size: fs.statSync(imagePath).size
         }
         message.attachments = new Map([
             ["1", attachment]
@@ -75,9 +77,10 @@ describe("figurinha", () => {
 
             const response = {
                 data: fs.createReadStream(attachment.url),
-                headers: {
-                    "content-type": attachment.contentType
-                }
+                headers: mockAxiosHeaders({
+                    "Content-Type": attachment.contentType,
+                    "Content-Length": attachment.size
+                })
             }
             return response
         })
@@ -121,9 +124,10 @@ describe("figurinha", () => {
 
             const response = {
                 data: fs.createReadStream(attachment.url),
-                headers: {
-                    "content-type": attachment.contentType
-                }
+                headers: mockAxiosHeaders({
+                    "Content-Type": attachment.contentType,
+                    "Content-Length": attachment.size
+                })
             }
             return response
         })
@@ -131,7 +135,6 @@ describe("figurinha", () => {
         try {
             await run(mockBot(), message)
         } catch (error) {
-            console.error(error)
             expect(error).toBeInstanceOf(ExpectedError)
         }
     })
@@ -141,10 +144,12 @@ describe("figurinha", () => {
         message.reference = {
             messageId: randomUUID()
         }
+        const imagePath = path.resolve("assets", "domingo_a_noite.png")
         const attachment = {
-            url: path.resolve("assets", "domingo_a_noite.png"),
+            url: imagePath,
             name: "domingo_a_noite.png",
-            contentType: "image/png"
+            contentType: "image/png",
+            size: fs.statSync(imagePath).size
         }
         const repliedMessage = mockMessage("mensagem")
         repliedMessage.attachments = new Map([
@@ -162,9 +167,10 @@ describe("figurinha", () => {
 
             const response = {
                 data: fs.createReadStream(attachment.url),
-                headers: {
-                    "content-type": attachment.contentType
-                }
+                headers: mockAxiosHeaders({
+                    "Content-Type": attachment.contentType,
+                    "Content-Length": attachment.size
+                })
             }
             return response
         })
@@ -200,9 +206,10 @@ describe("figurinha", () => {
 
             const response = {
                 data: fs.createReadStream(imageUrl),
-                headers: {
-                    "content-type": "image/png"
-                }
+                headers: mockAxiosHeaders({
+                    "Content-Type": "image/png",
+                    "Content-Length": fs.statSync(imageUrl).size
+                })
             }
             return response
         })
@@ -227,10 +234,12 @@ describe("figurinha", () => {
 
     test("deveria criar uma figurinha de gif com sucesso", async () => {
         const message = mockMessage("figurinha", "nome figurinha")
+        const imagePath = path.resolve("assets", "monkey-sleep.gif")
         const attachment = {
             url: path.resolve("assets", "monkey-sleep.gif"),
             name: "monkey-sleep.gif",
-            contentType: "image/gif"
+            contentType: "image/gif",
+            size: fs.statSync(imagePath).size
         }
         message.attachments = new Map([
             ["1", attachment]
@@ -243,9 +252,10 @@ describe("figurinha", () => {
 
             const response = {
                 data: fs.createReadStream(attachment.url),
-                headers: {
-                    "content-type": attachment.contentType
-                }
+                headers: mockAxiosHeaders({
+                    "Content-Type": attachment.contentType,
+                    "Content-Length": attachment.size
+                })
             }
             return response
         })

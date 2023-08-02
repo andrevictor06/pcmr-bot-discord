@@ -9,6 +9,8 @@ const { STICKERS } = require('../utils/constants');
 let stickers
 const stickersFolderPath = path.resolve(process.env.PASTA_FIGURINHAS)
 const defaultImageExtension = ".png"
+const allowedContentTypes = ["image/png", "image/jpeg", "image/gif"]
+const stickerMaxSize = parseInt(process.env.FIGURINHA_MAX_SIZE)
 
 const commands = {
     figurinha: {
@@ -76,21 +78,17 @@ async function createSticker(bot, msg) {
     if (!args.mainParam) {
         throw new ExpectedError("Cadê o nome da figurinha?")
     }
-    let url
-    if (args.params.url) {
-        url = args.params.url
-    } else {
-        let messageToFindAttachment = msg
-        if (msg.reference?.messageId) {
-            messageToFindAttachment = await msg.channel.messages.fetch(msg.reference.messageId)
-        }
-        url = Utils.getFirstAttachmentFrom(messageToFindAttachment, ["image/png", "image/jpeg", "image/gif"], parseInt(process.env.FIGURINHA_MAX_SIZE))?.url
+    let messageToFindAttachment = msg
+    if (msg.reference?.messageId) {
+        messageToFindAttachment = await msg.channel.messages.fetch(msg.reference.messageId)
     }
-    if (!url) throw new ExpectedError("Cadê a imagem?")
+    const url = args.params.url || Utils.getFirstAttachmentFrom(messageToFindAttachment, allowedContentTypes, stickerMaxSize)?.url
+    if (!url) throw new ExpectedError("Cadê o a imagem?")
+
     const stickerName = Utils.normalizeString(args.mainParam)
     const response = await axios.get(url, { responseType: 'stream' })
-    checkContentType(response.headers['content-type'])
-    return saveSticker(msg, response.data, stickerName, response.headers['content-type'])
+    Utils.checkContentLengthAndType(response, allowedContentTypes, stickerMaxSize)
+    return saveSticker(msg, response.data, stickerName, response.headers.get("Content-Type"))
 }
 
 function saveSticker(msg, data, stickerName, contentType) {
@@ -125,11 +123,11 @@ function listStickers(bot, msg) {
         throw new ExpectedError("Nenhuma figurinha por enquanto")
     }
     const template =
-    `
+        `
         >>> Para visualizar todas as figurinhas, acesse: **${process.env.URL_SITE}/figurinhas**\nLista de figurinhas:\n\n**${stickersNames.reduce((p, v) => p + "\n" + v)}**
     `
-    
-    msg.reply({content: template, embeds: []})
+
+    msg.reply({ content: template, embeds: [] })
     //"Lista de figurinhas:\n\n" + stickersNames.reduce((p, v) => p + "\n" + v))
 }
 

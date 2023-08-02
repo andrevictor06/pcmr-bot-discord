@@ -8,6 +8,8 @@ const { AUDIO_QUEUE_NAME, MUSIC_QUEUE_NAME } = require('../utils/constants')
 const { default: axios } = require('axios')
 const { cutMP3 } = require('mp3-cutter')
 
+const allowedContentTypes = ["audio/mpeg"]
+const audioMaxSize = parseInt(process.env.AUDIO_MAX_SIZE)
 const commands = {
     audio: {
         fn: audio,
@@ -179,13 +181,13 @@ async function saveAudio(bot, msg, args) {
     if (msg.reference?.messageId) {
         messageToFindAttachment = await msg.channel.messages.fetch(msg.reference.messageId)
     }
-    const attachment = Utils.getFirstAttachmentFrom(messageToFindAttachment, ["audio/mpeg"], parseInt(process.env.AUDIO_MAX_SIZE))
-    const url = attachment?.url
+    const url = args.params.url || Utils.getFirstAttachmentFrom(messageToFindAttachment, allowedContentTypes, audioMaxSize)?.url
     if (!url) throw new ExpectedError("Cadê o áudio?")
 
     const audioName = Utils.normalizeString(args.mainParam)
     const audioPath = path.resolve(audioFolderPath, audioName + defaultAudioExtension)
     const response = await axios.get(url, { responseType: 'stream' })
+    Utils.checkContentLengthAndType(response, allowedContentTypes, audioMaxSize)
 
     return new Promise((resolve, reject) => {
         const start = args.params.start || 0
