@@ -274,7 +274,7 @@ function checkAudioFolderSizeLimit() {
 
 function init(bot) {
     if (!fs.existsSync(audioFolderPath)) {
-        fs.mkdirSync(audioFolderPath)
+        fs.mkdirSync(audioFolderPath, { recursive: true })
     }
 }
 
