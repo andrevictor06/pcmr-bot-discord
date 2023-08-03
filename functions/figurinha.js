@@ -52,7 +52,8 @@ async function run(bot, msg) {
         return Utils.executeCommand(bot, msg, commands)
     }
 
-    const stickerName = Object.keys(stickers).find(value => msg.content == value)
+    const normalizedContent = Utils.normalizeString(msg.content)
+    const stickerName = Object.keys(stickers).find(value => value == normalizedContent)
     if (stickerName) {
         sendSticker(bot, msg, stickerName)
     }
@@ -85,16 +86,17 @@ async function createSticker(bot, msg) {
     const url = args.params.url || Utils.getFirstAttachmentFrom(messageToFindAttachment, allowedContentTypes, stickerMaxSize)?.url
     if (!url) throw new ExpectedError("Cadê o a imagem?")
 
-    const stickerName = Utils.normalizeString(args.mainParam)
     const response = await axios.get(url, { responseType: 'stream' })
     Utils.checkContentLengthAndType(response, allowedContentTypes, stickerMaxSize)
-    return saveSticker(msg, response.data, stickerName, response.headers.get("Content-Type"))
+    return saveSticker(args, msg, response)
 }
 
-function saveSticker(msg, data, stickerName, contentType) {
+function saveSticker(args, msg, response) {
     return new Promise((resolve, reject) => {
+        const contentType = response.headers.get("Content-Type")
+        const stickerName = Utils.normalizeString(args.mainParam)
         const imagePath = createImagePath(stickerName, contentType)
-        data
+        response.data
             .pipe(resizeImage(contentType))
             .pipe(fs.createWriteStream(imagePath))
             .on("finish", () => {
@@ -102,7 +104,7 @@ function saveSticker(msg, data, stickerName, contentType) {
                     stickers[stickerName] = imagePath
                     localStorage.setItem(STICKERS, JSON.stringify(stickers))
                     msg.reply({
-                        content: `Figurinha **${stickerName}** criada!`,
+                        content: `Figurinha **${args.mainParam}** criada!`,
                         files: [imagePath]
                     })
                     resolve()
