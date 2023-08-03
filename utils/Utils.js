@@ -236,6 +236,12 @@ function normalizeString(str) {
         .toLowerCase()
 }
 
+function isYoutubeURL(possibleYtURL) {
+    if (!isValidHttpUrl(possibleYtURL)) return false
+    const url = new URL(possibleYtURL)
+    return url.host.includes("youtube") || url.host.includes("youtu.be")
+}
+
 module.exports = {
     getRandomPlacaMae,
     getRandomProcessador,
@@ -258,5 +264,6 @@ module.exports = {
     getFirstAttachmentFrom,
     normalizeString,
     checkContentLengthAndType,
-    checkContentLength
+    checkContentLength,
+    isYoutubeURL
 }
