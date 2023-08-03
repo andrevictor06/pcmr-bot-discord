@@ -86,8 +86,8 @@ async function play(bot, message) {
 
 async function getURL(bot, args) {
     if (Utils.isValidHttpUrl(args.mainParam)) {
+        if (!Utils.isYoutubeURL(args.mainParam)) throw new ExpectedError("Essa url não é do youtube não man")
         const url = new URL(args.mainParam)
-        if (!url.host.includes("youtube")) throw new ExpectedError("Essa url não é do youtube não man")
         if (url.searchParams.has("list")) {
             try {
                 const playlistInfo = await playdl.playlist_info(args.mainParam, { incomplete: true })

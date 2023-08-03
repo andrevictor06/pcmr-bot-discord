@@ -189,7 +189,7 @@ async function saveAudio(bot, msg, args) {
     const audioName = Utils.normalizeString(args.mainParam)
     let stream
     let extension = defaultAudioExtension
-    if (Utils.isValidHttpUrl(url) && new URL(url).host.includes("youtube")) {
+    if (Utils.isYoutubeURL(url)) {
         const info = await playdl.video_basic_info(url)
         if (info.video_details.durationInSec > audioMaxSeconds) throw new ExpectedError("É um áudio ou uma música?")
 
