@@ -2,14 +2,15 @@ const Utils = require('../utils/Utils')
 const { default: axios } = require('axios')
 const path = require('path')
 const fs = require('fs')
-const sharp = require('sharp');
-const { ExpectedError } = require('../utils/expected_error');
-const { STICKERS } = require('../utils/constants');
+const sharp = require('sharp')
+const { ExpectedError } = require('../utils/expected_error')
+const { STICKERS } = require('../utils/constants')
+const { mp4ToGif } = require('../utils/video_utils')
 
 let stickers
 const stickersFolderPath = path.resolve(process.env.PASTA_FIGURINHAS)
 const defaultImageExtension = ".png"
-const allowedContentTypes = ["image/png", "image/jpeg", "image/gif"]
+const allowedContentTypes = ["image/png", "image/jpeg", "image/gif", "video/mp4"]
 const stickerMaxSize = parseInt(process.env.FIGURINHA_MAX_SIZE)
 
 const commands = {
@@ -92,18 +93,27 @@ async function createSticker(bot, msg) {
 }
 
 function saveSticker(args, msg, response) {
-    return new Promise((resolve, reject) => {
-        const contentType = response.headers.get("Content-Type")
+    return new Promise(async (resolve, reject) => {
+        let contentType = response.headers.get("Content-Type")
         const stickerName = Utils.normalizeString(args.mainParam)
+        const progessMessage = await msg.reply("Processando...")
+
+        let stream = response.data
+        if (contentType == "video/mp4") {
+            stream = mp4ToGif({
+                stream: response.data
+            })
+            contentType = "image/gif"
+        }
         const imagePath = createImagePath(stickerName, contentType)
-        response.data
+        stream
             .pipe(resizeImage(contentType))
             .pipe(fs.createWriteStream(imagePath))
             .on("finish", () => {
                 try {
                     stickers[stickerName] = imagePath
                     localStorage.setItem(STICKERS, JSON.stringify(stickers))
-                    msg.reply({
+                    progessMessage.edit({
                         content: `Figurinha **${args.mainParam}** criada!`,
                         files: [imagePath]
                     })
@@ -130,7 +140,6 @@ function listStickers(bot, msg) {
     `
 
     msg.reply({ content: template, embeds: [] })
-    //"Lista de figurinhas:\n\n" + stickersNames.reduce((p, v) => p + "\n" + v))
 }
 
 async function deleteSticker(bot, msg) {
@@ -176,12 +185,6 @@ function checkStickersFolderSizeLimit() {
     const stats = fs.statSync(stickersFolderPath)
     if (stats.size > parseInt(process.env.PASTA_FIGURINHAS_LIMITE)) {
         throw new ExpectedError("Tamanho limite da pasta atingido!")
-    }
-}
-
-function checkContentType(contentType) {
-    if (!["image/png", "image/jpeg", "image/gif"].includes(contentType)) {
-        throw new ExpectedError("Tem certeza que isso é uma imagem?")
     }
 }
 
