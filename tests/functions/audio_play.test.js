@@ -12,7 +12,7 @@ const { randomUUID } = require('crypto')
 const playdl = require('play-dl')
 
 const audioFolderPath = path.resolve(process.env.PASTA_AUDIO)
-const defaultImageExtension = ".mp3"
+const defaultAudioExtension = ".mp3"
 
 beforeEach(async () => {
     if (fs.existsSync(audioFolderPath)) {
@@ -201,6 +201,7 @@ describe("audio", () => {
         expect(files.find(v => v == "monki_flip.mp3")).toBeDefined()
 
         expect(message.reply).toBeCalledTimes(1)
+        expect(message.repliedMessage().edit).toBeCalledTimes(1)
     })
 
     test("deveria salvar um áudio com sucesso a partir de uma URL", async () => {
@@ -230,6 +231,7 @@ describe("audio", () => {
         expect(files.find(v => v == "monki_flip.mp3")).toBeDefined()
 
         expect(message.reply).toBeCalledTimes(1)
+        expect(message.repliedMessage().edit).toBeCalledTimes(1)
     })
 
     test("deveria salvar um áudio com sucesso a partir de um vídeo do youtube", async () => {
@@ -254,16 +256,16 @@ describe("audio", () => {
 
         const files = fs.readdirSync(audioFolderPath)
         expect(files).toBeTruthy()
-        expect(files.find(v => v == "monki_flip.webm")).toBeDefined()
+        expect(files.find(v => v == "monki_flip" + defaultAudioExtension)).toBeDefined()
 
         expect(message.reply).toBeCalledTimes(1)
+        expect(message.repliedMessage().edit).toBeCalledTimes(1)
     })
 
-    test("deveria dar erro ao tentar salvar um vídeo do youtube com duração maior que o limite permitido", async () => {
+    test("deveria dar erro ao tentar salvar um vídeo do youtube com tamanho maior que o limite permitido", async () => {
         expect.hasAssertions()
         const ytUrl = fakeYtUrl()
         const message = mockMessage("audio", "monki flip", "--url", ytUrl)
-        mockBasicInfo(ytUrl, "titulo", 5)
         playdl.stream.mockImplementation((url, options) => {
             expect(url).toEqual(ytUrl)
             expect(options).toMatchObject({
@@ -280,22 +282,7 @@ describe("audio", () => {
             await run(mockBot(), message)
         } catch (error) {
             expect(error).toBeInstanceOf(ExpectedError)
-            expect(playdl.video_basic_info).toBeCalledTimes(1)
             expect(playdl.stream).toBeCalledTimes(1)
-        }
-    })
-    test("deveria dar erro ao tentar salvar um vídeo do youtube maior que o limite permitido", async () => {
-        expect.hasAssertions()
-        const ytUrl = fakeYtUrl()
-        const message = mockMessage("audio", "monki flip", "--url", ytUrl)
-        mockBasicInfo(ytUrl, "titulo", parseInt(process.env.AUDIO_MAX_SECONDS) + 10)
-
-        try {
-            await run(mockBot(), message)
-        } catch (error) {
-            expect(error).toBeInstanceOf(ExpectedError)
-            expect(playdl.video_basic_info).toBeCalledTimes(1)
-            expect(playdl.stream).toBeCalledTimes(0)
         }
     })
 
@@ -618,7 +605,7 @@ describe("deletar_audio", () => {
 
     test("deveria deletar o áudio corretamente", async () => {
         const audioName = "monki_flip"
-        const audioPath = path.resolve(audioFolderPath, audioName + defaultImageExtension)
+        const audioPath = path.resolve(audioFolderPath, audioName + defaultAudioExtension)
         const bot = mockBot()
         const message = mockMessage("deletar_audio", audioName)
         fs.copyFileSync(

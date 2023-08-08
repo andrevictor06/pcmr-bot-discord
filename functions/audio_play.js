@@ -6,8 +6,8 @@ const { ExpectedError } = require('../utils/expected_error')
 const { setSharedVariable, getSharedVariable, deleteSharedVariable } = require("../utils/shared_variables")
 const { AUDIO_QUEUE_NAME, MUSIC_QUEUE_NAME } = require('../utils/constants')
 const { default: axios } = require('axios')
-const { cutMP3 } = require('mp3-cutter')
 const playdl = require('play-dl')
+const { convertToMp3 } = require('../utils/audio_utils')
 
 const allowedContentTypes = ["audio/mpeg"]
 const audioMaxSize = parseInt(process.env.AUDIO_MAX_SIZE)
@@ -188,39 +188,38 @@ async function saveAudio(bot, msg, args) {
 
     const audioName = Utils.normalizeString(args.mainParam)
     let stream
-    let extension = defaultAudioExtension
+    const start = args.params.start || 0
+    const end = args.params.end || audioMaxSeconds
     if (Utils.isYoutubeURL(url)) {
-        const info = await playdl.video_basic_info(url)
-        if (info.video_details.durationInSec > audioMaxSeconds) throw new ExpectedError("É um áudio ou uma música?")
-
         const ytSource = await playdl.stream(url, { quality: 1, discordPlayerCompatibility: true })
         Utils.checkContentLength(ytSource.content_length, audioMaxSize)
-        extension = ".webm"
         stream = ytSource.stream
     } else {
-        const start = args.params.start || 0
-        const end = args.params.end || audioMaxSeconds
         const response = await axios.get(url, { responseType: 'stream' })
         Utils.checkContentLengthAndType(response, allowedContentTypes, audioMaxSize)
-        stream = response.data.pipe(cutMP3({ start, end }))
+        stream = response.data
     }
-    const audioPath = path.resolve(audioFolderPath, audioName + extension)
-
+    const audioPath = path.resolve(audioFolderPath, audioName + defaultAudioExtension)
+    const progessMessage = await msg.reply("Processando...")
     return new Promise((resolve, reject) => {
-        stream
+        convertToMp3({
+            stream,
+            bitrate: 128,
+            sampleRate: 48000,
+            start,
+            end
+        })
             .pipe(fs.createWriteStream(audioPath))
             .on("finish", () => {
                 try {
-                    msg.reply(`Áudio ${audioName} criado!`)
+                    progessMessage.edit(`Áudio ${audioName} criado!`)
+                    msg.react("✅")
                     resolve()
                 } catch (error) {
                     reject(error)
                 }
             })
-            .on("error", error => {
-                Utils.logError(error)
-                resolve()
-            })
+            .on("error", reject)
     })
 }
 

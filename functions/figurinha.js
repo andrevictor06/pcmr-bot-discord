@@ -84,7 +84,7 @@ async function createSticker(bot, msg) {
         messageToFindAttachment = await msg.channel.messages.fetch(msg.reference.messageId)
     }
     const url = args.params.url || Utils.getFirstAttachmentFrom(messageToFindAttachment, allowedContentTypes, stickerMaxSize)?.url
-    if (!url) throw new ExpectedError("Cadê o a imagem?")
+    if (!url) throw new ExpectedError("Cadê a imagem?")
 
     const response = await axios.get(url, { responseType: 'stream' })
     Utils.checkContentLengthAndType(response, allowedContentTypes, stickerMaxSize)
