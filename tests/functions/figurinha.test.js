@@ -101,6 +101,54 @@ describe("figurinha", () => {
         expect(files[0]).toEqual("joao" + defaultImageExtension)
 
         expect(message.reply).toBeCalledTimes(1)
+        expect(message.repliedMessage().edit).toBeCalledTimes(1)
+    })
+
+    test("deveria criar uma figurinha com sucesso a partir de um video mp4", async () => {
+        const message = mockMessage("figurinha", "João")
+        const videoPath = path.resolve("tests", "files", "video.mp4")
+        const attachment = {
+            url: videoPath,
+            name: "video.mp4",
+            contentType: "video/mp4",
+            size: fs.statSync(videoPath).size
+        }
+        message.attachments = new Map([
+            ["1", attachment]
+        ])
+        axios.get.mockImplementation((url, options) => {
+            expect(url).toEqual(attachment.url)
+            expect(options).toMatchObject({
+                responseType: 'stream'
+            })
+
+            const response = {
+                data: fs.createReadStream(attachment.url),
+                headers: mockAxiosHeaders({
+                    "Content-Type": attachment.contentType,
+                    "Content-Length": attachment.size
+                })
+            }
+            return response
+        })
+
+        await run(mockBot(), message)
+
+        const stickersJson = localStorage.getItem(STICKERS)
+        expect(stickersJson).toBeTruthy()
+
+        const stickers = JSON.parse(stickersJson)
+        expect(stickers).toMatchObject({
+            "joao": path.resolve(stickersTestFolder, "joao.gif")
+        })
+
+        const files = fs.readdirSync(stickersTestFolder)
+        expect(files).toBeTruthy()
+        expect(files).toHaveLength(1)
+        expect(files[0]).toEqual("joao.gif")
+
+        expect(message.reply).toBeCalledTimes(1)
+        expect(message.repliedMessage().edit).toBeCalledTimes(1)
     })
 
     test("deveria dar erro ao tentar processar uma imagem maior que o limite definido", async () => {
@@ -230,6 +278,7 @@ describe("figurinha", () => {
         expect(files[0]).toEqual("joao" + defaultImageExtension)
 
         expect(message.reply).toBeCalledTimes(1)
+        expect(message.repliedMessage().edit).toBeCalledTimes(1)
     })
 
     test("deveria criar uma figurinha de gif com sucesso", async () => {
