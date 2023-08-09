@@ -189,7 +189,7 @@ async function saveAudio(bot, msg, args) {
     const audioName = Utils.normalizeString(args.mainParam)
     let stream
     const start = args.params.start || 0
-    const end = args.params.end || audioMaxSeconds
+    const end = args.params.end
     if (Utils.isYoutubeURL(url)) {
         const ytSource = await playdl.stream(url, { quality: 1, discordPlayerCompatibility: true })
         Utils.checkContentLength(ytSource.content_length, audioMaxSize)
