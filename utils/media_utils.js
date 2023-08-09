@@ -23,7 +23,7 @@ function mp4ToGif(options) {
     let command = ffmpeg()
         .setFfmpegPath(pathToFfmpeg)
         .input(options.input)
-        .addOption("-filter_complex", "fps=10,scale=720:-1")
+        .addOption("-filter_complex", "fps=8,scale=320:-1")
         .outputFormat("gif")
 
     if (options.start != null) {
