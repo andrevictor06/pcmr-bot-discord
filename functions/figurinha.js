@@ -104,10 +104,11 @@ function saveSticker(args, msg, response) {
                 input: response.data
             })
             contentType = "image/gif"
+        } else {
+            stream = stream.pipe(resizeImage(contentType))
         }
         const imagePath = createImagePath(stickerName, contentType)
         stream
-            .pipe(resizeImage(contentType))
             .pipe(fs.createWriteStream(imagePath))
             .on("finish", () => {
                 try {
