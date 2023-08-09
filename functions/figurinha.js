@@ -5,7 +5,7 @@ const fs = require('fs')
 const sharp = require('sharp')
 const { ExpectedError } = require('../utils/expected_error')
 const { STICKERS } = require('../utils/constants')
-const { mp4ToGif } = require('../utils/video_utils')
+const { mp4ToGif } = require('../utils/media_utils')
 
 let stickers
 const stickersFolderPath = path.resolve(process.env.PASTA_FIGURINHAS)
@@ -101,7 +101,7 @@ function saveSticker(args, msg, response) {
         let stream = response.data
         if (contentType == "video/mp4") {
             stream = mp4ToGif({
-                stream: response.data
+                input: response.data
             })
             contentType = "image/gif"
         }

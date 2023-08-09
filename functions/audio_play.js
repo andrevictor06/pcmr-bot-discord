@@ -7,7 +7,7 @@ const { setSharedVariable, getSharedVariable, deleteSharedVariable } = require("
 const { AUDIO_QUEUE_NAME, MUSIC_QUEUE_NAME } = require('../utils/constants')
 const { default: axios } = require('axios')
 const playdl = require('play-dl')
-const { convertToMp3 } = require('../utils/audio_utils')
+const { convertToMp3 } = require('../utils/media_utils')
 
 const allowedContentTypes = ["audio/mpeg"]
 const audioMaxSize = parseInt(process.env.AUDIO_MAX_SIZE)
@@ -188,8 +188,8 @@ async function saveAudio(bot, msg, args) {
 
     const audioName = Utils.normalizeString(args.mainParam)
     let stream
-    const start = args.params.start || 0
-    const end = args.params.end
+    const start = parseInt(args.params.start) || 0
+    const end = args.params.end || start + audioMaxSeconds
     if (Utils.isYoutubeURL(url)) {
         const ytSource = await playdl.stream(url, { quality: 1, discordPlayerCompatibility: true })
         Utils.checkContentLength(ytSource.content_length, audioMaxSize)
@@ -203,7 +203,7 @@ async function saveAudio(bot, msg, args) {
     const progessMessage = await msg.reply("Processando...")
     return new Promise((resolve, reject) => {
         convertToMp3({
-            stream,
+            input: stream,
             bitrate: 128,
             sampleRate: 48000,
             start,
