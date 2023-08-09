@@ -186,8 +186,8 @@ async function saveAudio(bot, msg, args) {
     const url = args.params.url || Utils.getFirstAttachmentFrom(messageToFindAttachment, allowedContentTypes, audioMaxSize)?.url
     if (!url) throw new ExpectedError("Cadê o áudio?")
 
-    const audioName = Utils.normalizeString(args.mainParam)
     let stream
+    const audioName = Utils.normalizeString(args.mainParam)
     const start = parseInt(args.params.start) || 0
     const end = args.params.end || start + audioMaxSeconds
     if (Utils.isYoutubeURL(url)) {
