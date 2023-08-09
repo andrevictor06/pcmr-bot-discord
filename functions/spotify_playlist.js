@@ -178,7 +178,9 @@ async function tryAddSongToSpotifyPlaylist(bot, song) {
 }
 
 async function init(bot) {
-    loadTracksCache()
+    if (process.env.ENVIRONMENT == "PRD" || process.env.ENVIRONMENT == "TEST") {
+        loadTracksCache()
+    }
 }
 
 function loadTracksCache() {

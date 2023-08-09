@@ -7,7 +7,7 @@ const { setSharedVariable, getSharedVariable, deleteSharedVariable } = require("
 const { AUDIO_QUEUE_NAME, MUSIC_QUEUE_NAME } = require('../utils/constants')
 const { default: axios } = require('axios')
 const playdl = require('play-dl')
-const { convertToMp3 } = require('../utils/audio_utils')
+const { convertToMp3 } = require('../utils/media_utils')
 
 const allowedContentTypes = ["audio/mpeg"]
 const audioMaxSize = parseInt(process.env.AUDIO_MAX_SIZE)
@@ -16,7 +16,7 @@ const commands = {
     audio: {
         fn: audio,
         help: {
-            name: Utils.command("audio") + " [nome do audio] [--start tempo em segundos] [--end tempo em segundos]",
+            name: Utils.command("audio") + " [nome do audio] [--url url do audio ou do youtube] [--start tempo em segundos] [--end tempo em segundos]",
             value: "Lista os audios disponiveis ou cria um novo áudio",
             inline: false
         }
@@ -186,10 +186,10 @@ async function saveAudio(bot, msg, args) {
     const url = args.params.url || Utils.getFirstAttachmentFrom(messageToFindAttachment, allowedContentTypes, audioMaxSize)?.url
     if (!url) throw new ExpectedError("Cadê o áudio?")
 
-    const audioName = Utils.normalizeString(args.mainParam)
     let stream
-    const start = args.params.start || 0
-    const end = args.params.end
+    const audioName = Utils.normalizeString(args.mainParam)
+    const start = parseInt(args.params.start) || 0
+    const end = args.params.end || start + audioMaxSeconds
     if (Utils.isYoutubeURL(url)) {
         const ytSource = await playdl.stream(url, { quality: 1, discordPlayerCompatibility: true })
         Utils.checkContentLength(ytSource.content_length, audioMaxSize)
@@ -203,7 +203,7 @@ async function saveAudio(bot, msg, args) {
     const progessMessage = await msg.reply("Processando...")
     return new Promise((resolve, reject) => {
         convertToMp3({
-            stream,
+            input: stream,
             bitrate: 128,
             sampleRate: 48000,
             start,

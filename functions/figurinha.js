@@ -5,7 +5,7 @@ const fs = require('fs')
 const sharp = require('sharp')
 const { ExpectedError } = require('../utils/expected_error')
 const { STICKERS } = require('../utils/constants')
-const { mp4ToGif } = require('../utils/video_utils')
+const { mp4ToGif } = require('../utils/media_utils')
 
 let stickers
 const stickersFolderPath = path.resolve(process.env.PASTA_FIGURINHAS)
@@ -17,7 +17,7 @@ const commands = {
     figurinha: {
         fn: createSticker,
         help: {
-            name: Utils.command("figurinha") + " [nome figurinha]",
+            name: Utils.command("figurinha") + " [nome figurinha] [--url url da imagem/gif/video]",
             value: "Cadastra uma nova figurinha",
             inline: false
         }
@@ -98,16 +98,18 @@ function saveSticker(args, msg, response) {
         const stickerName = Utils.normalizeString(args.mainParam)
         const progessMessage = await msg.reply("Processando...")
 
-        let stream = response.data
+        let stream
         if (contentType == "video/mp4") {
             stream = mp4ToGif({
-                stream: response.data
+                input: response.data,
+                width: 250
             })
             contentType = "image/gif"
+        } else {
+            stream = response.data.pipe(resizeImage(contentType))
         }
         const imagePath = createImagePath(stickerName, contentType)
         stream
-            .pipe(resizeImage(contentType))
             .pipe(fs.createWriteStream(imagePath))
             .on("finish", () => {
                 try {
