@@ -16,7 +16,7 @@ const commands = {
     audio: {
         fn: audio,
         help: {
-            name: Utils.command("audio") + " [nome do audio] [--start tempo em segundos] [--end tempo em segundos]",
+            name: Utils.command("audio") + " [nome do audio] [--url url do audio ou do youtube] [--start tempo em segundos] [--end tempo em segundos]",
             value: "Lista os audios disponiveis ou cria um novo áudio",
             inline: false
         }

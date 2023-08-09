@@ -17,7 +17,7 @@ const commands = {
     figurinha: {
         fn: createSticker,
         help: {
-            name: Utils.command("figurinha") + " [nome figurinha]",
+            name: Utils.command("figurinha") + " [nome figurinha] [--url url da imagem/gif/video]",
             value: "Cadastra uma nova figurinha",
             inline: false
         }
@@ -98,14 +98,15 @@ function saveSticker(args, msg, response) {
         const stickerName = Utils.normalizeString(args.mainParam)
         const progessMessage = await msg.reply("Processando...")
 
-        let stream = response.data
+        let stream
         if (contentType == "video/mp4") {
             stream = mp4ToGif({
-                input: response.data
+                input: response.data,
+                width: 250
             })
             contentType = "image/gif"
         } else {
-            stream = stream.pipe(resizeImage(contentType))
+            stream = response.data.pipe(resizeImage(contentType))
         }
         const imagePath = createImagePath(stickerName, contentType)
         stream
