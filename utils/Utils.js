@@ -156,7 +156,10 @@ function parseArgs(message) {
                     pieces[j] = ""
                 }
             }
-            parsedArgs.params[argName] = paramValue.join(" ")
+            const value = paramValue.join(" ")
+            parsedArgs.params[argName] = isNumeric(value)
+                ? +value
+                : value
             pieces[i] = ""
         }
     }
@@ -240,6 +243,13 @@ function isYoutubeURL(possibleYtURL) {
     if (!isValidHttpUrl(possibleYtURL)) return false
     const url = new URL(possibleYtURL)
     return url.host.includes("youtube") || url.host.includes("youtu.be")
+}
+
+function isNumeric(value) {
+    if (typeof value == 'number') return true
+    if (typeof value != 'string') return false
+
+    return !isNaN(value)
 }
 
 module.exports = {

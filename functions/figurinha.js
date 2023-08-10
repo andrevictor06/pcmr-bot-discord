@@ -124,10 +124,7 @@ function saveSticker(args, msg, response) {
                     reject(error)
                 }
             })
-            .on("error", error => {
-                Utils.logError(error)
-                resolve()
-            })
+            .on("error", reject)
     })
 }
 
