@@ -177,7 +177,7 @@ async function saveAudio(bot, msg, args) {
     if (!args.mainParam) throw new ExpectedError("Cadê o nome do áudio?")
     if (args.params.start < 0 || args.params.end < 0) throw new ExpectedError("E esses tempos negativos aí man?")
     if (args.params?.start > args.params?.end) throw new ExpectedError("O tempo final precisa ser > tempo inicial")
-    if (args.params?.end - args.params?.start > audioMaxSeconds) throw new ExpectedError("O áudio não pode ter mais que 30s de duração man")
+    if (args.params?.end - args.params?.start > audioMaxSeconds) throw new ExpectedError(`O áudio não pode ter mais que ${audioMaxSeconds}s de duração man`)
 
     let messageToFindAttachment = msg
     if (msg.reference?.messageId) {
@@ -202,24 +202,28 @@ async function saveAudio(bot, msg, args) {
     const audioPath = path.resolve(audioFolderPath, audioName + defaultAudioExtension)
     const progessMessage = await msg.reply("Processando...")
     return new Promise((resolve, reject) => {
-        convertToMp3({
-            input: stream,
-            bitrate: 128,
-            sampleRate: 48000,
-            start,
-            end
-        })
-            .pipe(fs.createWriteStream(audioPath))
-            .on("finish", () => {
-                try {
-                    progessMessage.edit(`Áudio ${audioName} criado!`)
-                    msg.react("✅")
-                    resolve()
-                } catch (error) {
-                    reject(error)
-                }
+        try {
+            convertToMp3({
+                input: stream,
+                bitrate: 128,
+                sampleRate: 48000,
+                start,
+                end
             })
-            .on("error", reject)
+                .pipe(fs.createWriteStream(audioPath))
+                .on("finish", () => {
+                    try {
+                        progessMessage.edit(`Áudio ${audioName} criado!`)
+                        msg.react("✅")
+                        resolve()
+                    } catch (error) {
+                        reject(error)
+                    }
+                })
+                .on("error", reject)
+        } catch (error) {
+            reject(error)
+        }
     })
 }
 
