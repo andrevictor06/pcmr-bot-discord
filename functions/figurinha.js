@@ -77,9 +77,8 @@ async function sendSticker(bot, msg, stickerName) {
 async function createSticker(bot, msg) {
     checkStickersFolderSizeLimit()
     const args = Utils.parseArgs(msg)
-    if (!args.mainParam) {
-        throw new ExpectedError("Cadê o nome da figurinha?")
-    }
+    if (!args.mainParam) throw new ExpectedError("Cadê o nome da figurinha?")
+
     let messageToFindAttachment = msg
     if (msg.reference?.messageId) {
         messageToFindAttachment = await msg.channel.messages.fetch(msg.reference.messageId)
@@ -94,37 +93,41 @@ async function createSticker(bot, msg) {
 
 function saveSticker(args, msg, response) {
     return new Promise(async (resolve, reject) => {
-        let contentType = response.headers.get("Content-Type")
-        const stickerName = Utils.normalizeString(args.mainParam)
-        const progessMessage = await msg.reply("Processando...")
+        try {
+            let contentType = response.headers.get("Content-Type")
+            const stickerName = Utils.normalizeString(args.mainParam)
+            const progessMessage = await msg.reply("Processando...")
 
-        let stream
-        if (contentType == "video/mp4") {
-            stream = mp4ToGif({
-                input: response.data,
-                width: 250
-            })
-            contentType = "image/gif"
-        } else {
-            stream = response.data.pipe(resizeImage(contentType))
+            let stream
+            if (contentType == "video/mp4") {
+                stream = mp4ToGif({
+                    input: response.data,
+                    width: 250
+                })
+                contentType = "image/gif"
+            } else {
+                stream = response.data.pipe(resizeImage(contentType))
+            }
+            const imagePath = createImagePath(stickerName, contentType)
+            stream
+                .pipe(fs.createWriteStream(imagePath))
+                .on("finish", () => {
+                    try {
+                        stickers[stickerName] = imagePath
+                        localStorage.setItem(STICKERS, JSON.stringify(stickers))
+                        progessMessage.edit({
+                            content: `Figurinha **${args.mainParam}** criada!`,
+                            files: [imagePath]
+                        })
+                        resolve()
+                    } catch (error) {
+                        reject(error)
+                    }
+                })
+                .on("error", reject)
+        } catch (error) {
+            reject(error)
         }
-        const imagePath = createImagePath(stickerName, contentType)
-        stream
-            .pipe(fs.createWriteStream(imagePath))
-            .on("finish", () => {
-                try {
-                    stickers[stickerName] = imagePath
-                    localStorage.setItem(STICKERS, JSON.stringify(stickers))
-                    progessMessage.edit({
-                        content: `Figurinha **${args.mainParam}** criada!`,
-                        files: [imagePath]
-                    })
-                    resolve()
-                } catch (error) {
-                    reject(error)
-                }
-            })
-            .on("error", reject)
     })
 }
 
