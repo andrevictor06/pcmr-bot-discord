@@ -106,6 +106,7 @@ dist
 .vscode/
 
 .localstorage/
+.backup/
 
 images/figurinhas
 images/figurinhas_test
