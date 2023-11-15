@@ -20,6 +20,8 @@
   "dependencies": {
     "@discordjs/opus": "^0.9.0",
     "@discordjs/voice": "^0.16.0",
+    "@google-cloud/local-auth": "^2.1.0",
+    "adm-zip": "^0.5.10",
     "axios": "^1.3.4",
     "bcrypt": "^5.1.0",
     "body-parser": "^1.20.2",
@@ -30,6 +32,7 @@
     "ffmpeg": "^0.0.4",
     "ffmpeg-static": "^5.0.0",
     "fluent-ffmpeg": "^2.1.2",
+    "googleapis": "^105.0.0",
     "helmet": "^6.0.1",
     "hpp": "^0.2.3",
     "node-html-parser": "^6.1.5",
