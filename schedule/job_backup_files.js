@@ -41,14 +41,14 @@ async function uploadFileOnDrive(bot, fileName, content){
 
 function enviarMensagemSalaDEV(bot, data, err){
     if(err){
-        bot.channels.fetch(process.env.ID_CHANNEL_DEV_BOT).then( channel => { 
+        bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then( channel => { 
             channel.send({ content: "Erro no processo do backup: " + err})
         });    
         return false;
     }
     let description = `>>>**Backup concluído com sucesso**\nLink: **${data.data.webViewLink}**`
 
-    bot.channels.fetch(process.env.ID_CHANNEL_DEV_BOT).then( channel => { 
+    bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then( channel => { 
         channel.send({
             embeds: [{
                 title: "Backup concluído com sucesso",
