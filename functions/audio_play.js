@@ -112,7 +112,6 @@ async function eventPlayAudio(event) {
     await play(event.client, event, audio)
 
     event.client.addInteractionCreate(process.env.ENVIRONMENT + "btn_stop_audio", eventStopAudio)
-    console.log( event);
     event.update(event.message.components)
     /*event.update({
         content: `Playing ${getAudioName(audio)}`,
