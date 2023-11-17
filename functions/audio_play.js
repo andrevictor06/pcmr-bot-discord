@@ -282,9 +282,12 @@ async function init(bot) {
 }
 
 async function createTopic(bot){
-    const channel = await bot.channels.cache.get(process.env.ID_CHANNEL_COMANDO_AUDIO)
-    const thread = await createThreads(channel)
-    thread.send({content: process.env.CARACTER_DEFAULT_FUNCTION +'audio'})
+    if(process.env.ID_CHANNEL_COMANDO_AUDIO){
+        const channel = await bot.channels.cache.get(process.env.ID_CHANNEL_COMANDO_AUDIO)
+        const thread = await createThreads(channel)
+        thread.send({content: process.env.CARACTER_DEFAULT_FUNCTION +'audio'})
+    }
+    
 }
 
 async function createThreads(channel) {
