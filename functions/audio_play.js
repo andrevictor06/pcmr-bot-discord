@@ -112,7 +112,9 @@ async function eventPlayAudio(event) {
     await play(event.client, event, audio)
 
     event.client.addInteractionCreate(process.env.ENVIRONMENT + "btn_stop_audio", eventStopAudio)
-    event.update({
+    console.log( event);
+    event.update(event.message.components)
+    /*event.update({
         content: `Playing ${getAudioName(audio)}`,
         components: [
             {
@@ -127,7 +129,7 @@ async function eventPlayAudio(event) {
                 ]
             }
         ]
-    })
+    })*/
 }
 
 async function eventStopAudio(event) {
