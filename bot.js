@@ -31,13 +31,23 @@ function init() {
 
 function initBotCommands(bot) {
     bot.functions = []
+    bot.object_functions = {}
     fs.readdirSync("./functions").forEach(fnFile => {
         const fn = require("./functions/" + fnFile)
         if (fn.init) {
             fn.init(bot)
         }
         bot.functions.push(fn)
+        bot.object_functions[fnFile] = fn
     })
+
+
+    bot.getFunction = (func) => {
+        if(func){
+            return bot.object_functions[func]
+        }
+        return null
+    }
 }
 
 function startJobs(bot) {
@@ -57,7 +67,7 @@ function applyListeners(bot) {
             }
         } catch (error) {
             Utils.logError(bot, error, __filename)
-            event.update({
+            event.reply({
                 content: Utils.getMessageError(error),
                 components: []
             })
@@ -129,6 +139,9 @@ function applyListeners(bot) {
 
                 Utils.setPresenceBotDefault(bot)
             }
+
+            bot.getFunction('audio_play.js').createTopic(bot)
+
             console.log(`Logged in as ${bot.user.tag}!`);
         } catch (error) { Utils.logError(bot, error, __filename) }
     })
