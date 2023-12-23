@@ -101,7 +101,7 @@ function createServerQueue(bot, msg) {
     serverQueue.player.on(AudioPlayerStatus.Idle, stop)
     serverQueue.player.on("error", error => {
         Utils.logError(bot, error, __filename)
-        msg.channel.send(Utils.getMessageError(error))
+        msg.channel.reply(Utils.getMessageError(error))
     })
     setSharedVariable(AUDIO_QUEUE_NAME, serverQueue)
     return serverQueue
@@ -112,7 +112,8 @@ async function eventPlayAudio(event) {
     await play(event.client, event, audio)
 
     event.client.addInteractionCreate(process.env.ENVIRONMENT + "btn_stop_audio", eventStopAudio)
-    event.update({
+    event.update(event.message.components)
+    /*event.update({
         content: `Playing ${getAudioName(audio)}`,
         components: [
             {
@@ -127,7 +128,7 @@ async function eventPlayAudio(event) {
                 ]
             }
         ]
-    })
+    })*/
 }
 
 async function eventStopAudio(event) {
@@ -159,7 +160,7 @@ async function listAudios(bot, msg) {
                 ]
             }
         })
-        msg.reply({ "components": buttons })
+        msg.channel.send({ "components": buttons })
     })
 }
 
@@ -274,12 +275,33 @@ function checkAudioFolderSizeLimit() {
     }
 }
 
-function init(bot) {
+async function init(bot) {
     if (!fs.existsSync(audioFolderPath)) {
         fs.mkdirSync(audioFolderPath, { recursive: true })
     }
 }
 
+async function createTopic(bot){
+    if(process.env.ID_CHANNEL_COMANDO_AUDIO){
+        const channel = await bot.channels.cache.get(process.env.ID_CHANNEL_COMANDO_AUDIO)
+        const thread = await createThreads(channel)
+        thread.send({content: process.env.CARACTER_DEFAULT_FUNCTION +'audio'})
+    }
+    
+}
+
+async function createThreads(channel) {
+    const cache = channel.threads.cache.find(x => x.name === 'Áudios Disponíveis')
+    if (cache)
+        await cache.delete()
+
+    return await channel.threads.create({
+        name: 'Áudios Disponíveis',
+        autoArchiveDuration: 60,
+        message: 'Áudios Disponíveis',
+    })
+}
+
 module.exports = {
-    init, run, canHandle, helpComand, runAudioPlay
+    init, run, canHandle, helpComand, runAudioPlay, createTopic
 }

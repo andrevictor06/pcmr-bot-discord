@@ -14,6 +14,7 @@ function getSchedule(){
 function run(bot){
     removerLogs(process.env.PATH_LOG)
     removerLogs(process.env.PATH_LOG_SITE)
+    removerLogs(process.env.PATH_BACKUP_FILES)
 }
 
 function removerLogs(path_resolve){
