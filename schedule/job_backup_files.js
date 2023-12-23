@@ -46,7 +46,6 @@ function enviarMensagemSalaDEV(bot, data, err){
         });    
         return false;
     }
-    let description = `>>>**Backup concluído com sucesso**\nLink: **${data.data.webViewLink}**`
 
     bot.channels.fetch(process.env.ID_CHANNEL_LOG_BOT).then( channel => { 
         channel.send({
@@ -59,5 +58,6 @@ function enviarMensagemSalaDEV(bot, data, err){
 }
 
 module.exports = {
-    initJob
+    initJob,
+    run
 }

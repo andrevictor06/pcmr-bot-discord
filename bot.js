@@ -143,7 +143,7 @@ function applyListeners(bot) {
             bot.getFunction('audio_play.js').createTopic(bot)
 
             console.log(`Logged in as ${bot.user.tag}!`);
-        } catch (error) { Utils.logError(bot, error, __filename) }
+        } catch (error) { Utils.logError(bot, error, __filename) }        
     })
 
     if (process.env.HABILITA_VOICE_STATE_UPDATE_LISTENER) {
