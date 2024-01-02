@@ -216,6 +216,7 @@ async function saveAudio(bot, msg, args) {
                     try {
                         progessMessage.edit(`Áudio ${audioName} criado!`)
                         msg.react("✅")
+                        createTopic(bot)
                         resolve()
                     } catch (error) {
                         reject(error)
@@ -237,6 +238,7 @@ function deleteAudio(bot, msg) {
         const audioName = path.basename(audio, path.extname(audio))
         if (audioName == args.mainParam) {
             fs.rmSync(path.resolve(audioFolderPath, audio))
+            createTopic(bot)
             msg.reply(`Áudio ${args.mainParam} removido!`)
             return
         }
