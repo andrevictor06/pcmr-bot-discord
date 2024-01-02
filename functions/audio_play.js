@@ -216,6 +216,7 @@ async function saveAudio(bot, msg, args) {
                     try {
                         progessMessage.edit(`Áudio ${audioName} criado!`)
                         msg.react("✅")
+                        createTopic(bot)
                         resolve()
                     } catch (error) {
                         reject(error)
