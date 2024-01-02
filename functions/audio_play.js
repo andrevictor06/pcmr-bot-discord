@@ -238,6 +238,7 @@ function deleteAudio(bot, msg) {
         const audioName = path.basename(audio, path.extname(audio))
         if (audioName == args.mainParam) {
             fs.rmSync(path.resolve(audioFolderPath, audio))
+            createTopic(bot)
             msg.reply(`Áudio ${args.mainParam} removido!`)
             return
         }
