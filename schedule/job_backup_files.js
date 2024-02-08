@@ -12,19 +12,21 @@ function getSchedule(){
 }
 
 function run(bot){
-    createZipBackup(bot);
+    if (process.env.ENVIRONMENT === "PRD")
+        createZipBackup(bot);
 }
 
 function createZipBackup(bot){
+    const name_zip = `BKP_${process.env.ENVIRONMENT}_${process.env.APP_NAME} ${((new Date()).toLocaleString().split("/").join("_").split(":").join("_"))}.zip`
     const zip = new AdmZip();
-    const file_name = path.resolve('.backup', 'pcmr ' + ((new Date()).toLocaleString().split("/").join("_").split(":").join("_")) + '.zip')
+    const file_name = path.resolve('.backup', name_zip)
     
     zip.addLocalFolder(path.resolve('audio'), "audio");
     zip.addLocalFolder(path.resolve('images'), "images");
     zip.addLocalFile(path.resolve('.localstorage', 'figurinhas'), ".localstorage");
     zip.writeZip(file_name);
     
-    uploadFileOnDrive(bot, 'pcmr ' + ((new Date()).toLocaleString().split("/").join("_").split(":").join("_")) + '.zip', fs.createReadStream(file_name))
+    uploadFileOnDrive(bot, name_zip, fs.createReadStream(file_name))
 
 }
 
