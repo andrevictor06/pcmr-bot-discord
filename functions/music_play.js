@@ -3,7 +3,7 @@ const Utils = require("../utils/Utils")
 const { ExpectedError } = require('../utils/expected_error')
 const playdl = require('play-dl');
 const { sharedVariableExists, setSharedVariable, getSharedVariable, deleteSharedVariable } = require("../utils/shared_variables")
-const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID } = require('../utils/constants')
+const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID, PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE } = require('../utils/constants')
 const spotify = require('./spotify_playlist')
 
 const musicQueueThreadName = "músicas_na_fila"
@@ -145,7 +145,13 @@ function createServerQueue(bot, message, voiceChannel) {
     }
     serverQueue.connection.subscribe(serverQueue.player)
 
-    serverQueue.player.on(AudioPlayerStatus.Idle, () => next(bot))
+    serverQueue.player.on(AudioPlayerStatus.Idle, () =>{
+        if (sharedVariableExists(PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE) && getSharedVariable(MUSIC_QUEUE_NAME).songs == 0){
+            getSharedVariable(PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE)(bot, message, voiceChannel)
+        }
+
+        next(bot)
+    })
     serverQueue.player.on("error", error => {
         Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(Utils.getMessageError(error))
@@ -155,6 +161,8 @@ function createServerQueue(bot, message, voiceChannel) {
             serverQueue.connection.configureNetworking()
         }
     })
+    
+    
     setSharedVariable(MUSIC_QUEUE_NAME, serverQueue)
 
     const inactivityIntervalId = setInterval(() => {
@@ -240,6 +248,7 @@ function stop(bot, message) {
         }
 
         deleteSharedVariable(MUSIC_QUEUE_NAME)
+        deleteSharedVariable(PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE)
     } catch (error) {
         Utils.logError(bot, error, __filename)
         if (message) {
@@ -251,7 +260,7 @@ function stop(bot, message) {
 function skip(bot, message) {
     if (sharedVariableExists(AUDIO_QUEUE_NAME)) return message.channel.send("Tem um áudio tocando man, calma ae")
 
-    if (getSharedVariable(MUSIC_QUEUE_NAME).songs.length > 0) {
+    if ( sharedVariableExists(PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE) || getSharedVariable(MUSIC_QUEUE_NAME).songs.length > 0) {
         stopPlayer(bot)
     } else {
         message.channel.send("Fila tá vazia man")
@@ -384,5 +393,5 @@ function helpComand(bot, msg) {
 }
 
 module.exports = {
-    run, canHandle, helpComand
+    run, canHandle, helpComand, play
 }
