@@ -55,7 +55,8 @@ function enviarMensagemSalaDEV(bot, data, err){
                 title: "Backup concluído com sucesso",
                 timestamp: new Date().toISOString(),
                 url: data.data.webViewLink
-            }]})
+            }]}) 
+        .then(message => message.reply({files: ["./assets/matrix-safe.png"]}))
     });
 }
 
