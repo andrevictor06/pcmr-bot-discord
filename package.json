@@ -38,7 +38,7 @@
     "node-html-parser": "^6.1.5",
     "node-localstorage": "^2.2.1",
     "node-schedule": "^2.1.1",
-    "play-dl": "^1.9.7",
+    "play-dl": "github:shinray/play-dl#dist",
     "sharp": "^0.32.3",
     "tweetnacl": "^1.0.3"
   },
