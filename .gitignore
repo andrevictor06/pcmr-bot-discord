@@ -107,6 +107,7 @@ dist
 
 .localstorage/
 .backup/
+.data/
 
 images/figurinhas
 images/figurinhas_test
