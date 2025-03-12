@@ -76,7 +76,7 @@ async function randomSong(bot, message) {
         if(track){
             setSharedVariable(RANDOM_PLAYLIST_ACTIVE, true)
             message.content = `${Utils.command("play")} ${track.data?.name} ${track.data?.artists?.map(u => u.name).join(', ')}`
-            play(bot, message)
+            await play(bot, message)
         }
     }
 }
