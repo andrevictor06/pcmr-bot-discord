@@ -220,12 +220,10 @@ async function playSong(bot, song) {
         serverQueue.player.play(resource)
         serverQueue.currentSong = songWithInfo
         serverQueue.textChannel.send(`Tocando: **${songWithInfo.video_details.title}**`)
-        //spotify.tryAddSongToSpotifyPlaylist(bot, songWithInfo)
+        spotify.tryAddSongToSpotifyPlaylist(bot, songWithInfo)
 
         Utils.setPresenceBot(bot, { name: songWithInfo.video_details.title, url: songWithInfo.video_details.url, type: 1 })
     } catch (error) {
-        console.log(error);
-        
         Utils.logError(bot, error, __filename)
         serverQueue.textChannel.send(Utils.getMessageError(error))
         return next(bot)
