@@ -74,8 +74,9 @@ async function randomSong(bot, message) {
         let track = await spotify.searchDataTrack(id_spotify_escolhida)
 
         if(track){
-            message.channel.send(`${Utils.command("play")} ${track.data?.name} ${track.data?.artists?.map(u => u.name).join(', ')}`)
             setSharedVariable(RANDOM_PLAYLIST_ACTIVE, true)
+            message.content = `${Utils.command("play")} ${track.data?.name} ${track.data?.artists?.map(u => u.name).join(', ')}`
+            play(bot, message)
         }
     }
 }
@@ -289,7 +290,11 @@ function skip(bot, message) {
     if ( sharedVariableExists(PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE) || getSharedVariable(MUSIC_QUEUE_NAME).songs.length > 0) {
         stopPlayer(bot)
     } else {
-        message.channel.send("Fila tá vazia man")
+        if (sharedVariableExists(RANDOM_PLAYLIST_ACTIVE)){
+            randomSong(bot, message)
+        }else{
+            message.channel.send("Fila tá vazia man")
+        }
     }
 }
 
