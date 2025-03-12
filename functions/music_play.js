@@ -74,7 +74,7 @@ async function randomSong(bot, message) {
         let track = await spotify.searchDataTrack(id_spotify_escolhida)
 
         if(track){
-            message.channel.send(`${track.stringify()}`)
+            message.channel.send(`${JSON.stringify(track)}`)
             console.log(track, " track");
             
             message.channel.send(`${Utils.command("play")} ${track.name} ${track.artists?.map(u => u.name).join(', ')}`)
