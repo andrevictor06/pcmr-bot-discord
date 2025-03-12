@@ -3,7 +3,7 @@ const Utils = require("../utils/Utils")
 const { ExpectedError } = require('../utils/expected_error')
 const playdl = require('play-dl');
 const { sharedVariableExists, setSharedVariable, getSharedVariable, deleteSharedVariable } = require("../utils/shared_variables")
-const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID, PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE } = require('../utils/constants')
+const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID, PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE, SPOTIFY_PLAYLIST_TRACKS, RANDOM_PLAYLIST_ACTIVE } = require('../utils/constants')
 const spotify = require('./spotify_playlist')
 
 const musicQueueThreadName = "músicas_na_fila"
@@ -54,6 +54,28 @@ const commands = {
             name: Utils.command("next"),
             value: "Mostra a próxima música na fila",
             inline: false
+        }
+    },
+    random: {
+        fn: randomSong,
+        help: {
+            name: Utils.command("random"),
+            value: "Inicia uma playlist aleatoria com base na PlayList Ursal no Spotify",
+            inline: false
+        }
+    }
+}
+
+async function randomSong(bot, message) {
+
+    let musicas = getSharedVariable(SPOTIFY_PLAYLIST_TRACKS)
+    if( musicas ){
+        let id_spotify_escolhida = Utils.getRandomFromArray(musicas)
+        let track = await spotify.searchDataTrack(id_spotify_escolhida)
+
+        if(track){
+            message.channel.send(`${Utils.command("play")} ${track.name} ${track.artists.map(u => u.name).join(', ')}`)
+            setSharedVariable(RANDOM_PLAYLIST_ACTIVE, true)
         }
     }
 }
@@ -148,6 +170,10 @@ function createServerQueue(bot, message, voiceChannel) {
     serverQueue.player.on(AudioPlayerStatus.Idle, () =>{
         if (sharedVariableExists(PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE) && getSharedVariable(MUSIC_QUEUE_NAME).songs == 0){
             getSharedVariable(PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE)(bot, message, voiceChannel)
+        }
+
+        if (sharedVariableExists(RANDOM_PLAYLIST_ACTIVE) && getSharedVariable(MUSIC_QUEUE_NAME).songs == 0){
+            randomSong(bot, message)
         }
 
         next(bot)
@@ -246,7 +272,7 @@ function stop(bot, message) {
             }
             deleteThread(message)
         }
-
+        deleteSharedVariable(RANDOM_PLAYLIST_ACTIVE)
         deleteSharedVariable(MUSIC_QUEUE_NAME)
         deleteSharedVariable(PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE)
     } catch (error) {

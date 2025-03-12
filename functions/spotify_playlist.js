@@ -226,6 +226,18 @@ async function spotifyCache(bot, msg) {
     msg.reply(`Cache das ${tracks.length} músicas da playlist do spotify realizado!`)
 }
 
+
+async function searchDataTrack(id) {
+    return axios.get(
+        `${SPOTIFY_BASE_URL}/tracks/${id}`,
+        {
+            headers: {
+                Authorization: `Bearer ${await getAuthToken()}`
+            }
+        }
+    )
+}
+
 function run(bot, msg) {
     return utils.executeCommand(bot, msg, commands)
 }
@@ -246,5 +258,6 @@ module.exports = {
     canHandle,
     helpComand,
     authenticate,
-    tryAddSongToSpotifyPlaylist
+    tryAddSongToSpotifyPlaylist,
+    searchDataTrack
 }
