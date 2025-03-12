@@ -3,7 +3,7 @@ const Utils = require("../utils/Utils")
 const { ExpectedError } = require('../utils/expected_error')
 const playdl = require('play-dl');
 const { sharedVariableExists, setSharedVariable, getSharedVariable, deleteSharedVariable } = require("../utils/shared_variables")
-const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID, PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE, SPOTIFY_PLAYLIST_TRACKS, RANDOM_PLAYLIST_ACTIVE } = require('../utils/constants')
+const { MUSIC_QUEUE_NAME, AUDIO_QUEUE_NAME, MUSIC_TIMEOUT_ID, MUSIC_INTERVAL_ID, PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE, SPOTIFY_PLAYLIST_TRACKS, RADIO_PLAYLIST_ACTIVE } = require('../utils/constants')
 const spotify = require('./spotify_playlist')
 
 const musicQueueThreadName = "músicas_na_fila"
@@ -56,17 +56,17 @@ const commands = {
             inline: false
         }
     },
-    random: {
-        fn: randomSong,
+    radio: {
+        fn: radioUrsal,
         help: {
-            name: Utils.command("random"),
+            name: Utils.command("radio"),
             value: "Inicia uma playlist aleatoria com base na PlayList Ursal no Spotify",
             inline: false
         }
     }
 }
 
-async function randomSong(bot, message) {
+async function radioUrsal(bot, message) {
 
     let musicas = getSharedVariable(SPOTIFY_PLAYLIST_TRACKS)
     if( musicas ){
@@ -74,7 +74,7 @@ async function randomSong(bot, message) {
         let track = await spotify.searchDataTrack(id_spotify_escolhida)
 
         if(track){
-            setSharedVariable(RANDOM_PLAYLIST_ACTIVE, true)
+            setSharedVariable(RADIO_PLAYLIST_ACTIVE, true)
             message.content = `${Utils.command("play")} ${track.data?.name} ${track.data?.artists?.map(u => u.name).join(', ')}`
             await play(bot, message)
         }
@@ -173,8 +173,8 @@ function createServerQueue(bot, message, voiceChannel) {
             getSharedVariable(PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE)(bot, message, voiceChannel)
         }
 
-        if (sharedVariableExists(RANDOM_PLAYLIST_ACTIVE) && getSharedVariable(MUSIC_QUEUE_NAME).songs == 0){
-            randomSong(bot, message)
+        if (sharedVariableExists(RADIO_PLAYLIST_ACTIVE) && getSharedVariable(MUSIC_QUEUE_NAME).songs == 0){
+            radioUrsal(bot, message)
         }
 
         next(bot)
@@ -273,7 +273,7 @@ function stop(bot, message) {
             }
             deleteThread(message)
         }
-        deleteSharedVariable(RANDOM_PLAYLIST_ACTIVE)
+        deleteSharedVariable(RADIO_PLAYLIST_ACTIVE)
         deleteSharedVariable(MUSIC_QUEUE_NAME)
         deleteSharedVariable(PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE)
     } catch (error) {
@@ -287,8 +287,8 @@ function stop(bot, message) {
 async function skip(bot, message) {
     if (sharedVariableExists(AUDIO_QUEUE_NAME)) return message.channel.send("Tem um áudio tocando man, calma ae")
     
-    if (sharedVariableExists(RANDOM_PLAYLIST_ACTIVE) && getSharedVariable(MUSIC_QUEUE_NAME).songs.length == 0){
-        await randomSong(bot, message)
+    if (sharedVariableExists(RADIO_PLAYLIST_ACTIVE) && getSharedVariable(MUSIC_QUEUE_NAME).songs.length == 0){
+        await radioUrsal(bot, message)
     }
     
     if ( sharedVariableExists(PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE) || getSharedVariable(MUSIC_QUEUE_NAME).songs.length > 0) {
@@ -408,7 +408,7 @@ async function loadAllSongsInfo() {
 }
 
 async function run(bot, msg) {
-    if ( (!Utils.startWithCommand(msg, "play") && !Utils.startWithCommand(msg, "random")) && !sharedVariableExists(MUSIC_QUEUE_NAME)) return msg.channel.send("Nem tô na sala man")
+    if ( (!Utils.startWithCommand(msg, "play") && !Utils.startWithCommand(msg, "radio")) && !sharedVariableExists(MUSIC_QUEUE_NAME)) return msg.channel.send("Nem tô na sala man")
 
     return await Utils.executeCommand(bot, msg, commands)
 }

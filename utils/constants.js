@@ -12,7 +12,7 @@ const MUSIC_QUEUE_NAME = "music:queue"
 const MUSIC_TIMEOUT_ID = "music:timeout_id"
 const MUSIC_INTERVAL_ID = "music:interval_id"
 const PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE = "playlist:callback"
-const RANDOM_PLAYLIST_ACTIVE = "music:RANDOM_PLAYLIST_ACTIVE"
+const RADIO_PLAYLIST_ACTIVE = "music:RADIO_PLAYLIST_ACTIVE"
 
 module.exports = {
     SPOTIFY_LOGIN_STATE,
@@ -29,5 +29,5 @@ module.exports = {
     MUSIC_TIMEOUT_ID,
     MUSIC_INTERVAL_ID,
     PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE,
-    RANDOM_PLAYLIST_ACTIVE
+    RADIO_PLAYLIST_ACTIVE
 }
