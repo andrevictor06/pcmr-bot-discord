@@ -284,17 +284,17 @@ function stop(bot, message) {
     }
 }
 
-function skip(bot, message) {
+async function skip(bot, message) {
     if (sharedVariableExists(AUDIO_QUEUE_NAME)) return message.channel.send("Tem um áudio tocando man, calma ae")
-
+    
+    if (sharedVariableExists(RANDOM_PLAYLIST_ACTIVE) && getSharedVariable(MUSIC_QUEUE_NAME).songs.length == 0){
+        await randomSong(bot, message)
+    }
+    
     if ( sharedVariableExists(PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE) || getSharedVariable(MUSIC_QUEUE_NAME).songs.length > 0) {
         stopPlayer(bot)
     } else {
-        if (sharedVariableExists(RANDOM_PLAYLIST_ACTIVE)){
-            randomSong(bot, message)
-        }else{
-            message.channel.send("Fila tá vazia man")
-        }
+        message.channel.send("Fila tá vazia man")
     }
 }
 
