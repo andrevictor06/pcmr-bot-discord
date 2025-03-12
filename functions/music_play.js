@@ -290,7 +290,11 @@ function skip(bot, message) {
     if ( sharedVariableExists(PLAYLIST_CALLBACK_AUDIO_STATUS_IDLE) || getSharedVariable(MUSIC_QUEUE_NAME).songs.length > 0) {
         stopPlayer(bot)
     } else {
-        message.channel.send("Fila tá vazia man")
+        if (sharedVariableExists(RANDOM_PLAYLIST_ACTIVE)){
+            randomSong(bot, message)
+        }else{
+            message.channel.send("Fila tá vazia man")
+        }
     }
 }
 
