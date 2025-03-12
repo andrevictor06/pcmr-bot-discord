@@ -403,7 +403,7 @@ async function loadAllSongsInfo() {
 }
 
 async function run(bot, msg) {
-    if (!Utils.startWithCommand(msg, "play") && !sharedVariableExists(MUSIC_QUEUE_NAME)) return msg.channel.send("Nem tô na sala man")
+    if ( (!Utils.startWithCommand(msg, "play") || !Utils.startWithCommand(msg, "random")) && !sharedVariableExists(MUSIC_QUEUE_NAME)) return msg.channel.send("Nem tô na sala man")
 
     return await Utils.executeCommand(bot, msg, commands)
 }
