@@ -122,7 +122,7 @@ async function getAllTracksFromPlaylist(limit, offset = 0) {
     )
     if (response.data?.items?.length > 0) {
         const tracks = await getAllTracksFromPlaylist(limit, limit + offset)
-        response.data.items.forEach(i => tracks.push(i.track.id))
+        response.data.items.filter(i => i.track != null).forEach(i => tracks.push(i.track.id))
         return tracks
     }
     return []
@@ -195,7 +195,7 @@ async function saveTracksCache(tracks) {
 }
 
 async function reloadTracksCache() {
-    const tracks = await getAllTracksFromPlaylist(50)
+    const tracks = await getAllTracksFromPlaylist(100)
     saveTracksCache(tracks)
     setSharedVariable(SPOTIFY_PLAYLIST_TRACKS, tracks)
     console.log('Cache atualizado')
