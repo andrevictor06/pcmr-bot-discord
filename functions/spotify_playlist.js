@@ -98,7 +98,7 @@ async function search(q) {
                 Authorization: `Bearer ${await getAuthToken()}`
             },
             params: {
-                q,
+                q: `track:"${q}"`,
                 type: 'track',
                 limit: 1
             }
