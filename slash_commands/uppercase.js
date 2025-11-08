@@ -11,7 +11,7 @@ function data(bot) {
     .addStringOption(option =>
       option
         .setName('texto')
-        .setDescription('Textopara enviar em maiúsculas')
+        .setDescription('Texto para enviar em maiúsculas')
         .setRequired(true)
     )
 }

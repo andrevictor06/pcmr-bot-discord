@@ -40,28 +40,27 @@ function initSlashCommands(bot){
         if (fn.init) {
             fn.init(bot)
         }
-        console.log( fn);
         
-        bot.slash_commands.push(fn)
-        bot.object_slash_commands[fnFile.split(".js")[0]] = fn
-        
-        bot.json_slash_commands.push(fn.data(bot).toJSON())
+        const data = fn.data(bot);
+        if( data){
+            bot.slash_commands.push(fn)
+            bot.object_slash_commands[data.name] = fn
+            bot.json_slash_commands.push(data.toJSON())
+        }
     })
 
     const rest = new REST({ version: '10' }).setToken(process.env.TOKEN_DISCORD);
 
     (async () => {
     try {
-        console.log('Atualizando comandos slash...');
 
         await rest.put(
         Routes.applicationCommands(process.env.ID_APPLICATION_ID_PCMR_BOT),
         { body: bot.json_slash_commands },
         );
 
-        console.log('Comandos registrados com sucesso!');
     } catch (error) {
-        console.error(error);
+        Utils.logError(bot, error, __filename)
     }
     })();
 
