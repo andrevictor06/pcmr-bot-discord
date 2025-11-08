@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const { Client, GatewayIntentBits } = require("discord.js")
+const { Client, GatewayIntentBits, REST, Routes} = require("discord.js")
 const Utils = require("./utils/Utils")
 const SharedVariables = require('./utils/shared_variables')
 const { runAudioPlay } = require('./functions/audio_play')
@@ -26,7 +26,45 @@ function init() {
     applyListeners(bot)
     startJobs(bot)
     bot.login(process.env.TOKEN_DISCORD)
+    initSlashCommands(bot)
     return bot
+}
+
+function initSlashCommands(bot){
+    bot.slash_commands = []
+    bot.object_slash_commands = {}
+    bot.json_slash_commands = []
+
+    fs.readdirSync("./slash_commands").forEach(fnFile => {
+        const fn = require("./slash_commands/" + fnFile)
+        if (fn.init) {
+            fn.init(bot)
+        }
+        console.log( fn);
+        
+        bot.slash_commands.push(fn)
+        bot.object_slash_commands[fnFile.split(".js")[0]] = fn
+        
+        bot.json_slash_commands.push(fn.data(bot).toJSON())
+    })
+
+    const rest = new REST({ version: '10' }).setToken(process.env.TOKEN_DISCORD);
+
+    (async () => {
+    try {
+        console.log('Atualizando comandos slash...');
+
+        await rest.put(
+        Routes.applicationCommands(process.env.ID_APPLICATION_ID_PCMR_BOT),
+        { body: bot.json_slash_commands },
+        );
+
+        console.log('Comandos registrados com sucesso!');
+    } catch (error) {
+        console.error(error);
+    }
+    })();
+
 }
 
 function initBotCommands(bot) {
@@ -59,12 +97,25 @@ function startJobs(bot) {
 }
 
 function applyListeners(bot) {
-    bot.on('interactionCreate', async (event) => {
+    bot.on('interactionCreate', async (event) => {  
         try {
             const func = SharedVariables.getSharedVariable(event.customId)
             if (func) {
                 await func(event)
             }
+        } catch (error) {
+            Utils.logError(bot, error, __filename)
+            event.reply({
+                content: Utils.getMessageError(error),
+                components: []
+            })
+        }
+
+        try {
+            if(bot.object_slash_commands[event.commandName]){
+               await bot.object_slash_commands[event.commandName].execute(bot, event)
+            }
+           
         } catch (error) {
             Utils.logError(bot, error, __filename)
             event.reply({
