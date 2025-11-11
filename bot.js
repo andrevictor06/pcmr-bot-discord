@@ -207,14 +207,22 @@ function applyListeners(bot) {
                     const musicQueue = SharedVariables.getSharedVariable(SharedVariables.MUSIC_QUEUE_NAME)
                     if (musicQueue && musicQueue.voiceChannel.id !== process.env.ID_VOICE_CHANNEL_GAME_PLAY) return
 
+                    let array_audios = ['dilera-mamaco.mp3', 'sergio-malandro-mamaco.mp3']                    
+                    if( foiOPapai(newState) ){
+                        array_audios = ['uh-papai-chegou-2.mp3', 'uh-papai-chegou.mp3']
+                    }
                     setTimeout(
-                        () => runAudioPlay(bot, newState.channelId, Utils.getRandomFromArray(['dilera-mamaco.mp3', 'sergio-malandro-mamaco.mp3'])),
+                        () => runAudioPlay(bot, newState.channelId, Utils.getRandomFromArray(array_audios)),
                         process.env.MAMACO_AUDIO_DELAY_MS
                     )
                 }
             } catch (error) { Utils.logError(bot, error, __filename) }
         });
     }
+}
+
+function foiOPapai( state){
+    return state.id == process.env.ID_MEMBER_RATO_QUE_VOA
 }
 
 module.exports = {
