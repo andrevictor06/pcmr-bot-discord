@@ -21,6 +21,10 @@ function init() {
             GatewayIntentBits.GuildWebhooks
         ]
     })
+    
+    bot.addInteractionCreate = (customId, func) => {
+        SharedVariables.setSharedVariable(customId, func)
+    }
 
     initBotCommands(bot)
     applyListeners(bot)
@@ -52,8 +56,7 @@ function initSlashCommands(bot){
     const rest = new REST({ version: '10' }).setToken(process.env.TOKEN_DISCORD);
 
     (async () => {
-    try {
-
+    try {        
         await rest.put(
         Routes.applicationCommands(process.env.ID_APPLICATION_ID_PCMR_BOT),
         { body: bot.json_slash_commands },
@@ -99,6 +102,7 @@ function applyListeners(bot) {
     bot.on('interactionCreate', async (event) => {  
         try {
             const func = SharedVariables.getSharedVariable(event.customId)
+            
             if (func) {
                 await func(event)
             }
@@ -123,10 +127,6 @@ function applyListeners(bot) {
             })
         }
     })
-
-    bot.addInteractionCreate = (customId, func) => {
-        SharedVariables.setSharedVariable(customId, func)
-    }
 
     bot.on("messageCreate", msg => {
         bot.functions.forEach(async (fn) => {
