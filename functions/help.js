@@ -25,18 +25,20 @@ function getHelpCommands(bot, msg){
 function run(bot, msg) {
     let fields = getHelpCommands(bot, msg)
     
-    const exampleEmbed = {
-        color: 0x0099ff,
-        author: {
-            name: process.env.APP_NAME,
-            icon_url: process.env.APP_ICON,
-        },
-        description: 'Lista dos comandos disponíveis neste servidor Discord',
-        fields: fields,
-        timestamp: new Date().toISOString()
-    }
+    Utils.chunkArray(fields, 25).forEach(list => {
+        const exampleEmbed = {
+            color: 0x0099ff,
+            author: {
+                name: process.env.APP_NAME,
+                icon_url: process.env.APP_ICON,
+            },
+            description: 'Lista dos comandos disponíveis neste servidor Discord',
+            fields: list,
+            timestamp: new Date().toISOString()
+        }
 
-    msg.reply({ embeds: [exampleEmbed] })
+        msg.reply({ embeds: [exampleEmbed] })
+    })
 }
 
 function canHandle(bot, msg) {
